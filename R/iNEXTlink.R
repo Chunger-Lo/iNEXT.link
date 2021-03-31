@@ -362,12 +362,12 @@ iNEXT_beta_link = function(x, coverage_expected, data_type=c('abundance', 'incid
 
   combined = ready4beta(x)
   if(level == 'taxonomic'){
-    dissimilarity <- iNEXT_beta(x = combined, coverage_expected = coverage_expected, data_type = data_type, level = level,
+    dissimilarity <- iNEXT_beta(x = combined, coverage_expected = coverage_expected, data_type = data_type, level = 'taxonomic',
                                 nboot = nboot, conf = conf, max_alpha_coverage = max_alpha_coverage, by = by)
   }
   else if(level == 'phylogenetic'){
 
-    dissimilarity = iNEXT_link_phybeta(x = combined, coverage_expected = seq(0.5,1,0.05), "abundance", level = 'phylogenetic',
+    dissimilarity = iNEXT_link_phybeta(x = combined, coverage_expected =coverage_expected, "abundance", level = 'phylogenetic',
                                        row.tree = rowtree,col.tree = coltree,
                                        nboot = 0, by = 'coverage')
   }
@@ -505,7 +505,8 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
           as.data.frame %>%
           set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
           mutate(Coverage_expected=rep(coverage_expected, 3), Coverage_real=rep(iNEXT:::Chat.Ind(data_gamma, m_gamma), 3),
-                 Size=rep(m_gamma, 3))
+                 Size=rep(m_gamma, 3))%>%
+          mutate(Method = ifelse(Coverage_expected>=ref_gamma, ifelse(Coverage_expected==ref_gamma, 'Observed', 'Extrapolated'), 'Interpolated'))
         # gamma = iNEXTPD2:::PhD.m.est(ai = ai_B[isn0],Lis = Li_b[isn0,,drop=F],
         #                              m=m[[i]],q=q,nt = n,cal = cal) %>% t %>%
         #   as.data.frame %>%
@@ -537,7 +538,8 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
         qPDm = qPDm/N
         alpha = qPDm %>% t %>% as.data.frame %>%
           set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
-          mutate(Coverage_expected=rep(coverage_expected, 3), Coverage_real=rep(iNEXT:::Chat.Ind(data_alpha, m_alpha), 3), Size=rep(m_alpha, 3))
+          mutate(Coverage_expected=rep(coverage_expected, 3), Coverage_real=rep(iNEXT:::Chat.Ind(data_alpha, m_alpha), 3), Size=rep(m_alpha, 3))%>%
+          mutate(Method = ifelse(Coverage_expected>=ref_gamma, ifelse(Coverage_expected==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated'))
 
       }
 
@@ -591,6 +593,9 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 
       beta = alpha
       beta$Estimate = gamma$Estimate/alpha$Estimate
+      beta[beta == "Observed"] = "Observed_alpha"
+      beta = beta %>% rbind(., cbind(gamma %>% filter(Method == "Observed") %>% select(Estimate) / alpha %>% filter(Method == "Observed") %>% select(Estimate),
+                                     Order = q, Method = "Observed", Coverage_expected = NA, Coverage_real = NA, Size = beta[beta$Method == "Observed_alpha", 'Size']))
 
       C = beta %>% mutate(Estimate = ifelse(Order==1, log(Estimate)/log(N), (Estimate^(1-Order) - 1)/(N^(1-Order)-1)))
       U = beta %>% mutate(Estimate = ifelse(Order==1, log(Estimate)/log(N), (Estimate^(Order-1) - 1)/(N^(Order-1)-1)))
@@ -1662,11 +1667,107 @@ ggiNEXT_PND <- function(outcome,type = 1,se = TRUE,facet = "None",
 #' ggiNEXT_beta_link(out, type = 1,se = TRUE,facet = "None",color = "Assemblage",grey = FALSE, text_size = 10)
 
 #' @export
-ggiNEXT_beta_link <- function(outcome,type = 1,se = TRUE,facet = "None",
-                        color = "Assemblage",grey = FALSE, text_size = 10){
-  ggiNEXT_beta(outcome, type = type,se = se,facet = facet,
-               color = color,grey = grey, text_size = text_size)
+ggiNEXT_beta_link <- function(output, type = c('B', 'D'), measurement = c('T', 'P', 'F_tau', 'F_AUC'),
+                              scale='free', main=NULL, transp=0.4){
+  # if(length(outcome) == 1){ outcome = outcome}
+  if (type == 'B'){
 
+      gamma = lapply(output, function(y) y[["gamma"]]) %>% do.call(rbind,.) %>% mutate(div_type = "Gamma") %>% as_tibble()
+      alpha = lapply(output, function(y) y[["alpha"]]) %>% do.call(rbind,.) %>% mutate(div_type = "Alpha") %>% as_tibble()
+      beta =  lapply(output, function(y) y[["beta"]])  %>% do.call(rbind,.) %>% mutate(div_type = "Beta")  %>% as_tibble()
+      beta = beta %>% filter(Method != 'Observed')
+      beta[beta == 'Observed_alpha'] = 'Observed'
+
+      df = rbind(gamma, alpha, beta)
+      for (i in unique(gamma$Order)) df$Order[df$Order==i] = paste0('q = ', i)
+      df$div_type <- factor(df$div_type, levels = c("Gamma","Alpha","Beta"))
+
+      id_obs = which(df$Method == 'Observed')
+
+      for (i in 1:length(id_obs)) {
+
+        new = df[id_obs[i],]
+        new$Coverage_expected = new$Coverage_expected - 0.0001
+        new$Method = 'Interpolated'
+
+        newe = df[id_obs[i],]
+        newe$Coverage_expected = newe$Coverage_expected + 0.0001
+        newe$Method = 'Extrapolated'
+
+        df = rbind(df, new, newe)
+
+      }
+
+      if (measurement=='T') { ylab = "Taxonomic diversity" }
+      if (measurement=='P') { ylab = "Phylogenetic Hill number" }
+      if (measurement=='F_tau') { ylab = "Functional diversity (given tau)" }
+      if (measurement=='F_AUC') { ylab = "Functional diversity (AUC)" }
+
+    }
+
+    if (type=='D'){
+
+      C = lapply(output, function(y) y[["C"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-CqN") %>% as_tibble()
+      U = lapply(output, function(y) y[["U"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-UqN") %>% as_tibble()
+      V = lapply(output, function(y) y[["V"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-VqN") %>% as_tibble()
+      S = lapply(output, function(y) y[["S"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-SqN") %>% as_tibble()
+      C = C %>% filter(Method != 'Observed')
+      U = U %>% filter(Method != 'Observed')
+      V = V %>% filter(Method != 'Observed')
+      S = S %>% filter(Method != 'Observed')
+      C[C == 'Observed_alpha'] = U[U == 'Observed_alpha'] = V[V == 'Observed_alpha'] = S[S == 'Observed_alpha'] = 'Observed'
+
+      df = rbind(C, U, V, S)
+      for (i in unique(C$Order)) df$Order[df$Order==i] = paste0('q = ', i)
+      df$div_type <- factor(df$div_type, levels = c("1-CqN","1-UqN","1-VqN","1-SqN"))
+
+      id_obs = which(df$Method == 'Observed')
+
+      for (i in 1:length(id_obs)) {
+
+        new = df[id_obs[i],]
+        new$Coverage_expected = new$Coverage_expected - 0.0001
+        new$Method = 'Interpolated'
+
+        newe = df[id_obs[i],]
+        newe$Coverage_expected = newe$Coverage_expected + 0.0001
+        newe$Method = 'Extrapolated'
+
+        df = rbind(df, new, newe)
+
+      }
+
+      if (measurement=='T') { ylab = "Taxonomic dissimilarity" }
+      if (measurement=='P') { ylab = "Phylogenetic dissimilarity" }
+      if (measurement=='F_tau') { ylab = "Functional dissimilarity (given tau)" }
+      if (measurement=='F_AUC') { ylab = "Functional dissimilarity (AUC)" }
+
+    }
+
+    lty = c(Interpolated = "solid", Extrapolated = "dotted")
+    df$Method = factor(df$Method, levels = c('Interpolated', 'Extrapolated', 'Observed'))
+
+    double_size = unique(df[df$Method=="Observed",]$Size)*2
+    double_extrepolation = df %>% filter(Method=="Extrapolated" & round(Size) %in% double_size)
+
+    # ggplot(data = df, aes(x = Coverage_expected, y = Estimate)) +
+    plot = ggplot(data = df, aes(x = Coverage_expected, y = Estimate, col = Region)) +
+      # geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Region, col = NULL), alpha=transp) +
+      geom_ribbon(aes(ymin = LCL, ymax = UCL, col = NULL), alpha=transp) +
+      geom_line(data = subset(df, Method!='Observed'), aes(linetype=Method), size=1.1) + scale_linetype_manual(values = lty) +
+      # geom_line(lty=2) +
+      geom_point(data = subset(df, Method=='Observed' & div_type=="Gamma"),shape=19, size=3) +
+      geom_point(data = subset(df, Method=='Observed' & div_type!="Gamma"),shape=1, size=3,stroke=1.5)+
+      geom_point(data = subset(double_extrepolation, div_type == "Gamma"),shape=17, size=3) +
+      geom_point(data = subset(double_extrepolation, div_type!="Gamma"),shape=2, size=3,stroke=1.5) +
+      facet_grid(div_type~Order, scales = scale) +
+      theme_bw() +
+      theme(legend.position = "bottom", legend.title = element_blank()) +
+      labs(x='Sample coverage', y=ylab, title=main)
+    if(length(output) == 1){
+      plot = plot + guides(col=FALSE)
+    }
+    return(plot)
 }
 # ggAsyD -------------------------------------------------------------------
 #' ggplot for Asymptotic Network diversity
@@ -1699,8 +1800,7 @@ ggAsyND <- function(outcome){
     labs(x = "Order q", y = "Network diversity") + theme(text = element_text(size = 10)) +
     theme(legend.position = "bottom", legend.box = "vertical",
           legend.key.width = unit(0.8, "cm"), legend.title = element_blank(),
-          legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,
-                                                                         -10, -5, -10))
+          legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10))
 }
 
 # ggAsyD -------------------------------------------------------------------
@@ -1828,25 +1928,19 @@ AsyPND <- function(data = puerto.rico$data, q = seq(0, 2, 0.2), datatype = "abun
 #' @return a table of Asymptotic network diversity q profile
 #'
 #' @examples
-#' ## Type (1) example for abundance-based data
-#' ## Ex.1
-#' data(spider)
-#' out1 <- ObsND(spider, class = 'TD', datatype = "abundance")
-#' ggObsPND(out1)
+#' ## Example for abundance-based data
+#' data(Norfolk)
+#' out1 <- ObsND(Norfolk, class = 'TD', datatype = "abundance")
+#' ggObsND(out1)
 #'
-#' ## Type (2) example for incidence-based data
-#'
-#' ## Ex.2
-#' data(ant)
-#' out2 <- ObsND(ant, class = 'TD', datatype = "incidence_freq", nboot = 0)
-#' ggObsPND(out2)
-#'
+
 #' @export
 ObsND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, conf = 0.95){
   lapply(1:length(data), function(i){
     x = data[[i]]
     assemblage = names(data)[[i]]
     tmp <- c(as.matrix(x))
+    ## nboot has to larger than 0
     res = MakeTable_Empericalprofile(data = x, B = nboot, q, conf = conf)%>%
       rename("qD"="Emperical", "qD.LCL"="LCL", "qD.UCL"="UCL")%>%
       mutate(Assemblage = assemblage, method = "Empirical")%>%filter(Target == "Diversity")%>%select(-Target)
@@ -1889,14 +1983,14 @@ estimateND = function(dat,q = c(0, 1, 2),datatype = "abundance",base = "size",
 #' @return a data.frame of species diversity table including the sample size, sample coverage, method (rarefaction or extrapolation), and diversity estimates with q = 0, 1, and 2 for the user-specified sample size or sample coverage.
 #'
 #' @examples
-#' ## Not run:
 #' data(spider)
 #' out <- estimatedPND(spider, q = c(0,1,2), datatype = "abundance", row.tree = rowtree, col.tree = coltree, base="size")
 #' out <- estimatedPND(spider, q = c(0,1,2), datatype = "abundance", row.tree = rowtree, col.tree = coltree, base="coverage")
 #'
 #' @export
-estimatedPND <- function(data,q = c(0, 1, 2),datatype = "abundance",
-                         level = NULL,nboot = 50,conf = 0.95){
+estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
+                         row.tree = NULL, col.tree =NULL,
+                         level = NULL,nboot = 30,conf = 0.95){
   q <- unique(ceiling(q))
   ci <- qnorm(conf/2+0.5)
 
@@ -1904,8 +1998,7 @@ estimatedPND <- function(data,q = c(0, 1, 2),datatype = "abundance",
     if (datatype == "abundance") {
       level <- sapply(data, function(x) {
         ni <- sum(x)
-        iNEXTPD2:::Coverage(data = x, datatype = datatype, m = 2 *
-                   ni, nt = ni)
+        iNEXTPD2:::Coverage(data = x, datatype = datatype, m = 2 * ni, nt = ni)
       })
     }
     else if (datatype == "incidence_raw") {
@@ -1918,9 +2011,9 @@ estimatedPND <- function(data,q = c(0, 1, 2),datatype = "abundance",
     level <- min(level)
   }
   # level =0.7
-  res = lapply(1:length(dat), function(i){
-    x = dat[[i]]
-    assemblage = names(dat)[[i]]
+  res = lapply(1:length(data), function(i){
+    x = data[[i]]
+    assemblage = names(data)[[i]]
     long = as.matrix(x)%>%c()
     m_target = Coverage_to_size(x, C = level)
     # if(base == "size"){m_target = level}
@@ -2041,7 +2134,7 @@ NetEvenness <- function(x,q = seq(0, 2, 0.2),
 # ggEven -------------------------------------------------------------------
 #' ggplot for Evenness
 #
-#' \code{ggEven} The figure for estimation of Evenness with order q\cr
+#' \code{ggNetEven} The figure for estimation of Evenness with order q\cr
 #'
 #' @param output a table generated from Evenness function\cr
 #' @return a figure of estimated sample completeness with order q\cr

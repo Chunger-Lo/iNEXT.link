@@ -14,7 +14,8 @@ Suggests: knitr,
     rmarkdown,
     ggpubr,
     ade4
-Imports: chaoUtility,
+Imports: 
+    chaoUtility,
     phytools,
     bipartite,
     Rcpp,
@@ -26,11 +27,10 @@ Imports: chaoUtility,
     stats,
     ape,
     phyclust,
-    utils
+    utils,
+    iNEXT3D
 LinkingTo: Rcpp
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
-
-
-
+Remotes: KaiHsiangHu/iNEXT3D

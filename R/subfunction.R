@@ -228,6 +228,62 @@ MakeTable_Empericalprofile = function(data, B, q, conf){
 #
 #   return(output)
 # }
+
+### Evenness
+# x = Norfolk
+# x = data
+# x = puerto.rico$data
+
+Evenness.profile <- function(x, q, datatype = c("abundance","incidence_freq"), method, E.class, C = NULL) {
+  # data_long <- lapply(x, function(tab){
+  #   as.matrix(tab)%>%c()}
+  #   ## 拉長
+  # )
+
+  if (method == "Estimated") {
+    estqD = estimate3D(x, class = 'TD', q, datatype, base = "coverage", level = C, nboot = 0)
+    estS = estimate3D(x, class = 'TD', 0, datatype, base = "coverage", level = C, nboot = 0)
+
+    estqD = estimate3D(x, class = 'TD', q, datatype, base = "coverage", level = C, nboot = 0)
+    estS = estimate3D(x, class = 'TD', 0, datatype, base = "coverage", level = C, nboot = 0)
+
+    out = lapply(E.class, function(i) {
+      tmp = sapply(1:length(x), function(k) even.class(q, empqD[empqD$Assemblage == names(x)[k], "qD"], empS[empS$Assemblage == names(x)[k], "qD"], i, x[[k]]/sum(x[[k]])))
+      if (class(tmp)[1] %in% c("numeric","integer")) {tmp = t(as.matrix(tmp, nrow = 1))}
+      rownames(tmp) = q
+      tmp
+    })
+  } else if (method == "Empirical") {
+
+    empqD = ObsND(x, q = q, datatype = datatype, nboot = 30)
+    empS = empqD%>%filter(Order.q == 0)
+
+    out = lapply(E.class, function(i) {
+      tmp = sapply(1:length(x), function(k) even.class(q,
+                                                       qD =empqD[empqD$Assemblage == names(x)[k], "qD"],
+                                                       S = empS[empS$Assemblage == names(x)[k], "qD"],
+                                                       E.class = i))
+                                                       # x[[k]]/sum(x[[k]])))
+      if (class(tmp)[1] %in% c("numeric","integer")) {tmp = t(as.matrix(tmp, nrow = 1))}
+      rownames(tmp) = q
+      tmp
+    })
+    # empqD = Obs3D(x, class = 'TD', q = q, datatype = datatype, nboot = 0)
+    # empS = Obs3D(x, class = 'TD', q = 0, datatype = datatype, nboot = 0)
+    #
+    # out = lapply(E.class, function(i) {
+    #   tmp = sapply(1:length(x), function(k) even.class(q, empqD[empqD$Assemblage == names(x)[k], "qD"], empS[empS$Assemblage == names(x)[k], "qD"], i, x[[k]]/sum(x[[k]])))
+    #   if (class(tmp)[1] %in% c("numeric","integer")) {tmp = t(as.matrix(tmp, nrow = 1))}
+    #   rownames(tmp) = q
+    #   tmp
+    # })
+  }
+
+  names(out) = paste("E", E.class, sep="")
+  return(out)
+}
+
+###
 ready4beta <- function(x){
   ### 拉長所有interaction, 視為不同subplot, 取聯集補0
   data_long <- lapply(x, function(tab){
@@ -241,14 +297,14 @@ ready4beta <- function(x){
   names_tab = lapply(seq_along(x), function(i){
     as.set(data_long[[i]]$int_name)
   })
+  # res_set = set()
+  # for(i in 1:(length(names_tab)-1)){
+  #   res_set = set_union(names_tab[[i]], names_tab[[i+1]])
+  # }
   res_set = set()
-  for(i in 1:(length(names_tab)-1)){
-    res_set = set_union(names_tab[[i]], names_tab[[i+1]])
+  for(i in 1:length(names_tab)){
+    res_set = set_union(names_tab[[i]], res_set)
   }
-
-  combined = data.frame(sp = sapply(res_set, as.character))%>%
-    left_join( data_long[[1]], by = c("sp" = "int_name"))%>%
-    left_join( data_long[[2]], by = c("sp" = "int_name"))
 
   combined = data.frame(sp = sapply(res_set, as.character))
   for(i in 1:length(names_tab)){

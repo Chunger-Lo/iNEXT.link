@@ -9,7 +9,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE, warning=FALSE,}
+```{r, include = FALSE, warning=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   warning = FALSE, message = FALSE,
@@ -91,11 +91,12 @@ library(iNEXT)
 # library(iNEXT)
 library(chaoUtility)
 library(tidyr)
-source("..//R//iNEXTlink.R")
-source("..//R//subfunction.R")
+
 source("..//R//myfunc.R")
 source("..//R//iNEXT_beta.R")
 source("..//R//iNEXT3D_0316.R")
+source("..//R//iNEXTlink.R")
+source("..//R//subfunction.R")
 ```
 
 <br><font size="5"><b>DATA FORMAT/INFORMATION</b></font> 
@@ -695,7 +696,10 @@ library(dplyr)
 
 We now apply four main functions to the abundance data to see the outputs:
 
-### Main function: `iNEXT_PND()`: 
+### Main function: 
+
+### 1.`iNEXT_ND()`: 
+
 
 ```{r,eval=T, message = F, warning=F}
 sample1 <- iNEXT_ND(x = Norfolk, datatype = "abundance", nboot = 10)
@@ -737,7 +741,7 @@ kable(head(sample1$AsyEst,9))
 # sample_iNEXT$AsyEst
 ```
 
-### ggiNEXT_ND
+### 2. ggiNEXT_ND
 
 To visualize the curves, use `ggiNEXT_ND` to obtain plots based on `ggplot2` package. This function provides three types of curves, which can be specified in the argument `plot.type`: 
  
@@ -753,15 +757,39 @@ ggiNEXT_ND(sample1, type = 1,facet = "Order.q" )
 ggiNEXT_ND(sample1, type = 3, facet = "Assemblage")
 ```
 
-### 4. `estimateND()`
+### 3. `estimateND()`
 
-```{r, eval = F}
-kable(estimateND(dat, datatype="abundance", base="coverage",level=0.7, conf=0.95))
+```{r, eval = T}
+kable(estimateND(Norfolk, datatype="abundance", base="coverage",level=0.7, conf=0.95))
 ```
 
 The `estimateND()` function returns a table of the computed diversity for specified/default diversity orders `q` and reference times for the user-specified values of sample coverage. The corresponding sample sizes and sample coverage values are also provided.
 
 
+### 4. Evenness
+
+```{r, warning=F, message=F}
+even1 = NetEvenness(Norfolk, q = seq(0,2,1), datatype = "abundance", nboot =30)
+```
+
+```{r,echo = TRUE ,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
+ggNetEven(even1)
+```
+
+
+### 5. Dissimilarity
+
+```{r}
+dissimilarity1 = iNEXT_beta_link(Norfolk, coverage_expected = seq(0.5,1,0.05),
+                                 data_type='abundance',
+                                 q = c(0, 1, 2),level='taxonomic',
+                                 nboot = 0, conf = 0.95, max_alpha_coverage=F, by='coverage')
+```
+
+```{r,echo = TRUE ,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
+ggiNEXT_beta_link(dissimilarity1, type = 'B')
+ggiNEXT_beta_link(dissimilarity1, type = 'D')
+```
 
 
 <br><font size="5"><b>EXAMPLES2: Abundance data with phylogenetic tree </b></font>
@@ -772,16 +800,18 @@ To demonstrate this data, the following commands display basic data visualizatio
 
 We now apply four main functions to the abundance data to see the outputs:
 
-### Main function: `iNEXT_PND()`: 
+### Main function: 
+
+### 1.`iNEXT_PND()`: 
 
 ```{r,eval=T, message = F, warning=F}
 sample2 <- iNEXT_PND(x = puerto.rico$data, datatype = "abundance", 
                      row.tree = rowtree, col.tree = coltree, nboot = 10)
 ```
 
-`iNEXT_ND()` returns a list containing three objects:
+`iNEXT_PND()` returns a list containing three objects:
 
-* `$DataInfo`: The same table from function **NDInfo()**, which summarizes some network statistics for each assemblage, including reference sample size (`n`), number of observed species (`S.obs`), Connectance, the first two rare species frequency counts.
+* `$DataInfo`: The same table from function **PNDInfo()**, which summarizes some network statistics for each assemblage, including reference sample size (`n`), number of observed species (`S.obs`), Connectance, the first two rare species frequency counts.
 
 ```{r}
 kable(sample2$DataInfo)
@@ -804,7 +834,7 @@ kable(head(sample2$iNextEst, 5)%>%rbind(tail(sample2$iNextEst, 5)))
 kable(head(sample2$AsyEst,9))
 ```
 
-### ggiNEXT_PND
+### 2. ggiNEXT_PND
 
 To visualize the curves, use `ggiNEXT_PND` to obtain plots based on `ggplot2` package. This function provides three types of curves, which can be specified in the argument `plot.type`: 
  
@@ -821,34 +851,30 @@ ggiNEXT_PND(sample2, type = 1,facet = "Order.q" )
 ggiNEXT_PND(sample2, type = 3, facet = "Assemblage")
 ```
 
-<!-- ### 4. `estimateND()` -->
+### 3. `estimatePND()`
 
-```{r, eval = F}
-# kable(estimatePND(dat, datatype="abundance", base="coverage",level=0.7, conf=0.95))
+```{r, eval = T}
+kable(estimatePND(puerto.rico$data, col.tree = coltree, row.tree = rowtree, nboot = 10,datatype="abundance",level=0.7, conf=0.95))
 ```
 
 <!-- The `estimateND()` function returns a table of the computed diversity for specified/default diversity orders `q` and reference times for the user-specified values of sample coverage. The corresponding sample sizes and sample coverage values are also provided. -->
 
 
-
-<br><font size="5"><b>EXAMPLES3: Dissimilarity </b></font>
+### 4. Evenness
 
 ```{r}
-dissimilarity1 = iNEXT_beta_link(Norfolk, coverage_expected = seq(0.5,1,0.05),
-                                 data_type='abundance',
-                                 q = c(0, 1, 2),level='taxonomic',
-                                 nboot = 0, conf = 0.95, max_alpha_coverage=F, by='coverage')
+even2 = NetEvenness(puerto.rico$data, q=  seq(0,2,1), datatype = "abundance", nboot = 0, E = 1:5, method = "Estimated", C = 0.9)
 ```
 
 ```{r,echo = TRUE ,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta(dissimilarity1, type = 'B')
-ggiNEXT_beta(dissimilarity1, type = 'D')
+ggNetEven(even2)
 ```
 
 
+### 5. Dissimilarity
 
 ```{r}
-dissimilarity2 = iNEXT_beta_link(Norfolk, coverage_expected = seq(0.5,1,0.05), data_type='abundance',
+dissimilarity2 = iNEXT_beta_link(puerto.rico$data, coverage_expected = seq(0.5,1,0.025), data_type='abundance',
                                  q = c(0, 1, 2),level='taxonomic', 
                                  row.tree = rowtree,col.tree = coltree,
                                  nboot = 0, conf = 0.95, max_alpha_coverage=F, 
@@ -857,9 +883,28 @@ dissimilarity2 = iNEXT_beta_link(Norfolk, coverage_expected = seq(0.5,1,0.05), d
 
 
 ```{r,echo = TRUE ,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta(dissimilarity2, type = 'B')
-ggiNEXT_beta(dissimilarity2, type = 'D')
+ggiNEXT_beta_link(dissimilarity2, type = 'B')
+ggiNEXT_beta_link(dissimilarity2, type = 'D')
 ```
+
+
+```{r, warning=F, message=F}
+dissimilarity3 = iNEXT_beta_link(x = puerto.rico$data, coverage_expected = seq(0.5,0.99,0.025), data_type='abundance',
+                                 q = c(0, 1, 2),level='phylogenetic', 
+                                 row.tree = rowtree, col.tree = coltree,
+                                 nboot = 0, conf = 0.95, max_alpha_coverage=F, 
+                                 by='coverage')
+```
+
+
+```{r,echo = TRUE ,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
+ggiNEXT_beta_link(dissimilarity3, type = 'B')
+ggiNEXT_beta_link(dissimilarity3, type = 'D')
+```
+
+
+
+
 
 
 

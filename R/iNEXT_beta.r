@@ -1052,7 +1052,8 @@ iNEXT_beta = function(x, coverage_expected, data_type=c('abundance', 'incidence_
 
       beta[beta == "Observed"] = "Observed_alpha"
       beta = beta %>%
-        rbind(., data.frame(Estimate = obs_beta, Order = q, Method = "Observed", Coverage_expected = NA, Coverage_real = NA, Size = beta[beta$Method == "Observed_alpha", 'Size']))
+        rbind(., data.frame(Estimate = obs_beta, Order = q, Method = "Observed", Coverage_expected = NA, Coverage_real = NA,
+                            Size = beta[beta$Method == "Observed_alpha", 'Size']))
 
       C = beta %>% mutate(Estimate = ifelse(Order==1, log(Estimate)/log(N), (Estimate^(1-Order) - 1)/(N^(1-Order)-1)))
       U = beta %>% mutate(Estimate = ifelse(Order==1, log(Estimate)/log(N), (Estimate^(Order-1) - 1)/(N^(Order-1)-1)))
@@ -1333,7 +1334,6 @@ iNEXT_beta = function(x, coverage_expected, data_type=c('abundance', 'incidence_
 }
 
 ggiNEXT_beta = function(output, type = c('B', 'D'), measurement = c('T', 'P', 'F_tau', 'F_AUC'), scale='free', main=NULL, transp=0.4){
-
   if (type == 'B'){
 
     gamma = lapply(output, function(y) y[["gamma"]]) %>% do.call(rbind,.) %>% mutate(div_type = "Gamma") %>% as_tibble()
@@ -1408,16 +1408,16 @@ ggiNEXT_beta = function(output, type = c('B', 'D'), measurement = c('T', 'P', 'F
 
   }
 
-  lty = c(Interpolated = "solid", Extrapolated = "dashed")
+  lty = c(Interpolated = "solid", Extrapolated = "dotted")
   df$Method = factor(df$Method, levels = c('Interpolated', 'Extrapolated', 'Observed'))
 
   double_size = unique(df[df$Method=="Observed",]$Size)*2
   double_extrepolation = df %>% filter(Method=="Extrapolated" & round(Size) %in% double_size)
 
-  ggplot(data = df, aes(x = Coverage_expected, y = Estimate, col = Region)) +
-    geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Region, col = NULL), alpha=transp) +
+  # ggplot(data = df, aes(x = Coverage_expected, y = Estimate)) +
+  plot = ggplot(data = df, aes(x = Coverage_expected, y = Estimate, col = Region)) +
+    geom_ribbon(aes(ymin = LCL, ymax = UCL, col = NULL), alpha=transp) +
     geom_line(data = subset(df, Method!='Observed'), aes(linetype=Method), size=1.1) + scale_linetype_manual(values = lty) +
-    # geom_line(lty=2) +
     geom_point(data = subset(df, Method=='Observed' & div_type=="Gamma"),shape=19, size=3) +
     geom_point(data = subset(df, Method=='Observed' & div_type!="Gamma"),shape=1, size=3,stroke=1.5)+
     geom_point(data = subset(double_extrepolation, div_type == "Gamma"),shape=17, size=3) +
@@ -1426,6 +1426,7 @@ ggiNEXT_beta = function(output, type = c('B', 'D'), measurement = c('T', 'P', 'F
     theme_bw() +
     theme(legend.position = "bottom", legend.title = element_blank()) +
     labs(x='Sample coverage', y=ylab, title=main)
+
 }
 
 coverage_to_size = function(x, C, data_type='abundance'){
