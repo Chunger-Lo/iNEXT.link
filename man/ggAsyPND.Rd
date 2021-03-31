@@ -13,21 +13,14 @@ ggAsyPND(outcome, text_size = 10)
 a figure of estimated sample completeness with order q\cr\cr
 }
 \description{
-\code{ggAsyD} Plots q-profile based on the outcome of \code{AsyD} using the ggplot2 package.\cr
+\code{ggAsyPND} Plots q-profile based on the outcome of \code{AsyD} using the ggplot2 package.\cr
 It will only show the confidence interval of 'Estimated'.
 }
 \examples{
-## Type (1) example for abundance-based data
-## Ex.1
-data(spider)
-out1 <- AsyPND(spider, class = 'TD', datatype = "abundance")
+\dontrun{
+data(puer)
+out1 <- AsyPND(puer)
 ggAsyPND(out1)
-
-## Type (2) example for incidence-based data
-
-## Ex.2
-data(ant)
-out2 <- AsyPND(ant, class = 'TD', datatype = "incidence_freq", nboot = 0)
-ggAsyPND(out2)
+}
 
 }

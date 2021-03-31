@@ -28,6 +28,7 @@ If "method" is estimated, then fist list will be named "C" which means the maxim
 \code{Evenness} computes Evenness Estimation of Evenness with order q.
 }
 \examples{
+\dontrun{
 ## Type (1) example for abundance based data (data.frame)
 data(Spider)
 out1 <- Evenness(x = Spider, datatype = "abundance")
@@ -37,4 +38,5 @@ out1
 data(woody_incid)
 out2 <- Evenness(x = woody_incid[,c(1,4)], datatype = "incidence_freq")
 out2
+}
 }

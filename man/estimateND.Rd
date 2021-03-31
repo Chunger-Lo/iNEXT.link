@@ -24,9 +24,10 @@ a data.frame of species diversity table including the sample size, sample covera
 \code{estimateND} computes species diversity (Hill numbers with q = 0, 1 and 2) with a particular user-specified level of sample size or sample coverage.
 }
 \examples{
-## Not run:
-data(spider)
-out <- estimateD(spider, q = c(0,1,2), datatype = "abundance", base="size")
-out <- estimateD(spider, q = c(0,1,2), datatype = "abundance", base="coverage")
+\dontrun{
+data(Norfolk)
+out1 <- estimateND(Norfolk, datatype="abundance", base="coverage",level=0.7, nboot = 30,conf=0.95)
+out2 <- estimateND(Norfolk, datatype="abundance", base="size",level=0.7, nboot = 30,conf=0.95)
+}
 
 }

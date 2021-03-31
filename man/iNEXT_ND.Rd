@@ -39,7 +39,8 @@ If \code{NULL}, then \code{endpoint} = double of the reference sample size in ea
 \item{nboot}{a positive integer specifying the number of bootstrap replications when assessing sampling uncertainty and constructing confidence intervals.
 Enter 0 to skip the bootstrap procedures. Default is 50.}
 
-\item{data}{a matrix/data.frame of species abundances (for abundance data) or species-by-site incidence raw matrix/data.frame (for incidence data).\cr
+\item{data}{a matrix/data.frame of species
+abundances (for abundance data) or species-by-site incidence raw matrix/data.frame (for incidence data).\cr
 Abundance data: a species-by-site matrix/data.frame of species abundances. The row (species) names of
 data must match the species names in the phylogenetic tree and thus cannot be missing.\cr
 Incidence raw data: species-by-site raw incidence matrix/data.frame. When there are N assemblages
@@ -68,6 +69,16 @@ Interpolation (rarefaction) and extrapolation of Chao et al.’s (2021) network 
 Function \code{iNEXTPD} computes network diversity estimates for rarefied samples and extrapolated samples
 along with confidence intervals and related coverage estimates based on Chao et al.’s (2021) network
 diversity (ND)
+}
+\examples{
+\dontrun{
+# Datatype: abundance data
+data(data.abu)
+data <- data.abu$data
+tree <- data.abu$tree
+out <- iNEXT_ND(data = data, q = c(0, 1, 2), nboot = 30)
+out
+}
 }
 \references{
 Chao, A., Chiu C.-H. and Jost, L. (2010). Phylogenetic diversity measures based on Hill numbers. \emph{Philosophical Transactions of the Royal Society B.}, 365, 3599-3609. \cr\cr

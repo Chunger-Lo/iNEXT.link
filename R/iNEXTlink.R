@@ -41,13 +41,14 @@
 #' showing asymptotic diversity estimates along with related statistics.}
 #' }
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # Datatype: abundance data
 #' data(data.abu)
 #' data <- data.abu$data
 #' tree <- data.abu$tree
 #' out <- iNEXT_ND(data = data, q = c(0, 1, 2), nboot = 30)
 #' out
+#' }
 #' @references
 #' Chao, A., Chiu C.-H. and Jost, L. (2010). Phylogenetic diversity measures based on Hill numbers. \emph{Philosophical Transactions of the Royal Society B.}, 365, 3599-3609. \cr\cr
 #' Chao, A., Chiu, C.-H., Hsieh, T. C., Davis, T., Nipperess, D., and Faith, D. (2015). Rarefaction and extrapolation of phylogenetic diversity. \emph{Methods in Ecology and Evolution}, 6, 380-388.\cr\cr
@@ -133,8 +134,11 @@ iNEXT_ND <- function(x, q = c(0,1,2), datatype = "abundance", size = NULL,
 #' sampling-unit-based incidence frequencies data (\code{datatype = "incidence_freq"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).
 #' @return a data.frame of basic data information including sample size, observed species richness, sample coverage estimate, and the first ten abundance/incidence frequency counts.
 #' @examples
+#' \dontrun{
 #' data(Norfolk)
 #' DataInfo(Norfolk, datatype="abundance")
+#' }
+
 #' @export
 NDinfo <- function(x, datatype = "abundance"){
   table <- lapply(x, function(y){datainf(data = y, datatype = datatype)})%>%do.call(rbind,.)
@@ -152,8 +156,11 @@ NDinfo <- function(x, datatype = "abundance"){
 #' sampling-unit-based incidence frequencies data (\code{datatype = "incidence_freq"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).
 #' @return a data.frame of basic data information including sample size, observed species richness, sample coverage estimate, and the first ten abundance/incidence frequency counts.
 #' @examples
+#' \dontrun{
 #' data(Norfolk)
 #' PNDinfo(Norfolk, datatype="abundance", row.tree = rowtree, col.tree = coltree)
+#' }
+
 #' @export
 PNDinfo <- function(data, datatype = "abundance", row.tree = NULL,col.tree = NULL){
   table <- lapply(data, function(y){datainfphy(data = y, datatype = datatype,
@@ -213,7 +220,7 @@ PNDinfo <- function(data, datatype = "abundance", row.tree = NULL,col.tree = NUL
 
 
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # Datatype: abundance data with phylogenetic tree
 #' data(data.inc)
 #' data <- data.inc$data
@@ -321,7 +328,7 @@ iNEXT_PND <- function(x, row.tree = NULL,col.tree = NULL,q = c(0,1,2), datatype 
 
 
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # example
 #' data(Norfolk)
 #' iNEXT_beta_link(Norfolk, coverage_expected, data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2),
@@ -1522,11 +1529,14 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 #' @param ... other arguments passed on to methods. Not currently used.
 #' @return a ggplot2 object
 #' @examples
-#' data(Norfolk)
+#' \dontrun{
+#' #' data(Norfolk)
 #' out1 <- iNEXT_ND(Norfolk, datatype = "abundance")
 #' ggiNEXT_ND(x = out1, type = 1)
 #' ggiNEXT_ND(x = out1, type = 2)
 #' ggiNEXT_ND(x = out1, type = 3)
+#' }
+
 #'
 #' @export
 ggiNEXT_ND <- function(outcome,type = 1,se = TRUE,facet = "None",color = "Assemblage",grey = FALSE, text_size = 10){
@@ -1560,7 +1570,7 @@ ggiNEXT_ND <- function(outcome,type = 1,se = TRUE,facet = "None",color = "Assemb
 #' @param ... other arguments passed on to methods. Not currently used.
 #' @return a ggplot2 object
 #' @examples
-#' \donotrun{
+#' \dontrun{
 #' data(Norfolk)
 #' out1 <- iNEXT_ND(Norfolk, datatype = "abundance")
 #' ggiNEXT_ND(x = out1, type = 1)
@@ -1627,12 +1637,15 @@ ggiNEXT_PND <- function(outcome,type = 1,se = TRUE,facet = "None",
 #' @param ... other arguments passed on to methods. Not currently used.
 #' @return a ggplot2 object
 #' @examples
-#' #' data(Norfolk)
+#' \dontrun{
+#' data(Norfolk)
 #' out = iNEXT_beta_link(Norfolk, coverage_expected, data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2),
 #' level=c('taxonomic', 'phylogenetic', 'functional'), nboot = 20, conf = 0.95, max_alpha_coverage=F,
 #'  by=c('coverage', 'size'),phy_tree=NULL, reftime = NULL)
 #'
 #' ggiNEXT_beta_link(out, type = 1,se = TRUE,facet = "None",color = "Assemblage",grey = FALSE, text_size = 10)
+#' }
+
 
 #' @export
 ggiNEXT_beta_link <- function(output, type = c('B', 'D'), measurement = c('T', 'P', 'F_tau', 'F_AUC'),
@@ -1747,11 +1760,14 @@ ggiNEXT_beta_link <- function(output, type = c('B', 'D'), measurement = c('T', '
 #' @return a figure of estimated sample completeness with order q\cr\cr
 #'
 #' @examples
+#' \dontrun{
 #' ## example for abundance-based data
 #' ## Ex.1
 #' data(Norfolk)
 #' out1 <- AsyND(Norfolk, datatype = "abundance")
 #' ggAsyND(out1)
+#' }
+
 #' @export
 ggAsyND <- function(outcome){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
@@ -1781,7 +1797,7 @@ ggAsyND <- function(outcome){
 #' @return a figure of estimated sample completeness with order q\cr\cr
 #'
 #' @examples
-#' \donotrun{
+#' \dontrun{
 #' data(puer)
 #' out1 <- AsyPND(puer)
 #' ggAsyPND(out1)
@@ -1817,7 +1833,7 @@ ggAsyPND <- function(outcome, text_size = 10){
 #' @examples
 #' \dontrun{
 #' data(Norfolk)
-#' out1 <- AsyND(Norfolk, class = 'TD', datatype = "abundance")
+#' out1 <- AsyND(Norfolk,datatype = "abundance")
 #' ggAsyPND(out1)
 #' }
 #'
@@ -1843,11 +1859,14 @@ AsyND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, 
 #' @return a table of Asymptotic network diversity q profile
 #'
 #' @examples
+#' \dontrun{
 #' ## Type (1) example for abundance-based data
 #' ## Ex.1
 #' data(spider)
 #' out1 <- AsyND(spider, class = 'TD', datatype = "abundance")
 #' ggAsyPND(out1)
+#' }
+
 
 #'
 #' @export
@@ -1877,10 +1896,13 @@ AsyPND <- function(data = puerto.rico$data, q = seq(0, 2, 0.2), datatype = "abun
 #' @return a table of Asymptotic network diversity q profile
 #'
 #' @examples
+#' \dontrun{
 #' ## Example for abundance-based data
 #' data(Norfolk)
-#' out1 <- ObsND(Norfolk, class = 'TD', datatype = "abundance")
+#' out1 <- ObsND(Norfolk, datatype = "abundance", nboot = 30)
 #' ggObsND(out1)
+#' }
+
 #'
 
 #' @export
@@ -1906,10 +1928,12 @@ ObsND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, 
 #' @return a data.frame of species diversity table including the sample size, sample coverage, method (rarefaction or extrapolation), and diversity estimates with q = 0, 1, and 2 for the user-specified sample size or sample coverage.
 #'
 #' @examples
-#' ## Not run:
+#' \dontrun{
 #' data(Norfolk)
 #' out1 <- estimateND(Norfolk, datatype="abundance", base="coverage",level=0.7, nboot = 30,conf=0.95)
 #' out2 <- estimateND(Norfolk, datatype="abundance", base="size",level=0.7, nboot = 30,conf=0.95)
+#' }
+
 #'
 #' @export
 estimateND = function(dat,q = c(0, 1, 2),datatype = "abundance",base = "size",
@@ -1932,9 +1956,12 @@ estimateND = function(dat,q = c(0, 1, 2),datatype = "abundance",base = "size",
 #' @return a data.frame of species diversity table including the sample size, sample coverage, method (rarefaction or extrapolation), and diversity estimates with q = 0, 1, and 2 for the user-specified sample size or sample coverage.
 #'
 #' @examples
-#' data(spider)
+#' \dontrun{
+#'
 #' out <- estimatedPND(spider, q = c(0,1,2), datatype = "abundance", row.tree = rowtree, col.tree = coltree, base="size")
 #' out <- estimatedPND(spider, q = c(0,1,2), datatype = "abundance", row.tree = rowtree, col.tree = coltree, base="coverage")
+#' }
+
 #'
 #' @export
 estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
@@ -2029,6 +2056,7 @@ estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
 # $summary individual summary of 4 steps of data.
 #'
 #' @examples
+#' \dontrun{
 #' ## Type (1) example for abundance based data (data.frame)
 ## Ex.1
 #' data(Spider)
@@ -2040,6 +2068,8 @@ estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
 #' data(woody_incid)
 #' out2 <- Evenness(x = woody_incid[,c(1,4)], datatype = "incidence_freq")
 #' out2
+#' }
+
 #' @export
 
 # x = Norfolk
@@ -2089,6 +2119,7 @@ NetEvenness <- function(x,q = seq(0, 2, 0.2),
 #' @return a figure of estimated sample completeness with order q\cr
 #'
 #' @examples
+#' \dontrun{
 #' ## Type (1) example for abundance based data (data.frame)
 #' ## Ex.1
 #' data(Spider)
@@ -2100,6 +2131,8 @@ NetEvenness <- function(x,q = seq(0, 2, 0.2),
 #' data(woody_incid)
 #' out2 <- Evenness(x = woody_incid[,c(1,4)], datatype = "incidence_freq")
 #' ggNetEven(out2)
+#' }
+
 #'
 #' @references
 #' Chao,A.and Ricotta,C.(2019).Quantifying evenness and linking it to diversity, beta diversity, and similarity.
@@ -2166,6 +2199,7 @@ ggNetEven <- function(output){
 #' \code{$summary} individual summary of 4 steps of data. \cr\cr
 #'
 #' @examples
+#' \dontrun{
 #' ## Type (1) example for abundance based data (data.frame)
 #' ## Ex.1
 #' data(Spider)
@@ -2177,6 +2211,8 @@ ggNetEven <- function(output){
 #' data(woody_incid)
 #' out2 <- Evenness(x = woody_incid[,c(1,4)], datatype = "incidence_freq")
 #' out2
+#' }
+
 #'
 #' @references
 #' Chao,A.and Ricotta,C.(2019).Quantifying evenness and linking it to diversity, beta diversity, and similarity.

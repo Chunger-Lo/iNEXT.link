@@ -22,9 +22,11 @@ a table of Asymptotic network diversity q profile
 \code{ObsND} The estimated and empirical diversity of order q
 }
 \examples{
+\dontrun{
 ## Example for abundance-based data
 data(Norfolk)
-out1 <- ObsND(Norfolk, class = 'TD', datatype = "abundance")
+out1 <- ObsND(Norfolk, datatype = "abundance", nboot = 30)
 ggObsND(out1)
+}
 
 }

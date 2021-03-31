@@ -17,9 +17,11 @@ a figure of estimated sample completeness with order q\cr\cr
 It will only show the confidence interval of 'Estimated'.
 }
 \examples{
+\dontrun{
 ## example for abundance-based data
 ## Ex.1
 data(Norfolk)
 out1 <- AsyND(Norfolk, datatype = "abundance")
 ggAsyND(out1)
+}
 }

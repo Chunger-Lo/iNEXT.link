@@ -22,17 +22,10 @@ a table of Asymptoti network diversity q profile
 \code{AsyND} The estimated and empirical diversity of order q
 }
 \examples{
-## Type (1) example for abundance-based data
-## Ex.1
-data(spider)
-out1 <- AsyND(spider, class = 'TD', datatype = "abundance")
+\dontrun{
+data(Norfolk)
+out1 <- AsyND(Norfolk,datatype = "abundance")
 ggAsyPND(out1)
-
-## Type (2) example for incidence-based data
-
-## Ex.2
-data(ant)
-out2 <- AsyND(ant, class = 'TD', datatype = "incidence_freq", nboot = 0)
-ggAsyPND(out2)
+}
 
 }

@@ -25,8 +25,10 @@ a data.frame of species diversity table including the sample size, sample covera
 \code{estimatedPND} computes species diversity (Hill numbers with q = 0, 1 and 2) with a particular user-specified level of sample size or sample coverage.
 }
 \examples{
-data(spider)
+\dontrun{
+
 out <- estimatedPND(spider, q = c(0,1,2), datatype = "abundance", row.tree = rowtree, col.tree = coltree, base="size")
 out <- estimatedPND(spider, q = c(0,1,2), datatype = "abundance", row.tree = rowtree, col.tree = coltree, base="coverage")
+}
 
 }

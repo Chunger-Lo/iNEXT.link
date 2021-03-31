@@ -41,13 +41,16 @@ use different colors for combinations of order x assemblage (\code{color.var="Bo
 a ggplot2 object
 }
 \description{
-\code{ggiNEXT_beta_link}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXTlink}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
+\code{ggiNEXT_beta_link}: the \code{\link[ggplot2]{ggplot}} extension for
+\code{\link{iNEXTlink}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
 }
 \examples{
-#' data(Norfolk)
+\dontrun{
+data(Norfolk)
 out = iNEXT_beta_link(Norfolk, coverage_expected, data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2),
 level=c('taxonomic', 'phylogenetic', 'functional'), nboot = 20, conf = 0.95, max_alpha_coverage=F,
  by=c('coverage', 'size'),phy_tree=NULL, reftime = NULL)
 
 ggiNEXT_beta_link(out, type = 1,se = TRUE,facet = "None",color = "Assemblage",grey = FALSE, text_size = 10)
+}
 }

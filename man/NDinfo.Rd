@@ -20,6 +20,8 @@ a data.frame of basic data information including sample size, observed species r
 \code{DataInfo}: exhibits basic data information
 }
 \examples{
-data(spider)
-DataInfo(spider, datatype="abundance")
+\dontrun{
+data(Norfolk)
+DataInfo(Norfolk, datatype="abundance")
+}
 }

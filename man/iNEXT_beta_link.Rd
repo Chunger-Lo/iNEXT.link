@@ -64,7 +64,7 @@ Function \code{iNEXTPD} computes network diversity estimates for rarefied sample
 along with confidence intervals and related coverage estimates based on Chao et al.’s (2021) beta diversity
 }
 \examples{
-\donttest{
+\dontrun{
 # example
 data(Norfolk)
 iNEXT_beta_link(Norfolk, coverage_expected, data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2),

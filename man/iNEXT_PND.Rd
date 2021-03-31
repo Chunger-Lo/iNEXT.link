@@ -72,7 +72,7 @@ along with confidence intervals and related coverage estimates based on Chao et 
 diversity (ND)
 }
 \examples{
-\donttest{
+\dontrun{
 # Datatype: abundance data with phylogenetic tree
 data(data.inc)
 data <- data.inc$data

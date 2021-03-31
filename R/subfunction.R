@@ -291,6 +291,7 @@ ready4beta <- function(x){
     long = gather(data = tab,key = "col.name", value= "abundance", -row.name)
     # long = mutate(long,int_name = paste0(col.name, "x", row.name))
     long = unite(long, "int_name",row.name:col.name)
+    long$abundance = as.numeric(long$abundance)
     return(long)
   })
 

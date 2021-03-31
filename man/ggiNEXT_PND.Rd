@@ -42,25 +42,14 @@ use different colors for combinations of order x assemblage (\code{color.var="Bo
 a ggplot2 object
 }
 \description{
-\code{ggiNEXT}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXTlink}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
+\code{ggiNEXT_PND}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXTlink}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
 }
 \examples{
-data(spider)
-# single-assemblage abundance data
-out1 <- iNEXT_ND(spider$Girdled, q = 0, datatype = "abundance")
+\dontrun{
+data(Norfolk)
+out1 <- iNEXT_ND(Norfolk, datatype = "abundance")
 ggiNEXT_ND(x = out1, type = 1)
 ggiNEXT_ND(x = out1, type = 2)
 ggiNEXT_ND(x = out1, type = 3)
-
-# single-assemblage incidence data with three orders q
-data(ant)
-size <- round(seq(10, 500, length.out=20))
-y <- iNEXT_ND(ant$h500m, class = 'TD', q = c(0,1,2), datatype = "incidence_freq", size = size)
-ggiNEXT_ND(y, se=FALSE, color.var="Order.q")
-
-# multiple-assemblage abundance data with three orders q
-data(spider)
-z <- iNEXT_ND(spider, class = 'TD', q = c(0,1,2), datatype = "abundance")
-ggiNEXT_ND(z, facet.var="Assemblage", color.var="Order.q")
-ggiNEXT_ND(z, facet.var="Both", color.var="Both")
+}
 }
