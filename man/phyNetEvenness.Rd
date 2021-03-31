@@ -44,7 +44,7 @@ A list of estimated(empirical) evenness with order q.\cr
 \code{$summary} individual summary of 4 steps of data. \cr\cr
 }
 \description{
-\code{Evenness} Estimation (Empirical) of Evenness with order q
+\code{phyNetEvenness} Estimation (Empirical) of Evenness with order q
 }
 \details{
 R scipts "Evenness" for Chao and Ricotta (2019) Ecology paper.

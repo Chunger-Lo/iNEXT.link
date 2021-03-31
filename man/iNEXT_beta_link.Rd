@@ -4,8 +4,7 @@
 \alias{iNEXT_beta_link}
 \title{Interpolation (rarefaction) and extrapolation of Chao et al.’s (2021) network diversity and mean network diversity
 Function \code{iNEXTPD} computes network diversity estimates for rarefied samples and extrapolated samples
-along with confidence intervals and related coverage estimates based on Chao et al.’s (2021) network
-diversity (ND)}
+along with confidence intervals and related coverage estimates based on Chao et al.’s (2021) beta diversity}
 \usage{
 iNEXT_beta_link(
   x,
@@ -17,8 +16,8 @@ iNEXT_beta_link(
   conf = 0.95,
   max_alpha_coverage = F,
   by = c("coverage", "size"),
-  phy_tree = NULL,
-  reftime = NULL
+  row.tree = NULL,
+  col.tree = NULL
 )
 }
 \arguments{
@@ -38,17 +37,11 @@ merged incidence matrix, where the rows of the matrix refer to all species prese
 data. The row (species) names of data must match the species names in the phylogenetic tree and
 thus cannot be missing.}
 
-\item{nT}{needed only when \code{datatype = "incidence_raw"}, a sequence of named nonnegative integers specifying the number of sampling units in each assemblage.
-If \code{names(nT) = NULL}, then assemblage are automatically named as "assemblage1", "assemblage2",..., etc. Ignored if \code{datatype = "abundance"}.}
-
 \item{datatype}{data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
 or species-by-site raw incidence matrix (\code{datatype = "incidence_raw"}). Default is \code{"abundance"}.}
 
 \item{type}{desired diversity type: \code{type = "PD"} for Chao et al. (2010) phylogenetic diversity
 and \code{type = "meanPD"} for mean phylogenetic diversity (phylogenetic Hill number). Default is \code{"PD"}.}
-
-\item{endpoint}{a positive integer specifying the endpoint for the rarefaction and extrapolation range.
-If \code{NULL}, then \code{endpoint} = double of the reference sample size in each assemblage. It is ignored if \code{size} is given.}
 
 \item{knots}{a positive integer specifying the number of equally-spaced knots between 1 and the \code{endpoint}. Default is 40.}
 
@@ -68,16 +61,19 @@ showing asymptotic diversity estimates along with related statistics.}
 \description{
 Interpolation (rarefaction) and extrapolation of Chao et al.’s (2021) network diversity and mean network diversity
 Function \code{iNEXTPD} computes network diversity estimates for rarefied samples and extrapolated samples
-along with confidence intervals and related coverage estimates based on Chao et al.’s (2021) network
-diversity (ND)
+along with confidence intervals and related coverage estimates based on Chao et al.’s (2021) beta diversity
 }
 \examples{
 \donttest{
-# Datatype: abundance data with phylogenetic tree
-data(data.inc)
-iNEXT_beta_link(data.abu, coverage_expected, data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2),
-level=c('taxonomic', 'phylogenetic', 'functional'),nboot = 20, conf = 0.95, max_alpha_coverage=F,
+# example
+data(Norfolk)
+iNEXT_beta_link(Norfolk, coverage_expected, data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2),
+level=c('taxonomic', 'phylogenetic', 'functional'), nboot = 20, conf = 0.95, max_alpha_coverage=F,
  by=c('coverage', 'size'),phy_tree=NULL, reftime = NULL)
+
+ dissimilarity1 = iNEXT_beta_link(Norfolk, coverage_expected = seq(0.5,1,0.05),
+ data_type='abundance', q = c(0, 1, 2),level='taxonomic',
+ nboot = 20, conf = 0.95, max_alpha_coverage=F, by='coverage')
 }
 }
 \references{

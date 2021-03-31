@@ -91,10 +91,8 @@ library(iNEXT)
 # library(iNEXT)
 library(chaoUtility)
 library(tidyr)
-
-source("..//R//myfunc.R")
-source("..//R//iNEXT_beta.R")
-source("..//R//iNEXT3D_0316.R")
+library(miNEXT.beta)
+library(iNEXT3D)
 source("..//R//iNEXTlink.R")
 source("..//R//subfunction.R")
 ```
@@ -689,6 +687,7 @@ To demonstrate this data, the following commands display basic data visualizatio
 
 ```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 library(ade4)
+library(tidyverse)
 library(ape)
 library(dplyr)
 ```

@@ -3,7 +3,8 @@
 #' Function \code{iNEXTPD} computes network diversity estimates for rarefied samples and extrapolated samples
 #' along with confidence intervals and related coverage estimates based on Chao et al.’s (2021) network
 #' diversity (ND)
-#' @param data a matrix/data.frame of species abundances (for abundance data) or species-by-site incidence raw matrix/data.frame (for incidence data).\cr
+#' @param data a matrix/data.frame of species
+#' abundances (for abundance data) or species-by-site incidence raw matrix/data.frame (for incidence data).\cr
 #' Abundance data: a species-by-site matrix/data.frame of species abundances. The row (species) names of
 #' data must match the species names in the phylogenetic tree and thus cannot be missing.\cr
 #' Incidence raw data: species-by-site raw incidence matrix/data.frame. When there are N assemblages
@@ -27,14 +28,7 @@
 #' @param nboot a positive integer specifying the number of bootstrap replications when assessing sampling uncertainty and constructing confidence intervals.
 #' Enter 0 to skip the bootstrap procedures. Default is 50.
 #' @param conf a positive number < 1 specifying the level of confidence interval. Default is 0.95.
-#' @import ape
-#' @import ggplot2
-#' @import dplyr
-#' @import tidytree
-#' @importFrom stats rbinom
-#' @importFrom stats rbinom
-#' @importFrom stats qnorm
-#' @importFrom stats sd
+#' @import ape ggplot2 dplyr tidytree stats
 #' @importFrom phyclust get.rooted.tree.height
 #' @return
 #'
@@ -46,8 +40,6 @@
 #'  \item{\code{$AsyEst}: for
 #' showing asymptotic diversity estimates along with related statistics.}
 #' }
-
-
 #' @examples
 #' \donttest{
 #' # Datatype: abundance data
@@ -141,8 +133,8 @@ iNEXT_ND <- function(x, q = c(0,1,2), datatype = "abundance", size = NULL,
 #' sampling-unit-based incidence frequencies data (\code{datatype = "incidence_freq"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).
 #' @return a data.frame of basic data information including sample size, observed species richness, sample coverage estimate, and the first ten abundance/incidence frequency counts.
 #' @examples
-#' data(spider)
-#' DataInfo(spider, datatype="abundance")
+#' data(Norfolk)
+#' DataInfo(Norfolk, datatype="abundance")
 #' @export
 NDinfo <- function(x, datatype = "abundance"){
   table <- lapply(x, function(y){datainf(data = y, datatype = datatype)})%>%do.call(rbind,.)
@@ -160,8 +152,8 @@ NDinfo <- function(x, datatype = "abundance"){
 #' sampling-unit-based incidence frequencies data (\code{datatype = "incidence_freq"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).
 #' @return a data.frame of basic data information including sample size, observed species richness, sample coverage estimate, and the first ten abundance/incidence frequency counts.
 #' @examples
-#' data(spider)
-#' DataInfo(spider, datatype="abundance", row.tree = rowtree, col.tree = coltree)
+#' data(Norfolk)
+#' PNDinfo(Norfolk, datatype="abundance", row.tree = rowtree, col.tree = coltree)
 #' @export
 PNDinfo <- function(data, datatype = "abundance", row.tree = NULL,col.tree = NULL){
   table <- lapply(data, function(y){datainfphy(data = y, datatype = datatype,
@@ -362,6 +354,7 @@ iNEXT_beta_link = function(x, coverage_expected, data_type=c('abundance', 'incid
 
   combined = ready4beta(x)
   if(level == 'taxonomic'){
+    # dissimilarity <- iNEXT_beta(x = combined, coverage_expected = coverage_expected, data_type = data_type, level = 'taxonomic',
     dissimilarity <- iNEXT_beta(x = combined, coverage_expected = coverage_expected, data_type = data_type, level = 'taxonomic',
                                 nboot = nboot, conf = conf, max_alpha_coverage = max_alpha_coverage, by = by)
   }
@@ -375,6 +368,8 @@ iNEXT_beta_link = function(x, coverage_expected, data_type=c('abundance', 'incid
   return(dissimilarity)
 
 }
+
+
 
 # iNEXT_beta_link(x = puerto.rico, coverage_expected = seq(0.5,1,0.05), "abundance", level = 'phylogenetic',
 #                 row.tree = rowtree,col.tree = coltree,
@@ -956,7 +951,6 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
           ai_vi_gamma = list(ai = data.frame(gamma_a), vi = data.frame(gamma_v))
 
           gamma = FD.m.est_0(ai_vi_gamma, m_gamma, c(0,1,2), n) %>% as.vector
-          # gamma = FunD:::FD.m.est(ai_vi_gamma, m_gamma, c(0,1,2), n) %>% as.vector
 
 
           alpha_x = as.vector(as.matrix(zik))
@@ -971,8 +965,6 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 
           if (by=='size') alpha = (FD.m.est_0(ai_vi_alpha, m_gamma, c(0,1,2), n)/N) %>% as.vector
           if (by=='coverage') alpha = (FD.m.est_0(ai_vi_alpha, m_alpha, c(0,1,2), n)/N) %>% as.vector
-          # if (by=='size') alpha = (FunD:::FD.m.est(ai_vi_alpha, m_gamma, c(0,1,2), n)/N) %>% as.vector
-          # if (by=='coverage') alpha = (FunD:::FD.m.est(ai_vi_alpha, m_alpha, c(0,1,2), n)/N) %>% as.vector
 
         }
 
@@ -999,7 +991,6 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
           ai_vi_gamma = list(ai = data.frame(gamma_a), vi = data.frame(gamma_v))
 
           gamma = FD.m.est_0(ai_vi_gamma, m_gamma, c(0,1,2), n) %>% as.vector
-          # gamma = FunD:::FD.m.est(ai_vi_gamma, m_gamma, c(0,1,2), n) %>% as.vector
 
 
           alpha_Y = data_2D[-1,]
@@ -1025,8 +1016,6 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 
           if (by=='size') alpha = (FD.m.est_0(ai_vi_alpha, m_gamma, c(0,1,2), n)/N) %>% as.vector
           if (by=='coverage') alpha = (FD.m.est_0(ai_vi_alpha, m_alpha, c(0,1,2), n)/N) %>% as.vector
-          # if (by=='size') alpha = (FunD:::FD.m.est(ai_vi_alpha, m_gamma, c(0,1,2), n)/N) %>% as.vector
-          # if (by=='coverage') alpha = (FunD:::FD.m.est(ai_vi_alpha, m_alpha, c(0,1,2), n)/N) %>% as.vector
 
         }
 
@@ -1533,24 +1522,12 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 #' @param ... other arguments passed on to methods. Not currently used.
 #' @return a ggplot2 object
 #' @examples
-#' data(spider)
-#' # single-assemblage abundance data
-#' out1 <- iNEXT_ND(spider$Girdled, q = 0, datatype = "abundance")
+#' data(Norfolk)
+#' out1 <- iNEXT_ND(Norfolk, datatype = "abundance")
 #' ggiNEXT_ND(x = out1, type = 1)
 #' ggiNEXT_ND(x = out1, type = 2)
 #' ggiNEXT_ND(x = out1, type = 3)
 #'
-#' # single-assemblage incidence data with three orders q
-#' data(ant)
-#' size <- round(seq(10, 500, length.out=20))
-#' y <- iNEXT_ND(ant$h500m, class = 'TD', q = c(0,1,2), datatype = "incidence_freq", size = size)
-#' ggiNEXT_ND(y, se=FALSE, color.var="Order.q")
-#'
-#' # multiple-assemblage abundance data with three orders q
-#' data(spider)
-#' z <- iNEXT_ND(spider, class = 'TD', q = c(0,1,2), datatype = "abundance")
-#' ggiNEXT_ND(z, facet.var="Assemblage", color.var="Order.q")
-#' ggiNEXT_ND(z, facet.var="Both", color.var="Both")
 #' @export
 ggiNEXT_ND <- function(outcome,type = 1,se = TRUE,facet = "None",color = "Assemblage",grey = FALSE, text_size = 10){
 
@@ -1564,7 +1541,7 @@ ggiNEXT_ND <- function(outcome,type = 1,se = TRUE,facet = "None",color = "Assemb
 # ggiNEXT -------------------------------------------------------------------
 #' ggplot2 extension for an iNEXT object
 #'
-#' \code{ggiNEXT}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXTlink}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
+#' \code{ggiNEXT_PND}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXTlink}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
 #' @param x an \code{iNEXT} object computed by \code{\link{iNEXT}}.
 #' @param type three types of plots: sample-size-based rarefaction/extrapolation curve (\code{type = 1});
 #' sample completeness curve (\code{type = 2}); coverage-based rarefaction/extrapolation curve (\code{type = 3}).
@@ -1583,24 +1560,14 @@ ggiNEXT_ND <- function(outcome,type = 1,se = TRUE,facet = "None",color = "Assemb
 #' @param ... other arguments passed on to methods. Not currently used.
 #' @return a ggplot2 object
 #' @examples
-#' data(spider)
-#' # single-assemblage abundance data
-#' out1 <- iNEXT_ND(spider$Girdled, q = 0, datatype = "abundance")
+#' \donotrun{
+#' data(Norfolk)
+#' out1 <- iNEXT_ND(Norfolk, datatype = "abundance")
 #' ggiNEXT_ND(x = out1, type = 1)
 #' ggiNEXT_ND(x = out1, type = 2)
 #' ggiNEXT_ND(x = out1, type = 3)
-#'
-#' # single-assemblage incidence data with three orders q
-#' data(ant)
-#' size <- round(seq(10, 500, length.out=20))
-#' y <- iNEXT_ND(ant$h500m, class = 'TD', q = c(0,1,2), datatype = "incidence_freq", size = size)
-#' ggiNEXT_ND(y, se=FALSE, color.var="Order.q")
-#'
-#' # multiple-assemblage abundance data with three orders q
-#' data(spider)
-#' z <- iNEXT_ND(spider, class = 'TD', q = c(0,1,2), datatype = "abundance")
-#' ggiNEXT_ND(z, facet.var="Assemblage", color.var="Order.q")
-#' ggiNEXT_ND(z, facet.var="Both", color.var="Both")
+#' }
+
 #' @export
 ggiNEXT_PND <- function(outcome,type = 1,se = TRUE,facet = "None",
                         color = "Assemblage",grey = FALSE, text_size = 10){
@@ -1640,7 +1607,8 @@ ggiNEXT_PND <- function(outcome,type = 1,se = TRUE,facet = "None",
 # ggiNEXT -------------------------------------------------------------------
 #' ggplot2 extension for an iNEXT object
 #'
-#' \code{ggiNEXT_beta_link}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXTlink}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
+#' \code{ggiNEXT_beta_link}: the \code{\link[ggplot2]{ggplot}} extension for
+#' \code{\link{iNEXTlink}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
 #' @param x an \code{iNEXT} object computed by \code{\link{iNEXT}}.
 #' @param type three types of plots: sample-size-based rarefaction/extrapolation curve (\code{type = 1});
 #' sample completeness curve (\code{type = 2}); coverage-based rarefaction/extrapolation curve (\code{type = 3}).
@@ -1806,25 +1774,19 @@ ggAsyND <- function(outcome){
 # ggAsyD -------------------------------------------------------------------
 #' ggplot for Asymptotic diversity
 #'
-#' \code{ggAsyD} Plots q-profile based on the outcome of \code{AsyD} using the ggplot2 package.\cr
+#' \code{ggAsyPND} Plots q-profile based on the outcome of \code{AsyD} using the ggplot2 package.\cr
 #' It will only show the confidence interval of 'Estimated'.
 #'
 #' @param outcome the outcome of the functions \code{AsyD} .\cr
 #' @return a figure of estimated sample completeness with order q\cr\cr
 #'
 #' @examples
-#' ## Type (1) example for abundance-based data
-#' ## Ex.1
-#' data(spider)
-#' out1 <- AsyPND(spider, class = 'TD', datatype = "abundance")
+#' \donotrun{
+#' data(puer)
+#' out1 <- AsyPND(puer)
 #' ggAsyPND(out1)
-#'
-#' ## Type (2) example for incidence-based data
-#'
-#' ## Ex.2
-#' data(ant)
-#' out2 <- AsyPND(ant, class = 'TD', datatype = "incidence_freq", nboot = 0)
-#' ggAsyPND(out2)
+#' }
+
 #'
 #' @export
 ggAsyPND <- function(outcome, text_size = 10){
@@ -1853,18 +1815,11 @@ ggAsyPND <- function(outcome, text_size = 10){
 #' @return a table of Asymptoti network diversity q profile
 #'
 #' @examples
-#' ## Type (1) example for abundance-based data
-#' ## Ex.1
-#' data(spider)
-#' out1 <- AsyND(spider, class = 'TD', datatype = "abundance")
+#' \dontrun{
+#' data(Norfolk)
+#' out1 <- AsyND(Norfolk, class = 'TD', datatype = "abundance")
 #' ggAsyPND(out1)
-#'
-#' ## Type (2) example for incidence-based data
-#'
-#' ## Ex.2
-#' data(ant)
-#' out2 <- AsyND(ant, class = 'TD', datatype = "incidence_freq", nboot = 0)
-#' ggAsyPND(out2)
+#' }
 #'
 #' @export
 AsyND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, conf = 0.95){
@@ -1893,13 +1848,7 @@ AsyND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, 
 #' data(spider)
 #' out1 <- AsyND(spider, class = 'TD', datatype = "abundance")
 #' ggAsyPND(out1)
-#'
-#' ## Type (2) example for incidence-based data
-#'
-#' ## Ex.2
-#' data(ant)
-#' out2 <- AsyND(ant, class = 'TD', datatype = "incidence_freq", nboot = 0)
-#' ggAsyPND(out2)
+
 #'
 #' @export
 AsyPND <- function(data = puerto.rico$data, q = seq(0, 2, 0.2), datatype = "abundance",
@@ -1958,9 +1907,9 @@ ObsND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, 
 #'
 #' @examples
 #' ## Not run:
-#' data(spider)
-#' out <- estimateD(spider, q = c(0,1,2), datatype = "abundance", base="size")
-#' out <- estimateD(spider, q = c(0,1,2), datatype = "abundance", base="coverage")
+#' data(Norfolk)
+#' out1 <- estimateND(Norfolk, datatype="abundance", base="coverage",level=0.7, nboot = 30,conf=0.95)
+#' out2 <- estimateND(Norfolk, datatype="abundance", base="size",level=0.7, nboot = 30,conf=0.95)
 #'
 #' @export
 estimateND = function(dat,q = c(0, 1, 2),datatype = "abundance",base = "size",
@@ -2131,7 +2080,7 @@ NetEvenness <- function(x,q = seq(0, 2, 0.2),
   names(EVEN) = paste0("E",E.class)
   return(EVEN)
 }
-# ggEven -------------------------------------------------------------------
+# ggNetEven -------------------------------------------------------------------
 #' ggplot for Evenness
 #
 #' \code{ggNetEven} The figure for estimation of Evenness with order q\cr
@@ -2144,13 +2093,13 @@ NetEvenness <- function(x,q = seq(0, 2, 0.2),
 #' ## Ex.1
 #' data(Spider)
 #' out1 <- Evenness(x = Spider, datatype = "abundance")
-#' ggEven(out1)
+#' ggNetEven(out1)
 #'
 #' ## Type (2) example for incidence based data (list of data.frame)
 #' ## Ex.2
 #' data(woody_incid)
 #' out2 <- Evenness(x = woody_incid[,c(1,4)], datatype = "incidence_freq")
-#' ggEven(out2)
+#' ggNetEven(out2)
 #'
 #' @references
 #' Chao,A.and Ricotta,C.(2019).Quantifying evenness and linking it to diversity, beta diversity, and similarity.
@@ -2194,7 +2143,7 @@ ggNetEven <- function(output){
 
 #' Evenness main function
 #'
-#' \code{Evenness} Estimation (Empirical) of Evenness with order q
+#' \code{phyNetEvenness} Estimation (Empirical) of Evenness with order q
 #'
 #' R scipts "Evenness" for Chao and Ricotta (2019) Ecology paper.
 #' This R code is for computing Figures 2, 3 and 4 of Chao and Ricotta (2019) paper.
