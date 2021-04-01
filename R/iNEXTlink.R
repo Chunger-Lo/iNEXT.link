@@ -1653,7 +1653,7 @@ ggiNEXT_PND <- function(outcome,type = 1, stript.size = 14, text.size = 14){
 
 #' @export
 ggiNEXT_beta_link <- function(output, type = c('B', 'D'), measurement = c('T', 'P', 'F_tau', 'F_AUC'),
-                              scale='free', main=NULL, transp=0.4){
+                              scale='free', main=NULL, transp=0.4, stript.size = 11, text.size = 13){
   # if(length(outcome) == 1){ outcome = outcome}
   if (type == 'B'){
 
@@ -1738,7 +1738,7 @@ ggiNEXT_beta_link <- function(output, type = c('B', 'D'), measurement = c('T', '
     # ggplot(data = df, aes(x = Coverage_expected, y = Estimate)) +
     plot = ggplot(data = df, aes(x = Coverage_expected, y = Estimate, col = Region)) +
       # geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Region, col = NULL), alpha=transp) +
-      geom_ribbon(aes(ymin = LCL, ymax = UCL, col = NULL), alpha=transp) +
+      geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Region), alpha=transp) +
       geom_line(data = subset(df, Method!='Observed'), aes(linetype=Method), size=1.1) + scale_linetype_manual(values = lty) +
       # geom_line(lty=2) +
       geom_point(data = subset(df, Method=='Observed' & div_type=="Gamma"),shape=19, size=3) +
@@ -1747,10 +1747,12 @@ ggiNEXT_beta_link <- function(output, type = c('B', 'D'), measurement = c('T', '
       geom_point(data = subset(double_extrepolation, div_type!="Gamma"),shape=2, size=3,stroke=1.5) +
       facet_grid(div_type~Order, scales = scale) +
       theme_bw() +
-      theme(legend.position = "bottom", legend.title = element_blank()) +
+      theme(legend.position = "bottom", legend.title = element_blank(),
+            strip.text = element_text(size = stript.size), text = element_text(size = text.size),
+            legend.key.width = unit(1,"cm")) +
       labs(x='Sample coverage', y=ylab, title=main)
     if(length(output) == 1){
-      plot = plot + guides(col=FALSE)
+      plot = plot + guides(col=FALSE, fill = FALSE)
     }
     return(plot)
 }
@@ -1773,7 +1775,7 @@ ggiNEXT_beta_link <- function(output, type = c('B', 'D'), measurement = c('T', '
 #' }
 
 #' @export
-ggAsyND <- function(outcome){
+ggAsyND <- function(outcome, text.size = 14){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
   if (sum(unique(outcome$method) %in% c("Estimated", "Empirical")) == 0)
@@ -1787,8 +1789,10 @@ ggAsyND <- function(outcome){
     scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
     labs(x = "Order q", y = "Network diversity") + theme(text = element_text(size = 10)) +
     theme(legend.position = "bottom", legend.box = "vertical",
-          legend.key.width = unit(0.8, "cm"), legend.title = element_blank(),
-          legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10))
+          legend.key.width = unit(1.1, "cm"), legend.title = element_blank(),
+          legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10),
+          text = element_text(size = text.size)
+          )
 }
 
 # ggAsyD -------------------------------------------------------------------
@@ -1911,6 +1915,42 @@ AsyPND <- function(data = puerto.rico$data, q = seq(0, 2, 0.2), datatype = "abun
 
 #' @export
 ObsND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, conf = 0.95){
+  lapply(1:length(data), function(i){
+    x = data[[i]]
+    assemblage = names(data)[[i]]
+    tmp <- c(as.matrix(x))
+    ## nboot has to larger than 0
+    res = MakeTable_Empericalprofile(data = x, B = nboot, q, conf = conf)%>%
+      rename("qD"="Emperical", "qD.LCL"="LCL", "qD.UCL"="UCL")%>%
+      mutate(Assemblage = assemblage, method = "Empirical")%>%filter(Target == "Diversity")%>%select(-Target)
+    return(res)
+  })%>%do.call("rbind",.)
+}
+# ObsPND -------------------------------------------------------------------
+#' Empirical diversity q profile
+#'
+#' \code{ObsND} The estimated and empirical diversity of order q
+#'
+#' @param outcome the outcome of the functions \code{ObsND} .\cr
+#' @return a table of Asymptotic network diversity q profile
+#'
+#' @examples
+#' \dontrun{
+#' ## Example for abundance-based data
+#' data(Norfolk)
+#' out1 <- ObsND(Norfolk, datatype = "abundance", nboot = 30)
+#' ggObsND(out1)
+#' }
+#' @export
+ObsPND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, conf = 0.95, row.tree = NULL, col.tree = NULL){
+  ## 2. iNterpolation/ Extrapolation
+  data_long <- lapply(data, function(tab){
+    as.matrix(tab)%>%c()}
+    ## 拉長
+  )
+
+  NetDiv <- get.netphydiv(data = x,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)
+
   lapply(1:length(data), function(i){
     x = data[[i]]
     assemblage = names(data)[[i]]

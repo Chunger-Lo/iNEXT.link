@@ -683,7 +683,8 @@ get.netphydiv <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf) {
   mle <- lapply(phydata, function(x){
         # iNEXTPD2:::
         # iNEXTPD2::PhdObs(x, datatype = "abundace", tree = )
-        PhD:::PD.qprofile(x,q,cal = "PD",nt = sum(x[x$tgroup == "Tip","branch.abun"]))/
+        # PhD:::PD.qprofile(x,q,cal = "PD",nt = sum(x[x$tgroup == "Tip","branch.abun"]))/
+        PhD:::PD.qprofile(aL = x, q = q, cal = "PD", nt = sum(x[x$tgroup == "Tip","branch.abun"]))/
       sum(x$branch.abun*x$branch.length)*sum(x[x$tgroup == "Tip",]$branch.abun)
   })
   est <- lapply(phydata,function(x){
