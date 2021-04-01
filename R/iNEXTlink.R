@@ -1510,7 +1510,7 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 # ggiNEXT -------------------------------------------------------------------
 #' ggplot2 extension for an iNEXT object
 #'
-#' \code{ggiNEXT}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXTlink}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
+#' \code{ggiNEXT_ND}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXT}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
 #' @param x an \code{iNEXT} object computed by \code{\link{iNEXT}}.
 #' @param type three types of plots: sample-size-based rarefaction/extrapolation curve (\code{type = 1});
 #' sample completeness curve (\code{type = 2}); coverage-based rarefaction/extrapolation curve (\code{type = 3}).
@@ -1539,14 +1539,14 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 
 #'
 #' @export
-ggiNEXT_ND <- function(outcome,type = 1,se = TRUE,facet = "None",color = "Assemblage",grey = FALSE, text_size = 10){
+ggiNEXT_ND <- function(outcome,type = 1,se = TRUE,facet.var = "None",color.var = "Assemblage",grey = FALSE, text.size = 18){
 
-  ggiNEXT(outcome,type = type,facet.var = facet, color.var = color, se = se) + theme_bw() +
+  iNEXT::ggiNEXT(outcome,type = type,facet.var = facet.var, color.var = color.var, se = se, grey = grey) + theme_bw() +
     theme(legend.position = "bottom",
           legend.title=element_blank(),
           legend.box.spacing = unit(0.4, "cm"),
-          text=element_text(size= text_size),
-          legend.key.width = unit(0.2,"cm")) + ylab("Network diversity")
+          text=element_text(size= text.size),
+          legend.key.width = unit(1,"cm")) + ylab("Network diversity")
 }
 # ggiNEXT -------------------------------------------------------------------
 #' ggplot2 extension for an iNEXT object
@@ -1579,8 +1579,7 @@ ggiNEXT_ND <- function(outcome,type = 1,se = TRUE,facet = "None",color = "Assemb
 #' }
 
 #' @export
-ggiNEXT_PND <- function(outcome,type = 1,se = TRUE,facet = "None",
-                        color = "Assemblage",grey = FALSE, text_size = 10){
+ggiNEXT_PND <- function(outcome,type = 1, stript.size = 14, text.size = 14){
   iNE <- outcome$iNextEst
   iNE.sub <- iNE[iNE$method == "observed",]
   iNE[iNE$method == "observed",]$method <-  "interpolated"
@@ -1590,28 +1589,33 @@ ggiNEXT_PND <- function(outcome,type = 1,se = TRUE,facet = "None",
   iNE$method <- factor(iNE$method,levels = c("interpolated","extrapolated"))
   iNE$Order.q = paste0("q = ", iNE$Order.q)
   iNE.sub$Order.q = paste0("q = ", iNE.sub$Order.q)
+
   if(type == 1){
     # size-based
-    ### ggiNEXT_PND
-    ggplot(iNE) + geom_line(aes(x = m,y = PD,color = Region,linetype = method),size = 1.2) + facet_wrap(~Order.q) +
+    ggplot(iNE, aes(x = m,y = PD)) + geom_line(aes(color = Region,linetype = method),size = 1.2) + facet_wrap(~Order.q) +
       geom_ribbon(aes(x = m,ymax = PD.UCL ,ymin = PD.LCL,fill = Region),alpha = 0.25) +
-      geom_point(aes(x = m,y = PD ,color = Region,shape = Region),size = 5,data = iNE.sub) + theme_bw() +
+      geom_point(aes(x = m,y = PD ,color = Region,shape = Region),size = 5,data = iNE.sub) +
       theme(legend.position = "bottom",
-            legend.title=element_blank(),
-            text=element_text(size=text_size),
-            legend.key.width = unit(0.2,"cm"))  +
-      labs(x = "Number of individuals", y = "Network phylogenetic diversity", lty = "Method")
+            legend.title=element_blank(), strip.text = element_text(size = stript.size),
+            text=element_text(size=text.size),
+            legend.key.width = unit(0.8,"cm"))  +
+      labs(x = "Number of individuals", y = "Network phylogenetic diversity", lty = "Method")+ theme_bw()
   }else if(type == 3){
     # coverage-based
     ggplot(iNE) + geom_line(aes(x = SC,y = PD,color = Region,linetype = method),size = 1.2) + facet_wrap(~Order.q) +
       geom_ribbon(aes(x = SC,ymax = PD.UCL ,ymin = PD.LCL,fill = Region),alpha = 0.25) +
       geom_point(aes(x = SC,y = PD ,color = Region,shape = Region),size = 5,data = iNE.sub) + theme_bw() +
       theme(legend.position = "bottom",
-            legend.title=element_blank(),
-            text=element_text(size=text_size),
-            legend.key.width = unit(0.1,"cm"))  +
-      labs(x = "Sample coverage", y = "Network phylogenetic diversity", lty = "Method")
+            legend.title=element_blank(), strip.text = element_text(size = stript.size),
+            text=element_text(size=text.size),
+            legend.key.width = unit(0.8,"cm"))  +
+      labs(x = "Sample coverage", y = "Phylogenetic network diversity", lty = "Method")
   }
+  # if(grey){
+  #   g <- g +
+  #     scale_fill_grey(start = 0, end = .4) +
+  #     scale_colour_grey(start = .2, end = .2)
+  # }
 
 }
 # ggiNEXT -------------------------------------------------------------------

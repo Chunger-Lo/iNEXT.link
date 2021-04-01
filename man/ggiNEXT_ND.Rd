@@ -8,10 +8,10 @@ ggiNEXT_ND(
   outcome,
   type = 1,
   se = TRUE,
-  facet = "None",
-  color = "Assemblage",
+  facet.var = "None",
+  color.var = "Assemblage",
   grey = FALSE,
-  text_size = 10
+  text.size = 18
 )
 }
 \arguments{
@@ -19,10 +19,6 @@ ggiNEXT_ND(
 sample completeness curve (\code{type = 2}); coverage-based rarefaction/extrapolation curve (\code{type = 3}).}
 
 \item{se}{a logical variable to display confidence interval around the estimated sampling curve.}
-
-\item{grey}{a logical variable to display grey and white ggplot2 theme.}
-
-\item{x}{an \code{iNEXT} object computed by \code{\link{iNEXT}}.}
 
 \item{facet.var}{create a separate plot for each value of a specified variable:
 no separation \cr (\code{facet.var="None"});
@@ -36,13 +32,17 @@ use different colors for diversity orders (\code{color.var="Order.q"});
 use different colors for sites (\code{color.var="Assemblage"});
 use different colors for combinations of order x assemblage (\code{color.var="Both"}).}
 
+\item{grey}{a logical variable to display grey and white ggplot2 theme.}
+
+\item{x}{an \code{iNEXT} object computed by \code{\link{iNEXT}}.}
+
 \item{...}{other arguments passed on to methods. Not currently used.}
 }
 \value{
 a ggplot2 object
 }
 \description{
-\code{ggiNEXT}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXTlink}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
+\code{ggiNEXT_ND}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXT}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
 }
 \examples{
 \dontrun{

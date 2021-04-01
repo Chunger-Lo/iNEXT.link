@@ -4,25 +4,15 @@
 \alias{ggiNEXT_PND}
 \title{ggplot2 extension for an iNEXT object}
 \usage{
-ggiNEXT_PND(
-  outcome,
-  type = 1,
-  se = TRUE,
-  facet = "None",
-  color = "Assemblage",
-  grey = FALSE,
-  text_size = 10
-)
+ggiNEXT_PND(outcome, type = 1, stript.size = 14, text.size = 14)
 }
 \arguments{
 \item{type}{three types of plots: sample-size-based rarefaction/extrapolation curve (\code{type = 1});
 sample completeness curve (\code{type = 2}); coverage-based rarefaction/extrapolation curve (\code{type = 3}).}
 
-\item{se}{a logical variable to display confidence interval around the estimated sampling curve.}
-
-\item{grey}{a logical variable to display grey and white ggplot2 theme.}
-
 \item{x}{an \code{iNEXT} object computed by \code{\link{iNEXT}}.}
+
+\item{se}{a logical variable to display confidence interval around the estimated sampling curve.}
 
 \item{facet.var}{create a separate plot for each value of a specified variable:
 no separation \cr (\code{facet.var="None"});
@@ -35,6 +25,8 @@ all curves are in the same color (\code{color.var="None"});
 use different colors for diversity orders (\code{color.var="Order.q"});
 use different colors for sites (\code{color.var="Assemblage"});
 use different colors for combinations of order x assemblage (\code{color.var="Both"}).}
+
+\item{grey}{a logical variable to display grey and white ggplot2 theme.}
 
 \item{...}{other arguments passed on to methods. Not currently used.}
 }
