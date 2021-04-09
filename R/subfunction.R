@@ -406,7 +406,8 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
       tmp1[[i]]$Species <- names(tmp1)[i]
     }
     tmp1 <- do.call(rbind,tmp1)
-    t2 <- as.data.frame(tmp1[,c(3,4,5,7,8)])
+    # t2 <- as.data.frame(tmp1[,c(3,4,5,7,8)])
+    t2 <- as.data.frame(tmp1[, c("branch.length", 'label','tgroup','node.age','branch.abun','Species')])
     tmp1[is.na(tmp1)] <- 0
     t2$r.length <- 0
     t2$r.group <- 0
@@ -417,6 +418,7 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
     }
     t2$group <- ifelse(t2$tgroup == t2$r.group,t2$tgroup,"Inode")
     t2$interaction <- paste(t2$label,t2$Species,sep = "-")
+
     out <- data.frame(branch.abun = t2$branch.abun, branch.length = t2$branch.length*t2$r.length,
                       tgroup = t2$group, interaction = t2$interaction)
   }
@@ -694,8 +696,8 @@ get.netphydiv <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf) {
     # q = c(0,1,2)
     # nt = nt = sum(x[x$tgroup == "Tip",]$branch.abun)
     # cal = 'PD'
-        my_PhD.q.est(ai = x$branch.abun,Lis = x$branch.length,q,nt = sum(x[x$tgroup == "Tip","branch.abun"]), cal = 'PD')/
-          sum(x$branch.abun*x$branch.length)*sum(x[x$tgroup == "Tip",]$branch.abun)
+      my_PhD.q.est(ai = x$branch.abun,Lis = x$branch.length,q,nt = sum(x[x$tgroup == "Tip","branch.abun"]), cal = 'PD')/
+        sum(x$branch.abun*x$branch.length)*sum(x[x$tgroup == "Tip",]$branch.abun)
   })
   boot.sam <- lapply(data, function(x){
     sample.boot.phy(x,B =B,row.tree = row.tree,col.tree = col.tree)

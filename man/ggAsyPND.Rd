@@ -4,7 +4,7 @@
 \alias{ggAsyPND}
 \title{ggplot for Asymptotic diversity}
 \usage{
-ggAsyPND(outcome, text_size = 10)
+ggAsyPND(outcome, text_size = 14)
 }
 \arguments{
 \item{outcome}{the outcome of the functions \code{AsyD} .\cr}
@@ -18,9 +18,8 @@ It will only show the confidence interval of 'Estimated'.
 }
 \examples{
 \dontrun{
-data(puer)
-out1 <- AsyPND(puer)
+data(puerto.rico)
+out1 <- AsyPND(puerto.rico$data, datatype = "abundance")
 ggAsyPND(out1)
 }
-
 }

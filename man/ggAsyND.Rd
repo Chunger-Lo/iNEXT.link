@@ -4,7 +4,7 @@
 \alias{ggAsyND}
 \title{ggplot for Asymptotic Network diversity}
 \usage{
-ggAsyND(outcome)
+ggAsyND(outcome, text.size = 14)
 }
 \arguments{
 \item{outcome}{the outcome of the functions \code{AsyND} .\cr}

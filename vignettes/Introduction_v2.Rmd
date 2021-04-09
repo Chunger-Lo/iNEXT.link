@@ -89,6 +89,7 @@ library(iNEXT)
 
 ```{r, echo = F}
 # library(iNEXT)
+source("F:\\Chao\\miNEXT.beta\\R\\main_functions.R")
 library(chaoUtility)
 library(tidyr)
 library(magrittr)
@@ -799,11 +800,7 @@ ggNetEven(even1)
 dissimilarity1 = iNEXT_beta_link(x = Norfolk, coverage_expected = seq(0.5,1,0.05),
                                  data_type='abundance',
                                  q = c(0, 1, 2),level='taxonomic',
-                                 nboot = 30, conf = 0.95, max_alpha_coverage=F, by='coverage')
-```
-
-```{r}
-dissimilarity1
+                                 nboot = 0, conf = 0.95, max_alpha_coverage=F, by='coverage')
 ```
 
 
@@ -812,7 +809,11 @@ ggiNEXT_beta_link(dissimilarity1, type = 'B')
 ggiNEXT_beta_link(dissimilarity1, type = 'D')
 ```
 
-
+```{r}
+kable(head(dissimilarity1$Region_1$gamma, 10))
+kable(head(dissimilarity1$Region_1$alpha, 10))
+kable(head(dissimilarity1$Region_1$beta, 10))
+```
 
 <br><font size="5"><b>EXAMPLES2: Abundance data with phylogenetic tree </b></font>
 -------------------
@@ -870,12 +871,12 @@ ggiNEXT_PND(sample2, type = 1)
 
 
 ```{r,echo = TRUE ,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_PND(sample2, type = 3, facet = "Assemblage")
+ggiNEXT_PND(sample2, type = 3)
 ```
 
 ```{r}
-asy2 = AsyPND(puerto.rico$data, q = c(0,1,2), nboot = 10)
-obs2 = ObsPND(puerto.rico$data, q = c(0,1,2), nboot = 10)
+# asy2 = AsyPND(puerto.rico$data, q = c(0,1,2), nboot = 10)
+# obs2 = ObsPND(puerto.rico$data, q = c(0,1,2), nboot = 10)
 
 ```
 
@@ -916,6 +917,12 @@ ggiNEXT_beta_link(dissimilarity2, type = 'D')
 ```
 
 
+```{r}
+kable(head(dissimilarity2$Region_1$gamma, 10))
+kable(head(dissimilarity2$Region_1$alpha, 10))
+kable(head(dissimilarity2$Region_1$beta, 10))
+```
+
 ```{r, warning=F, message=F}
 dissimilarity3 = iNEXT_beta_link(x = puerto.rico$data, coverage_expected = seq(0.5,0.99,0.025), data_type='abundance',
                                  q = c(0, 1, 2),level='phylogenetic', 
@@ -931,6 +938,11 @@ ggiNEXT_beta_link(dissimilarity3, type = 'D')
 ```
 
 
+```{r}
+kable(head(dissimilarity3$Region_1$gamma, 10))
+kable(head(dissimilarity3$Region_1$alpha, 10))
+kable(head(dissimilarity3$Region_1$beta, 10))
+```
 
 
 

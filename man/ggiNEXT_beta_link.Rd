@@ -10,7 +10,9 @@ ggiNEXT_beta_link(
   measurement = c("T", "P", "F_tau", "F_AUC"),
   scale = "free",
   main = NULL,
-  transp = 0.4
+  transp = 0.4,
+  stript.size = 11,
+  text.size = 13
 )
 }
 \arguments{

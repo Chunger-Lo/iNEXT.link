@@ -17,22 +17,6 @@ a figure of estimated sample completeness with order q\cr
 ggplot for Evenness
 \code{ggNetEven} The figure for estimation of Evenness with order q\cr
 }
-\examples{
-\dontrun{
-## Type (1) example for abundance based data (data.frame)
-## Ex.1
-data(Spider)
-out1 <- Evenness(x = Spider, datatype = "abundance")
-ggNetEven(out1)
-
-## Type (2) example for incidence based data (list of data.frame)
-## Ex.2
-data(woody_incid)
-out2 <- Evenness(x = woody_incid[,c(1,4)], datatype = "incidence_freq")
-ggNetEven(out2)
-}
-
-}
 \references{
 Chao,A.and Ricotta,C.(2019).Quantifying evenness and linking it to diversity, beta diversity, and similarity.
 }

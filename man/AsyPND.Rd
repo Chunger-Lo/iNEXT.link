@@ -8,6 +8,8 @@ AsyPND(
   data = puerto.rico$data,
   q = seq(0, 2, 0.2),
   datatype = "abundance",
+  row.tree = NULL,
+  col.tree = NULL,
   nboot = 50,
   conf = 0.95
 )
@@ -25,9 +27,8 @@ a table of Asymptotic network diversity q profile
 \dontrun{
 ## Type (1) example for abundance-based data
 ## Ex.1
-data(spider)
-out1 <- AsyND(spider, class = 'TD', datatype = "abundance")
+data(puerto.rico$data)
+out1 <- AsyND(puerto.rico$data, datatype = "abundance", row.tree = row.tree,col.tree = col.tree)
 ggAsyPND(out1)
 }
-
 }

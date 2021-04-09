@@ -1806,14 +1806,12 @@ ggAsyND <- function(outcome, text.size = 14){
 #'
 #' @examples
 #' \dontrun{
-#' data(puer)
-#' out1 <- AsyPND(puer)
+#' data(puerto.rico)
+#' out1 <- AsyPND(puerto.rico$data, datatype = "abundance")
 #' ggAsyPND(out1)
 #' }
-
-#'
 #' @export
-ggAsyPND <- function(outcome, text_size = 10){
+ggAsyPND <- function(outcome, text_size = 14){
   table = outcome
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
@@ -1821,12 +1819,12 @@ ggAsyPND <- function(outcome, text_size = 10){
     stop("Please use the outcome from specified function 'AsyD'")
 
   ggplot(table) +
-    geom_line(aes(x = Order.q, y = Estimate,lty = method, color = Region),lwd = 1.5) +
+    geom_line(aes(x = Order.q, y = Estimate,lty = method, color = Region),lwd = 1.4) +
     geom_ribbon(aes(x = Order.q, ymin = LCL, ymax = UCL,fill = Region,lty = method), alpha = 0.25) + theme_bw() +
     theme(legend.position = "bottom",
           legend.title=element_blank(),
           text=element_text(size=text_size),
-          legend.key.width = unit(0.2,"cm"))  +
+          legend.key.width = unit(1,"cm"))  +
     labs(x = "Order q", y = "Network phylogenetic diversity", lty = "Method") + scale_linetype_manual(values=c("dashed","solid"))
 }
 
@@ -1870,27 +1868,19 @@ AsyND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, 
 #' \dontrun{
 #' ## Type (1) example for abundance-based data
 #' ## Ex.1
-#' data(spider)
-#' out1 <- AsyND(spider, class = 'TD', datatype = "abundance")
+#' data(puerto.rico$data)
+#' out1 <- AsyND(puerto.rico$data, datatype = "abundance", row.tree = row.tree,col.tree = col.tree)
 #' ggAsyPND(out1)
 #' }
-
-
-#'
 #' @export
 AsyPND <- function(data = puerto.rico$data, q = seq(0, 2, 0.2), datatype = "abundance",
+                   row.tree = NULL, col.tree = NULL,
                    nboot = 50, conf = 0.95){
-  lapply(1:length(data), function(i) {
-    x = data[[i]]
-    assemblage = names(data)[[i]]
-    tmp <- c(as.matrix(x))
-    # tmp = x
 
-    res = MakeTable_Proposeprofile(data = x, B = nboot, q, conf = conf)%>%
-      rename("qD"="Estimate", "qD.LCL"="LCL", "qD.UCL"="UCL")%>%
-      mutate(Assemblage = assemblage, method = "Estimated")%>%filter(Target == "Diversity")%>%select(-Target)
-    return(res)
-    })%>%do.call("rbind",.)
+  NetDiv <- get.netphydiv(data = data,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)%>%
+    filter(method == "Estimate")
+
+  return(NetDiv)
 }
 
 
@@ -1910,11 +1900,9 @@ AsyPND <- function(data = puerto.rico$data, q = seq(0, 2, 0.2), datatype = "abun
 #' out1 <- ObsND(Norfolk, datatype = "abundance", nboot = 30)
 #' ggObsND(out1)
 #' }
-
-#'
-
 #' @export
 ObsND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, conf = 0.95){
+
   lapply(1:length(data), function(i){
     x = data[[i]]
     assemblage = names(data)[[i]]
@@ -1937,30 +1925,16 @@ ObsND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, 
 #' @examples
 #' \dontrun{
 #' ## Example for abundance-based data
-#' data(Norfolk)
-#' out1 <- ObsND(Norfolk, datatype = "abundance", nboot = 30)
-#' ggObsND(out1)
+#' data(puerto.rico$data)
+#' out1 <- ObsPND(puerto.rico$data, datatype = "abundance", row.tree = row.tree,col.tree = col.tree)
+#' ggObsPND(out1)
 #' }
 #' @export
 ObsPND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, conf = 0.95, row.tree = NULL, col.tree = NULL){
-  ## 2. iNterpolation/ Extrapolation
-  data_long <- lapply(data, function(tab){
-    as.matrix(tab)%>%c()}
-    ## 拉長
-  )
+  NetDiv <- get.netphydiv(data = data,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)%>%
+    filter(method == "Empirical")
 
-  NetDiv <- get.netphydiv(data = x,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)
-
-  lapply(1:length(data), function(i){
-    x = data[[i]]
-    assemblage = names(data)[[i]]
-    tmp <- c(as.matrix(x))
-    ## nboot has to larger than 0
-    res = MakeTable_Empericalprofile(data = x, B = nboot, q, conf = conf)%>%
-      rename("qD"="Emperical", "qD.LCL"="LCL", "qD.UCL"="UCL")%>%
-      mutate(Assemblage = assemblage, method = "Empirical")%>%filter(Target == "Diversity")%>%select(-Target)
-    return(res)
-  })%>%do.call("rbind",.)
+  return(NetDiv)
 }
 
 # estimateD  -------------------------------------------------------------------
@@ -1982,7 +1956,6 @@ ObsPND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50,
 #' @export
 estimateND = function(dat,q = c(0, 1, 2),datatype = "abundance",base = "size",
                       level = NULL,nboot = 50,conf = 0.95){
-
   lapply(1:length(dat), function(i){
     x = dat[[i]]
     assemblage = names(dat)[[i]]
@@ -2001,9 +1974,9 @@ estimateND = function(dat,q = c(0, 1, 2),datatype = "abundance",base = "size",
 #'
 #' @examples
 #' \dontrun{
-#'
-#' out <- estimatedPND(spider, q = c(0,1,2), datatype = "abundance", row.tree = rowtree, col.tree = coltree, base="size")
-#' out <- estimatedPND(spider, q = c(0,1,2), datatype = "abundance", row.tree = rowtree, col.tree = coltree, base="coverage")
+#' data(puerto.rico$data)
+#' out <- estimatedPND(puerto.rico$data, q = c(0,1,2), datatype = "abundance", row.tree = rowtree, col.tree = coltree)
+#' out
 #' }
 
 #'
@@ -2101,21 +2074,14 @@ estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
 #'
 #' @examples
 #' \dontrun{
-#' ## Type (1) example for abundance based data (data.frame)
-## Ex.1
-#' data(Spider)
-#' out1 <- Evenness(x = Spider, datatype = "abundance")
-#' out1
-#
-#' ## Type (2) example for incidence based data (list of data.frame)
-#' ## Ex.2
-#' data(woody_incid)
-#' out2 <- Evenness(x = woody_incid[,c(1,4)], datatype = "incidence_freq")
-#' out2
-#' }
-
+#' data(Norfolk)
+#' Est <- NetEvenness(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
+#' Emp <- NetEvenness(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
+#' Est
+#' Emp
+#' ggNetEven(Est)
+#' ggNetEven(Est)
 #' @export
-
 # x = Norfolk
 # tmp1 = NetEvenness(Norfolk, q=  seq(0,2,0.2), E = 1:5, method = "Estimated", C = 0.9)
 # tmp1 = NetEvenness(Norfolk, q=  seq(0,2,0.2), E = 1:5, method = "Empirical")
@@ -2164,20 +2130,13 @@ NetEvenness <- function(x,q = seq(0, 2, 0.2),
 #'
 #' @examples
 #' \dontrun{
-#' ## Type (1) example for abundance based data (data.frame)
-#' ## Ex.1
-#' data(Spider)
-#' out1 <- Evenness(x = Spider, datatype = "abundance")
-#' ggNetEven(out1)
-#'
-#' ## Type (2) example for incidence based data (list of data.frame)
-#' ## Ex.2
-#' data(woody_incid)
-#' out2 <- Evenness(x = woody_incid[,c(1,4)], datatype = "incidence_freq")
-#' ggNetEven(out2)
-#' }
-
-#'
+#' data(Norfolk)
+#' Est <- NetEvenness(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
+#' Emp <- NetEvenness(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
+#' Est
+#' Emp
+#' ggNetEven(Est)
+#' ggNetEven(Est)
 #' @references
 #' Chao,A.and Ricotta,C.(2019).Quantifying evenness and linking it to diversity, beta diversity, and similarity.
 #' @export
@@ -2244,20 +2203,13 @@ ggNetEven <- function(output){
 #'
 #' @examples
 #' \dontrun{
-#' ## Type (1) example for abundance based data (data.frame)
-#' ## Ex.1
-#' data(Spider)
-#' out1 <- Evenness(x = Spider, datatype = "abundance")
-#' out1
-#'
-#' ## Type (2) example for incidence based data (list of data.frame)
-#' ## Ex.2
-#' data(woody_incid)
-#' out2 <- Evenness(x = woody_incid[,c(1,4)], datatype = "incidence_freq")
-#' out2
-#' }
-
-#'
+#' data(
+#' Est <- phyNetEvenness(x = puerto.rico$data, q = c(0,1,2), nboot = 30, method = "Estimated", col.tree = puerto.rico$col.tree, row.tree = puerto.rico$row.tree)
+#' Emp <- phyNetEvenness(x = puerto.rico$data, q = c(0,1,2), nboot = 30, method = "Empirical", col.tree = puerto.rico$col.tree, row.tree = puerto.rico$row.tree)
+#' Est
+#' Emp
+#' ggNetEven(Est)
+#' ggNetEven(Est)
 #' @references
 #' Chao,A.and Ricotta,C.(2019).Quantifying evenness and linking it to diversity, beta diversity, and similarity.
 #' @export

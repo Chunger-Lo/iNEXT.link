@@ -51,22 +51,6 @@ R scipts "Evenness" for Chao and Ricotta (2019) Ecology paper.
 This R code is for computing Figures 2, 3 and 4 of Chao and Ricotta (2019) paper.
 installed and loaded before running the scripts.
 }
-\examples{
-\dontrun{
-## Type (1) example for abundance based data (data.frame)
-## Ex.1
-data(Spider)
-out1 <- Evenness(x = Spider, datatype = "abundance")
-out1
-
-## Type (2) example for incidence based data (list of data.frame)
-## Ex.2
-data(woody_incid)
-out2 <- Evenness(x = woody_incid[,c(1,4)], datatype = "incidence_freq")
-out2
-}
-
-}
 \references{
 Chao,A.and Ricotta,C.(2019).Quantifying evenness and linking it to diversity, beta diversity, and similarity.
 }
