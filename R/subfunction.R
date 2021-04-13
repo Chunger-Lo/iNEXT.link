@@ -331,7 +331,7 @@ long_to_wide = function(data_long = bootstrap_data_gamma){
 create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
   if (class(data) != "matrix") { data <- as.matrix(data) }
 
-  if (is.null(row.tree) == 0 & is.null(col.tree) == 1){
+  if ((is.null(row.tree)) == 0 & (is.null(col.tree) == 1)){
     tip <- row.tree$tip.label[-match(rownames(data),row.tree$tip.label)]
     mytree <- drop.tip(row.tree,tip)
     mytree <- phylo2phytree(mytree)

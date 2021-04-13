@@ -222,10 +222,10 @@ PNDinfo <- function(data, datatype = "abundance", row.tree = NULL,col.tree = NUL
 #' @examples
 #' \dontrun{
 #' # Datatype: abundance data with phylogenetic tree
-#' data(data.inc)
-#' data <- data.inc$data
-#' rowtree <- data.inc$rowtree
-#' coltree <- data.inc$coltree
+#' data(puerto.rico)
+#' data <- puerto.rico$data
+#' rowtree <- puerto.rico$rowtree
+#' coltree <- puerto.rico$coltree
 #' out <- iNEXT_PND(data = data, row.tree = rowtree, col.tree = coltree, q = c(0, 1, 2))
 #' out
 #' }
@@ -355,7 +355,7 @@ iNEXT_PND <- function(x, row.tree = NULL,col.tree = NULL,q = c(0,1,2), datatype 
 # level = 'phylogenetic'; data_type = "abundance";conf=0.95;by = 'coverage';nboot=20
 # level = 'taxonomic'
 
-iNEXT_beta_link = function(x, coverage_expected, data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2), level=c('taxonomic', 'phylogenetic', 'functional'),
+iNEXT_beta_link = function(x, coverage_expected = seq(0.5, 1, 0.5), data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2), level=c('taxonomic', 'phylogenetic', 'functional'),
                            nboot = 20, conf = 0.95, max_alpha_coverage=F, by=c('coverage', 'size'),
                            row.tree = NULL,col.tree = NULL){
 
@@ -1849,7 +1849,7 @@ AsyND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, 
     x = data[[i]]
     assemblage = names(data)[[i]]
     # tmp <- c(as.matrix(x))
-    tmp = x
+    # tmp = x
     res = MakeTable_Proposeprofile(data = x, B = nboot, q, conf = conf)%>%
       rename("qD"="Estimate", "qD.LCL"="LCL", "qD.UCL"="UCL")%>%
       mutate(Assemblage = assemblage, method = "Estimated")%>%filter(Target == "Diversity")%>%select(-Target)
