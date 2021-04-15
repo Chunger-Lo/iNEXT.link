@@ -28,13 +28,11 @@ If "method" is estimated, then fist list will be named "C" which means the maxim
 \code{Specialization} computes Evenness Estimation of Evenness with order q.
 }
 \examples{
-\dontrun{
 data(Norfolk)
 Est <- Specialization(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
 Emp <- Specialization(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
 Est
 Emp
 ggSpec(Est)
-ggSpec(Est)
-}
+ggSpec(Emp)
 }

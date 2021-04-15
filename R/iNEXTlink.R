@@ -2129,15 +2129,13 @@ estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
 # $summary individual summary of 4 steps of data.
 #'
 #' @examples
-#' \dontrun{
 #' data(Norfolk)
 #' Est <- Specialization(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
 #' Emp <- Specialization(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
 #' Est
 #' Emp
 #' ggSpec(Est)
-#' ggSpec(Est)
-#' }
+#' ggSpec(Emp)
 #' @export
 # x = Norfolk
 # tmp1 = NetEvenness(Norfolk, q=  seq(0,2,0.2), E = 1:5, method = "Estimated", C = 0.9)
@@ -2195,11 +2193,13 @@ Specialization <- function(x,q = seq(0, 2, 0.2),
       res = lapply(res, function(each_class){
         each_class%>%
           mutate(Evenness = 1-Evenness, Even.LCL = 1-Even.LCL, Even.UCL = 1-Even.UCL)%>%
-          rename('Specialization'='Evenness', 'Specialization.LCL' ='Evenness.LCL', 'Specialization.UCL' ='Evenness.UCL')
+          rename('Specialization'='Evenness', 'Spec.LCL' ='Even.LCL', 'Spec.UCL' ='Even.UCL')%>%
+          mutate(Assemblage = names(long)[[i]])
       })
-      if(method == "Empirical") index = 1
-      if(method == "Estimated") index = 2
-      return(res[[index]]%>%mutate(Assemblage = names(long)[[i]]))
+      # if(method == "Empirical") index = 1
+      # if(method == "Estimated") index = 2
+      # return(res[[index]]%>%mutate(Assemblage = names(long)[[i]]))
+      return(res[[1]])
     })%>%do.call("rbind",.)
 
     each_class%>%mutate(class = paste0("E",e))
@@ -2277,10 +2277,10 @@ ggSpec <- function(output){
     geom_line(size=1.2) +
     scale_colour_manual(values = cbPalette) +
     geom_ribbon(data = classdata %>% filter(Method=="Estimated"),
-                aes(ymin=Specialization.LCL, ymax=Specialization.UCL, fill=Assemblage),
+                aes(ymin=Spec.LCL, ymax=Spec.UCL, fill=Assemblage),
                 alpha=0.2, linetype=0) +
     geom_ribbon(data = classdata %>% filter(Method=="Empirical"),
-                aes(ymin=Specialization.LCL, ymax=Specialization.UCL, fill=Assemblage),
+                aes(ymin=Spec.LCL, ymax=Spec.UCL, fill=Assemblage),
                 alpha=0.2, linetype=0) +
     scale_fill_manual(values = cbPalette) +
     labs(x="Order q", y="Specialization") +
