@@ -1,5 +1,60 @@
-#' Interpolation (rarefaction) and extrapolation of Chao et al.’s (2021) network diversity and mean network diversity
+#' Sample Completeness main function
+#'
+#' \code{NetSC} Estimation of Sample Completeness with order q
+#'
+#' @param x a matrix/data.frame/list/vector of abundances-based/incidences-based species data.\cr
+#' @param q a integer vector for the order of Hill number\cr
+#' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
+#' sampling-unit-based incidence frequencies data (\code{datatype = "incidence_freq"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).\cr
+#' @param nboot an integer specifying the number of bootstrap replications, default is 30.\cr
+#' @param conf  positive number < 1 specifying the level of confidence interval, default is 0.95.\cr\cr
+#' @return a matrix of estimated sample completeness with order q: \cr\cr
+#'
+#' @examples
+#' data(Norfolk)
+#' output = NetSC(Norfolk)
+#' ggNetSC(output)
+#'
+#' @references
+#' Chao,A.,Y.Kubota,D.Zelený,C.-H.Chiu.
+#' Quantifying sample completeness and comparing diversities among assemblages.
+#' @export
+NetSC <- function(x, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30, conf = 0.95){
+  data_long <- lapply(x, function(tab){
+    as.matrix(tab)%>%c()}
+  )
+  res = iNEXT4steps::SC(x = data_long, q = q, datatype = datatype, nboot = nboot, conf = conf)
+}
 
+# ggSC -------------------------------------------------------------------
+#' ggplot for Sample Completeness
+#'
+#' \code{ggNetSC} The figure for estimation of Sample Completeness with order q
+#'
+#' @param output a table generated from SC function
+#' @return a figure of estimated sample completeness with order q
+#'
+#' @examples
+#' data(Norfolk)
+#' output = NetSC(Norfolk)
+#' ggNetSC(output)
+#' @references
+#' Chao,A.,Y.Kubota,D.Zelený,C.-H.Chiu.
+#' Quantifying sample completeness and comparing diversities among assemblages.
+#' @export
+ggNetSC <- function(output){
+  cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
+                     "#330066", "#CC79A7", "#0072B2", "#D55E00"))
+  ggplot(output, aes(x = Order.q, y = Estimate.SC, colour = Assemblage)) +
+    geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
+    geom_ribbon(aes(ymin = SC.LCL, ymax = SC.UCL, fill = Assemblage),
+                alpha = 0.2, linetype = 0) + scale_fill_manual(values = cbPalette) +
+    labs(x = "Order q", y = "Sample completeness") + theme(text = element_text(size = 18)) +
+    theme(legend.position = "bottom", legend.box = "vertical",
+          legend.key.width = unit(1.2, "cm"), legend.title = element_blank())
+}
+
+#' Interpolation (rarefaction) and extrapolation of Chao et al.’s (2021) network diversity and mean network diversity
 #' Function \code{iNEXTPD} computes network diversity estimates for rarefied samples and extrapolated samples
 #' along with confidence intervals and related coverage estimates based on Chao et al.’s (2021) network
 #' diversity (ND)

@@ -348,8 +348,8 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
     out <- data.frame(branch.abun = tmp$branch.abun, branch.length = tmp$branch.length,
                       tgroup = tmp$tgroup,interaction = tmp$interaction)
   }
-
-  if (is.null(row.tree) == 1 & is.null(col.tree) == 0){
+  ## beetles example
+  if ((is.null(row.tree) == 1) & (is.null(col.tree) == 0)){
     tip <- col.tree$tip.label[-match(colnames(data),col.tree$tip.label)]
     mytree <- drop.tip(col.tree,tip)
     mytree <- phylo2phytree(mytree)
@@ -367,7 +367,7 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
 
   }
 
-  if (is.null(row.tree) == 0 & is.null(col.tree) == 0){
+  if ((is.null(row.tree) == 0) & (is.null(col.tree) == 0)){
     col.tip <- col.tree$tip.label[-match(colnames(data),col.tree$tip.label)]
     mytree.col <- drop.tip(col.tree,col.tip)
     mytree.col <- phylo2phytree(mytree.col)
