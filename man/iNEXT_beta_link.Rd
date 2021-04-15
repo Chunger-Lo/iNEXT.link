@@ -8,7 +8,7 @@ along with confidence intervals and related coverage estimates based on Chao et 
 \usage{
 iNEXT_beta_link(
   x,
-  coverage_expected,
+  coverage_expected = seq(0.5, 1, 0.5),
   data_type = c("abundance", "incidence_raw"),
   q = c(0, 1, 2),
   level = c("taxonomic", "phylogenetic", "functional"),

@@ -74,10 +74,10 @@ diversity (ND)
 \examples{
 \dontrun{
 # Datatype: abundance data with phylogenetic tree
-data(data.inc)
-data <- data.inc$data
-rowtree <- data.inc$rowtree
-coltree <- data.inc$coltree
+data(puerto.rico)
+data <- puerto.rico$data
+rowtree <- puerto.rico$rowtree
+coltree <- puerto.rico$coltree
 out <- iNEXT_PND(data = data, row.tree = rowtree, col.tree = coltree, q = c(0, 1, 2))
 out
 }
