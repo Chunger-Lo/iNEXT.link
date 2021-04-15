@@ -51,6 +51,17 @@ R scipts "Evenness" for Chao and Ricotta (2019) Ecology paper.
 This R code is for computing Figures 2, 3 and 4 of Chao and Ricotta (2019) paper.
 installed and loaded before running the scripts.
 }
+\examples{
+\dontrun{
+data(
+Est <- phySpecialization(x = puerto.rico$data, q = c(0,1,2), nboot = 30, method = "Estimated", col.tree = puerto.rico$col.tree, row.tree = puerto.rico$row.tree)
+Emp <- phySpecialization(x = puerto.rico$data, q = c(0,1,2), nboot = 30, method = "Empirical", col.tree = puerto.rico$col.tree, row.tree = puerto.rico$row.tree)
+Est
+Emp
+ggSpec(Est)
+ggSpec(Est)
+}
+}
 \references{
 Chao,A.and Ricotta,C.(2019).Quantifying evenness and linking it to diversity, beta diversity, and similarity.
 }

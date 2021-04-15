@@ -2115,8 +2115,8 @@ estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
 }
 
 
-# Evenness  -------------------------------------------------------------------
-#' Evenness Estimation of Evenness with order q
+# Specialization  -------------------------------------------------------------------
+#' Specialization Estimation of Evenness with order q
 #'
 #' \code{Specialization} computes Evenness Estimation of Evenness with order q.
 #'
@@ -2137,6 +2137,7 @@ estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
 #' Emp
 #' ggSpec(Est)
 #' ggSpec(Est)
+#' }
 #' @export
 # x = Norfolk
 # tmp1 = NetEvenness(Norfolk, q=  seq(0,2,0.2), E = 1:5, method = "Estimated", C = 0.9)
@@ -2190,6 +2191,7 @@ Specialization <- function(x,q = seq(0, 2, 0.2),
     each_class = lapply(seq_along(long), function(i){
       res = iNEXT4steps::Evenness(long[[i]], q = q,datatype = datatype,
                                   method = method, nboot=nboot, E.class = e, C = C)
+      res['Coverage'] = NULL
       res = lapply(res, function(each_class){
         each_class%>%
           mutate(Evenness = 1-Evenness, Even.LCL = 1-Even.LCL, Even.UCL = 1-Even.UCL)%>%
@@ -2333,6 +2335,7 @@ ggSpec <- function(output){
 #' Emp
 #' ggSpec(Est)
 #' ggSpec(Est)
+#' }
 #' @references
 #' Chao,A.and Ricotta,C.(2019).Quantifying evenness and linking it to diversity, beta diversity, and similarity.
 #' @export
