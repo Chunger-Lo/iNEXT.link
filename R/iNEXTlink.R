@@ -24,6 +24,7 @@ NetSC <- function(x, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30, con
     as.matrix(tab)%>%c()}
   )
   res = iNEXT4steps::SC(x = data_long, q = q, datatype = datatype, nboot = nboot, conf = conf)
+  return(res)
 }
 
 # ggSC -------------------------------------------------------------------
@@ -2117,7 +2118,7 @@ estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
 # Evenness  -------------------------------------------------------------------
 #' Evenness Estimation of Evenness with order q
 #'
-#' \code{Evenness} computes Evenness Estimation of Evenness with order q.
+#' \code{Specialization} computes Evenness Estimation of Evenness with order q.
 #'
 #' @param outcome the outcome of the functions \code{ObsND} .\cr
 #' @return A list of estimated(empirical) evenness with order q.
@@ -2130,17 +2131,52 @@ estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
 #' @examples
 #' \dontrun{
 #' data(Norfolk)
-#' Est <- NetEvenness(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
-#' Emp <- NetEvenness(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
+#' Est <- Specialization(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
+#' Emp <- Specialization(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
 #' Est
 #' Emp
-#' ggNetEven(Est)
-#' ggNetEven(Est)
+#' ggSpec(Est)
+#' ggSpec(Est)
 #' @export
 # x = Norfolk
 # tmp1 = NetEvenness(Norfolk, q=  seq(0,2,0.2), E = 1:5, method = "Estimated", C = 0.9)
 # tmp1 = NetEvenness(Norfolk, q=  seq(0,2,0.2), E = 1:5, method = "Empirical")
-NetEvenness <- function(x,q = seq(0, 2, 0.2),
+# NetEvenness <- function(x,q = seq(0, 2, 0.2),
+#                      datatype = "abundance",
+#                      method = "Estimated",
+#                      nboot = 30,
+#                      conf = 0.95,
+#                      E.class = c(1:5),
+#                      C = NULL){
+#
+#   long = lapply(x, function(da){da%>%as.data.frame()%>%gather(key = "col_sp", value = "abundance")%>%.[,2]})
+#   # EVEN <- lapply(seq_along(long),
+#   #                           function(i){
+#   #                             res = iNEXT4steps::Evenness(long[[i]], q = q,datatype = datatype,
+#   #                                                         method = method, nboot=nboot, E.class = E, C = C)
+#   #                             res[["Coverage"]] = NULL
+#   #                             tab = lapply(E.class, function(j){
+#   #                               tmp = res[[j]]%>%mutate(class = paste0("E", j))
+#   #                               return(tmp)
+#   #                             })%>%do.call("rbind",.)%>%
+#   #                               mutate(Assemblage = names(long)[[i]])
+#   #                             return(tab)
+#   #                           })%>%do.call("rbind",.)
+#   EVEN <- lapply(E.class, function(e){
+#     each_class = lapply(seq_along(long), function(i){
+#       res = iNEXT4steps::Evenness(long[[i]], q = q,datatype = datatype,
+#                                   method = method, nboot=nboot, E.class = e, C = C)
+#       if(method == "Empirical") index = 1
+#       if(method == "Estimated") index = 2
+#       return(res[[index]]%>%mutate(Assemblage = names(long)[[i]]))
+#     })%>%do.call("rbind",.)
+#
+#     each_class%>%mutate(class = paste0("E",e))
+#   })
+#   names(EVEN) = paste0("E",E.class)
+#   return(EVEN)
+# }
+Specialization <- function(x,q = seq(0, 2, 0.2),
                      datatype = "abundance",
                      method = "Estimated",
                      nboot = 30,
@@ -2149,22 +2185,16 @@ NetEvenness <- function(x,q = seq(0, 2, 0.2),
                      C = NULL){
 
   long = lapply(x, function(da){da%>%as.data.frame()%>%gather(key = "col_sp", value = "abundance")%>%.[,2]})
-  # EVEN <- lapply(seq_along(long),
-  #                           function(i){
-  #                             res = iNEXT4steps::Evenness(long[[i]], q = q,datatype = datatype,
-  #                                                         method = method, nboot=nboot, E.class = E, C = C)
-  #                             res[["Coverage"]] = NULL
-  #                             tab = lapply(E.class, function(j){
-  #                               tmp = res[[j]]%>%mutate(class = paste0("E", j))
-  #                               return(tmp)
-  #                             })%>%do.call("rbind",.)%>%
-  #                               mutate(Assemblage = names(long)[[i]])
-  #                             return(tab)
-  #                           })%>%do.call("rbind",.)
-  EVEN <- lapply(E.class, function(e){
+
+  Specialization <- lapply(E.class, function(e){
     each_class = lapply(seq_along(long), function(i){
       res = iNEXT4steps::Evenness(long[[i]], q = q,datatype = datatype,
                                   method = method, nboot=nboot, E.class = e, C = C)
+      res = lapply(res, function(each_class){
+        each_class%>%
+          mutate(Evenness = 1-Evenness, Even.LCL = 1-Even.LCL, Even.UCL = 1-Even.UCL)%>%
+          rename('Specialization'='Evenness', 'Specialization.LCL' ='Evenness.LCL', 'Specialization.UCL' ='Evenness.UCL')
+      })
       if(method == "Empirical") index = 1
       if(method == "Estimated") index = 2
       return(res[[index]]%>%mutate(Assemblage = names(long)[[i]]))
@@ -2172,9 +2202,11 @@ NetEvenness <- function(x,q = seq(0, 2, 0.2),
 
     each_class%>%mutate(class = paste0("E",e))
   })
-  names(EVEN) = paste0("E",E.class)
-  return(EVEN)
+  names(Specialization) = paste0("E",E.class)
+  return(Specialization)
 }
+
+
 # ggNetEven -------------------------------------------------------------------
 #' ggplot for Evenness
 #
@@ -2186,38 +2218,74 @@ NetEvenness <- function(x,q = seq(0, 2, 0.2),
 #' @examples
 #' \dontrun{
 #' data(Norfolk)
-#' Est <- NetEvenness(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
-#' Emp <- NetEvenness(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
+#' Est <- Specialization(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
+#' Emp <- Specialization(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
 #' Est
 #' Emp
-#' ggNetEven(Est)
-#' ggNetEven(Est)
+#' ggSpec(Est)
+#' ggSpec(Est)
+#' }
 #' @references
 #' Chao,A.and Ricotta,C.(2019).Quantifying evenness and linking it to diversity, beta diversity, and similarity.
 #' @export
-ggNetEven <- function(output){
+# ggNetEven <- function(output){
+#   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
+#                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
+#   classdata = cbind(do.call(rbind, output))%>%
+#     rename("Method"="method")
+#
+#   fig = classdata%>%
+#     ggplot(aes(x=Order.q, y=Evenness, colour=Assemblage, lty = Method)) +
+#     geom_line(size=1.2) +
+#     scale_colour_manual(values = cbPalette) +
+#     geom_ribbon(data = classdata %>% filter(Method=="Estimated"),
+#                 aes(ymin=Even.LCL, ymax=Even.UCL, fill=Assemblage),
+#                 alpha=0.2, linetype=0) +
+#     geom_ribbon(data = classdata %>% filter(Method=="Empirical"),
+#                 aes(ymin=Even.LCL, ymax=Even.UCL, fill=Assemblage),
+#                 alpha=0.2, linetype=0) +
+#     scale_fill_manual(values = cbPalette) +
+#     labs(x="Order q", y="Evenness") +
+#     # theme_bw(base_size = 18) +
+#     theme(text=element_text(size=18)) +
+#     theme(legend.position = "bottom", legend.box = "vertical",
+#           legend.key.width = unit(1.2,"cm"),
+#           # plot.margin = unit(c(1.5,0.3,1.2,0.3), "lines"),
+#           legend.title = element_blank(),
+#           legend.margin = margin(0,0,0,0),
+#           legend.box.margin = margin(-10,-10,-5,-10),
+#           text = element_text(size=12),
+#           plot.margin = unit(c(5.5,5.5,5.5,5.5), "pt")
+#     )
+#
+#   if (length(output) != 1) fig = fig +
+#     facet_wrap(~class) +
+#     theme(strip.text.x = element_text(size=12, colour = "purple", face="bold"))
+#
+#   return(fig)
+# }
+ggSpec <- function(output){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
   classdata = cbind(do.call(rbind, output))%>%
     rename("Method"="method")
 
   fig = classdata%>%
-    ggplot(aes(x=Order.q, y=Evenness, colour=Assemblage, lty = Method)) +
+    ggplot(aes(x=Order.q, y=Specialization, colour=Assemblage, lty = Method)) +
     geom_line(size=1.2) +
     scale_colour_manual(values = cbPalette) +
     geom_ribbon(data = classdata %>% filter(Method=="Estimated"),
-                aes(ymin=Even.LCL, ymax=Even.UCL, fill=Assemblage),
+                aes(ymin=Specialization.LCL, ymax=Specialization.UCL, fill=Assemblage),
                 alpha=0.2, linetype=0) +
     geom_ribbon(data = classdata %>% filter(Method=="Empirical"),
-                aes(ymin=Even.LCL, ymax=Even.UCL, fill=Assemblage),
+                aes(ymin=Specialization.LCL, ymax=Specialization.UCL, fill=Assemblage),
                 alpha=0.2, linetype=0) +
     scale_fill_manual(values = cbPalette) +
-    labs(x="Order q", y="Evenness") +
+    labs(x="Order q", y="Specialization") +
     # theme_bw(base_size = 18) +
     theme(text=element_text(size=18)) +
     theme(legend.position = "bottom", legend.box = "vertical",
           legend.key.width = unit(1.2,"cm"),
-          # plot.margin = unit(c(1.5,0.3,1.2,0.3), "lines"),
           legend.title = element_blank(),
           legend.margin = margin(0,0,0,0),
           legend.box.margin = margin(-10,-10,-5,-10),
@@ -2259,16 +2327,42 @@ ggNetEven <- function(output){
 #' @examples
 #' \dontrun{
 #' data(
-#' Est <- phyNetEvenness(x = puerto.rico$data, q = c(0,1,2), nboot = 30, method = "Estimated", col.tree = puerto.rico$col.tree, row.tree = puerto.rico$row.tree)
-#' Emp <- phyNetEvenness(x = puerto.rico$data, q = c(0,1,2), nboot = 30, method = "Empirical", col.tree = puerto.rico$col.tree, row.tree = puerto.rico$row.tree)
+#' Est <- phySpecialization(x = puerto.rico$data, q = c(0,1,2), nboot = 30, method = "Estimated", col.tree = puerto.rico$col.tree, row.tree = puerto.rico$row.tree)
+#' Emp <- phySpecialization(x = puerto.rico$data, q = c(0,1,2), nboot = 30, method = "Empirical", col.tree = puerto.rico$col.tree, row.tree = puerto.rico$row.tree)
 #' Est
 #' Emp
-#' ggNetEven(Est)
-#' ggNetEven(Est)
+#' ggSpec(Est)
+#' ggSpec(Est)
 #' @references
 #' Chao,A.and Ricotta,C.(2019).Quantifying evenness and linking it to diversity, beta diversity, and similarity.
 #' @export
-phyNetEvenness <- function(x,row.tree = NULL,col.tree = NULL,
+# phyNetEvenness <- function(x,row.tree = NULL,col.tree = NULL,
+#                            q = seq(0, 2, 0.2),
+#                            datatype = "abundance",
+#                            method = "Estimated",
+#                            nboot = 30,
+#                            conf = 0.95,
+#                            E.class = c(1:5),
+#                            C = NULL){
+#   long = lapply(x, function(da){da%>%as.data.frame()%>%gather(key = "col_sp", value = "abundance")%>%.[,2]})
+#
+#
+#
+#   EVEN <- lapply(seq_along(long),
+#                             function(i){
+#                               res = iNEXT4steps::Evenness(long[[i]], q = q,datatype = datatype,
+#                                                           method = method, nboot=nboot, E.class = 1:5, C = C)
+#                               res[["Coverage"]] = NULL
+#                               tab = lapply(E.class, function(j){
+#                                 tmp = res[[j]]%>%mutate(class = paste0("E", j))
+#                                 return(tmp)
+#                               })%>%do.call("rbind",.)%>%
+#                                 mutate(Assemblage = names(long)[[i]])
+#                               return(tab)
+#                             })%>%do.call("rbind",.)
+#   return(EVEN)
+# }
+phySpecialization <- function(x,row.tree = NULL,col.tree = NULL,
                            q = seq(0, 2, 0.2),
                            datatype = "abundance",
                            method = "Estimated",
@@ -2296,44 +2390,6 @@ phyNetEvenness <- function(x,row.tree = NULL,col.tree = NULL,
 }
 
 
-# ggEven <- function(output = tmp1) {
-#   if (names(output[1]) == "Coverage")  output = output[-1]
-#   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
-#                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
-#   classdata = cbind(do.call(rbind, output),
-#                     class = rep(names(output), each=nrow(output[[1]])))%>%
-#     rename("Method"="method")
-#
-#   fig = classdata%>%
-#     ggplot(aes(x=Order.q, y=Evenness, colour=Assemblage, lty = Method)) +
-#     geom_line(size=1.2) +
-#     scale_colour_manual(values = cbPalette) +
-#     geom_ribbon(data = classdata %>% filter(Method=="Estimated"),
-#                 aes(ymin=Even.LCL, ymax=Even.UCL, fill=Assemblage),
-#                 alpha=0.2, linetype=0) +
-#     geom_ribbon(data = classdata %>% filter(Method=="Empirical"),
-#                 aes(ymin=Even.LCL, ymax=Even.UCL, fill=Assemblage),
-#                 alpha=0.2, linetype=0) +
-#     scale_fill_manual(values = cbPalette) +
-#     labs(x="Order q", y="Evenness") +
-#     # theme_bw(base_size = 18) +
-#     theme(text=element_text(size=18)) +
-#     theme(legend.position = "bottom", legend.box = "vertical",
-#           legend.key.width = unit(1.2,"cm"),
-#           # plot.margin = unit(c(1.5,0.3,1.2,0.3), "lines"),
-#           legend.title = element_blank(),
-#           legend.margin = margin(0,0,0,0),
-#           legend.box.margin = margin(-10,-10,-5,-10),
-#           text = element_text(size=12),
-#           plot.margin = unit(c(5.5,5.5,5.5,5.5), "pt")
-#     )
-#
-#   if (length(output) != 1) fig = fig +
-#     facet_wrap(~class) +
-#     theme(strip.text.x = element_text(size=12, colour = "purple", face="bold"))
-#
-#   return(fig)
-# }
 
 even.class = function (q, qD, S, E.class)
 {
