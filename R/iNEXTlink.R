@@ -2129,8 +2129,8 @@ estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
 #'
 #' @examples
 #' data(Norfolk)
-#' Est <- Specialization(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
-#' Emp <- Specialization(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
+#' Est <- NetSpec(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
+#' Emp <- NetSpec(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
 #' Est
 #' Emp
 #' ggSpec(Est)
@@ -2174,7 +2174,7 @@ estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
 #   names(EVEN) = paste0("E",E.class)
 #   return(EVEN)
 # }
-Specialization <- function(x,q = seq(0, 2, 0.2),
+NetSpec <- function(x,q = seq(0, 2, 0.2),
                      datatype = "abundance",
                      method = "Estimated",
                      nboot = 30,
@@ -2219,8 +2219,8 @@ Specialization <- function(x,q = seq(0, 2, 0.2),
 #' @examples
 #' \dontrun{
 #' data(Norfolk)
-#' Est <- Specialization(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
-#' Emp <- Specialization(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
+#' Est <- NetSpec(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
+#' Emp <- NetSpec(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
 #' Est
 #' Emp
 #' ggSpec(Est)
@@ -2328,8 +2328,8 @@ ggSpec <- function(output){
 #' @examples
 #' \dontrun{
 #' data(
-#' Est <- phySpecialization(x = puerto.rico$data, q = c(0,1,2), nboot = 30, method = "Estimated", col.tree = puerto.rico$col.tree, row.tree = puerto.rico$row.tree)
-#' Emp <- phySpecialization(x = puerto.rico$data, q = c(0,1,2), nboot = 30, method = "Empirical", col.tree = puerto.rico$col.tree, row.tree = puerto.rico$row.tree)
+#' Est <- phySpec(x = puerto.rico$data, q = c(0,1,2), nboot = 30, method = "Estimated", col.tree = puerto.rico$col.tree, row.tree = puerto.rico$row.tree)
+#' Emp <- phySpec(x = puerto.rico$data, q = c(0,1,2), nboot = 30, method = "Empirical", col.tree = puerto.rico$col.tree, row.tree = puerto.rico$row.tree)
 #' Est
 #' Emp
 #' ggSpec(Est)
@@ -2338,33 +2338,8 @@ ggSpec <- function(output){
 #' @references
 #' Chao,A.and Ricotta,C.(2019).Quantifying evenness and linking it to diversity, beta diversity, and similarity.
 #' @export
-# phyNetEvenness <- function(x,row.tree = NULL,col.tree = NULL,
-#                            q = seq(0, 2, 0.2),
-#                            datatype = "abundance",
-#                            method = "Estimated",
-#                            nboot = 30,
-#                            conf = 0.95,
-#                            E.class = c(1:5),
-#                            C = NULL){
-#   long = lapply(x, function(da){da%>%as.data.frame()%>%gather(key = "col_sp", value = "abundance")%>%.[,2]})
-#
-#
-#
-#   EVEN <- lapply(seq_along(long),
-#                             function(i){
-#                               res = iNEXT4steps::Evenness(long[[i]], q = q,datatype = datatype,
-#                                                           method = method, nboot=nboot, E.class = 1:5, C = C)
-#                               res[["Coverage"]] = NULL
-#                               tab = lapply(E.class, function(j){
-#                                 tmp = res[[j]]%>%mutate(class = paste0("E", j))
-#                                 return(tmp)
-#                               })%>%do.call("rbind",.)%>%
-#                                 mutate(Assemblage = names(long)[[i]])
-#                               return(tab)
-#                             })%>%do.call("rbind",.)
-#   return(EVEN)
-# }
-phySpecialization <- function(x,row.tree = NULL,col.tree = NULL,
+
+phySpec <- function(x,row.tree = NULL,col.tree = NULL,
                            q = seq(0, 2, 0.2),
                            datatype = "abundance",
                            method = "Estimated",
