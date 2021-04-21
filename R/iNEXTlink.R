@@ -2113,8 +2113,7 @@ estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
   })%>%do.call("rbind",.)
   return(res)
 }
-
-
+# nothin
 # Specialization  -------------------------------------------------------------------
 #' Specialization Estimation of Evenness with order q
 #'
@@ -2185,7 +2184,7 @@ Specialization <- function(x,q = seq(0, 2, 0.2),
 
   long = lapply(x, function(da){da%>%as.data.frame()%>%gather(key = "col_sp", value = "abundance")%>%.[,2]})
 
-  Specialization <- lapply(E.class, function(e){
+  Spec <- lapply(E.class, function(e){
     each_class = lapply(seq_along(long), function(i){
       res = iNEXT4steps::Evenness(long[[i]], q = q,datatype = datatype,
                                   method = method, nboot=nboot, E.class = e, C = C)
@@ -2204,8 +2203,8 @@ Specialization <- function(x,q = seq(0, 2, 0.2),
 
     each_class%>%mutate(class = paste0("E",e))
   })
-  names(Specialization) = paste0("E",E.class)
-  return(Specialization)
+  names(Spec) = paste0("E",E.class)
+  return(Spec)
 }
 
 
