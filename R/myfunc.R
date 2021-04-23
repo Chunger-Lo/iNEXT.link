@@ -1,5 +1,5 @@
 ## PHD
-my_PhD.q.est <- function (ai, Lis, q, nt, cal) 
+my_PhD.q.est <- function (ai, Lis, q, nt, cal)
 {
   t_bars <- as.numeric(t(ai) %*% Lis/nt)
   I1 <- which(ai == 1)
@@ -20,8 +20,8 @@ my_PhD.q.est <- function (ai, Lis, q, nt, cal)
     ai_h1_I <- ai <= (nt - 1)
     h1_pt2 <- rep(0, S)
     ai_h1 <- ai[ai_h1_I]
-    h1_pt2[ai_h1_I] <- tibble(ai = ai) %>% .[ai_h1_I, ] %>% 
-      mutate(diga = digamma(nt) - digamma(ai)) %>% apply(., 
+    h1_pt2[ai_h1_I] <- tibble(ai = ai) %>% .[ai_h1_I, ] %>%
+      mutate(diga = digamma(nt) - digamma(ai)) %>% apply(.,
                                                          1, prod)/nt
   }
   if (2 %in% q) {
@@ -31,7 +31,7 @@ my_PhD.q.est <- function (ai, Lis, q, nt, cal)
     deltas_pt2 <- sapply(0:(nt - 1), function(k) {
       ai_delt_I <- ai <= (nt - k)
       deltas_pt2 <- rep(0, S)
-      deltas_pt2[ai_delt_I] <- delta_part2(ai = ai[ai_delt_I], 
+      deltas_pt2[ai_delt_I] <- delta_part2(ai = ai[ai_delt_I],
                                            k = k, n = nt)
       deltas_pt2
     }) %>% t()
@@ -53,8 +53,8 @@ my_PhD.q.est <- function (ai, Lis, q, nt, cal)
       k <- 0:(nt - 1)
       deltas <- as.numeric(deltas_pt2 %*% Li)
       a <- (choose(q - 1, k) * (-1)^k * deltas) %>% sum
-      b <- ifelse(g1 == 0 | A == 1, 0, (g1 * ((1 - A)^(1 - 
-                                                         nt))/nt) * (A^(q - 1) - sum(choose(q - 1, k) * 
+      b <- ifelse(g1 == 0 | A == 1, 0, (g1 * ((1 - A)^(1 -
+                                                         nt))/nt) * (A^(q - 1) - sum(choose(q - 1, k) *
                                                                                        (A - 1)^k)))
       ans <- ((a + b)/(t_bar^q))^(1/(1 - q))
     }
@@ -67,7 +67,7 @@ my_PhD.q.est <- function (ai, Lis, q, nt, cal)
     PD_obs <- sum(Li)
     g1 <- sum(Li[I1])
     g2 <- sum(Li[I2])
-    est <- sapply(q, function(q_) Sub(q = q_, g1 = g1, g2 = g2, 
+    est <- sapply(q, function(q_) Sub(q = q_, g1 = g1, g2 = g2,
                                       PD_obs = PD_obs, t_bar = t_bar, Li = Li))
   })
   if (cal == "PD") {
@@ -82,7 +82,7 @@ my_PhD.q.est <- function (ai, Lis, q, nt, cal)
 }
 
 
-my_PhD.m.est <- function (ai, Lis, m, q, nt, cal) 
+my_PhD.m.est <- function (ai, Lis, m, q, nt, cal)
 {
   t_bars <- as.numeric(t(ai) %*% Lis/nt)
   if (sum(m > nt) > 0) {
@@ -100,16 +100,16 @@ my_PhD.m.est <- function (ai, Lis, m, q, nt, cal)
         })
         beta <- rep(0, length(q))
         beta0plus <- which(asy_i != obs_i)
-        beta[beta0plus] <- (obs_i[beta0plus] - RPD_m_i[beta0plus])/(asy_i[beta0plus] - 
+        beta[beta0plus] <- (obs_i[beta0plus] - RPD_m_i[beta0plus])/(asy_i[beta0plus] -
                                                                       RPD_m_i[beta0plus])
         outq <- sapply(1:length(q), function(i) {
           if (q[i] != 2) {
-            obs_i[i] + (asy_i[i] - obs_i[i]) * (1 - 
+            obs_i[i] + (asy_i[i] - obs_i[i]) * (1 -
                                                   (1 - beta[i])^m)
           }
           else if (q[i] == 2) {
-            1/sum((Li/(t_bar)^2) * ((1/(nt + m)) * (ai/nt) + 
-                                      ((nt + m - 1)/(nt + m)) * (ai * (ai - 
+            1/sum((Li/(t_bar)^2) * ((1/(nt + m)) * (ai/nt) +
+                                      ((nt + m - 1)/(nt + m)) * (ai * (ai -
                                                                          1)/(nt * (nt - 1)))))
           }
         })
@@ -119,7 +119,7 @@ my_PhD.m.est <- function (ai, Lis, m, q, nt, cal)
     }
     RPD_m <- PhD:::RPD(ai%>%as.matrix(), Lis%>%as.matrix(), nt, nt - 1, q)
     obs <- PhD:::RPD(ai%>%as.matrix(), Lis%>%as.matrix(), nt, nt, q)
-    asy <- matrix(my_PhD.q.est(ai = ai, Lis = Lis, q = q, nt = nt, 
+    asy <- matrix(my_PhD.q.est(ai = ai, Lis = Lis, q = q, nt = nt,
                             cal = cal), nrow = length(q), ncol = length(t_bars))
   }
   else if (sum(m == nt) > 0) {
@@ -128,7 +128,7 @@ my_PhD.m.est <- function (ai, Lis, m, q, nt, cal)
   if (cal == "PD") {
     out <- sapply(m, function(mm) {
       if (mm < nt) {
-        ans <- PhD:::RPD(ai = ai%>%as.matrix(), Lis = Lis%>%as.matrix(), n = nt, m = mm, 
+        ans <- PhD:::RPD(ai = ai%>%as.matrix(), Lis = Lis%>%as.matrix(), n = nt, m = mm,
                    q = q)
       }
       else if (mm == nt) {
@@ -143,7 +143,7 @@ my_PhD.m.est <- function (ai, Lis, m, q, nt, cal)
   else if (cal == "meanPD") {
     out <- sapply(m, function(mm) {
       if (mm < nt) {
-        ans <- PhD:::RPD(ai = ai%>%as.matrix(), Lis = Lis%>%as.matrix(), n = nt, m = mm, 
+        ans <- PhD:::RPD(ai = ai%>%as.matrix(), Lis = Lis%>%as.matrix(), n = nt, m = mm,
                    q = q)
       }
       else if (mm == nt) {
@@ -162,6 +162,48 @@ my_PhD.m.est <- function (ai, Lis, m, q, nt, cal)
   return(out)
 }
 
+# coverage_to_size <- function(x, C){
+#   x <- x[x > 0]
+#   m <- NULL
+#   n <- sum(x)
+#   refC <- iNEXT:::Chat.Ind(x, n)
+#   f <- function(m, C) abs(iNEXT:::Chat.Ind(x, m) - C)
+#   mm <- sapply(C, function(cvrg) {
+#     if (refC == cvrg) {
+#       mm <- n
+#     }
+#     else if (refC > cvrg) {
+#       opt <- optimize(f, C = cvrg, lower = 0, upper = sum(x))
+#       mm <- opt$minimum
+#     }
+#     else if (refC < cvrg) {
+#       f1 <- sum(x == 1)
+#       f2 <- sum(x == 2)
+#       if (f1 > 0 & f2 > 0) {
+#         A <- (n - 1) * f1/((n - 1) * f1 + 2 * f2)
+#       }
+#       else if (f1 > 1 & f2 == 0) {
+#         A <- (n - 1) * (f1 - 1)/((n - 1) * (f1 - 1) +
+#                                    2)
+#       }
+#       else if (f1 == 0 & f2 > 0) {
+#         A <- 0
+#       }
+#       else if (f1 == 1 & f2 == 0) {
+#         A <- 0
+#       }
+#       else if (f1 == 0 & f2 == 0) {
+#         A <- 0
+#       }
+#       mm <- ifelse(A == 0, 0, (log(n/f1) + log(1 - cvrg))/log(A) -
+#                      1)
+#       mm <- n + mm
+#     }
+#     mm
+#   })
+#   mm[mm < 1] <- 1
+#   return(mm)
+# # }
 Coverage_to_size <- function(x, C){
   x <- x[x > 0]
   m <- NULL
@@ -183,7 +225,7 @@ Coverage_to_size <- function(x, C){
         A <- (n - 1) * f1/((n - 1) * f1 + 2 * f2)
       }
       else if (f1 > 1 & f2 == 0) {
-        A <- (n - 1) * (f1 - 1)/((n - 1) * (f1 - 1) + 
+        A <- (n - 1) * (f1 - 1)/((n - 1) * (f1 - 1) +
                                    2)
       }
       else if (f1 == 0 & f2 > 0) {
@@ -195,7 +237,7 @@ Coverage_to_size <- function(x, C){
       else if (f1 == 0 & f2 == 0) {
         A <- 0
       }
-      mm <- ifelse(A == 0, 0, (log(n/f1) + log(1 - cvrg))/log(A) - 
+      mm <- ifelse(A == 0, 0, (log(n/f1) + log(1 - cvrg))/log(A) -
                      1)
       mm <- n + mm
     }

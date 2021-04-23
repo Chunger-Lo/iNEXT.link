@@ -504,9 +504,9 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
       coverage_expected = c(coverage_expected, ref_gamma, ref_alpha, ref_alpha_max) %>% sort %>% unique
       # coverage_expected = coverage_expected[coverage_expected<1]
 
-      m_gamma = sapply(coverage_expected, function(i) coverage_to_size(data_gamma, i, data_type='abundance'))
+      m_gamma = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(data_gamma, i, data_type='abundance'))
       if (by=='size') m_alpha = m_gamma
-      if (by=='coverage') m_alpha = sapply(coverage_expected, function(i) coverage_to_size(data_alpha, i, data_type='abundance'))
+      if (by=='coverage') m_alpha = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(data_alpha, i, data_type='abundance'))
 
     }
     if (data_type=='incidence_raw') {
@@ -535,9 +535,9 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
       coverage_expected = c(coverage_expected, ref_gamma, ref_alpha, ref_alpha_max) %>% sort %>% unique
       # coverage_expected = coverage_expected[coverage_expected<1]
 
-      m_gamma = sapply(coverage_expected, function(i) coverage_to_size(data_gamma_freq, i, data_type='incidence_freq'))
+      m_gamma = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(data_gamma_freq, i, data_type='incidence_freq'))
       if (by=='size') m_alpha = m_gamma
-      if (by=='coverage') m_alpha = sapply(coverage_expected, function(i) coverage_to_size(data_alpha_freq, i, data_type='incidence_raw'))
+      if (by=='coverage') m_alpha = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(data_alpha_freq, i, data_type='incidence_raw'))
 
     }
 
@@ -777,8 +777,8 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
             bootstrap_data_alpha = as.matrix(x_bt) %>% as.vector
             bootstrap_data_alpha = bootstrap_data_alpha[bootstrap_data_alpha>0]
 
-            m_gamma = sapply(coverage_expected, function(i) coverage_to_size(bootstrap_data_gamma, i, data_type='abundance'))
-            m_alpha = sapply(coverage_expected, function(i) coverage_to_size(bootstrap_data_alpha, i, data_type='abundance'))
+            m_gamma = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(bootstrap_data_gamma, i, data_type='abundance'))
+            m_alpha = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(bootstrap_data_alpha, i, data_type='abundance'))
 
             # aL = phyBranchAL_Abu(phylo = tree_bt, data = bootstrap_data_gamma, rootExtend = T, refT = reft)
             # aL$treeNabu$branch.length = aL$BLbyT[,1]
@@ -935,8 +935,8 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
             bootstrap_data_gamma_freq = bootstrap_data_gamma_freq[bootstrap_data_gamma_freq>0]
             bootstrap_data_alpha_freq = bootstrap_data_alpha_freq[bootstrap_data_alpha_freq>0]
 
-            m_gamma = sapply(coverage_expected, function(i) coverage_to_size(bootstrap_data_gamma_freq, i, data_type='incidence'))
-            m_alpha = sapply(coverage_expected, function(i) coverage_to_size(bootstrap_data_alpha_freq, i, data_type='incidence'))
+            m_gamma = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(bootstrap_data_gamma_freq, i, data_type='incidence'))
+            m_alpha = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(bootstrap_data_alpha_freq, i, data_type='incidence'))
 
             aL = phyBranchAL_Inc(phylo = tree_bt, data = bootstrap_data_gamma_raw, datatype = "incidence_raw", rootExtend = T, refT = reft)
             aL$treeNabu$branch.length = aL$BLbyT[,1]
@@ -2113,11 +2113,11 @@ estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
   })%>%do.call("rbind",.)
   return(res)
 }
-# nothin
-# Specialization  -------------------------------------------------------------------
+
+# NetSpec  -------------------------------------------------------------------
 #' Specialization Estimation of Evenness with order q
 #'
-#' \code{Specialization} computes Evenness Estimation of Evenness with order q.
+#' \code{NetSpec} computes Evenness Estimation of Evenness with order q.
 #'
 #' @param outcome the outcome of the functions \code{ObsND} .\cr
 #' @return A list of estimated(empirical) evenness with order q.
@@ -2128,6 +2128,7 @@ estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
 # $summary individual summary of 4 steps of data.
 #'
 #' @examples
+#' \dontrun{
 #' data(Norfolk)
 #' Est <- NetSpec(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
 #' Emp <- NetSpec(x = Norfolk, datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
@@ -2135,45 +2136,10 @@ estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
 #' Emp
 #' ggSpec(Est)
 #' ggSpec(Emp)
+#' }
+
 #' @export
-# x = Norfolk
-# tmp1 = NetEvenness(Norfolk, q=  seq(0,2,0.2), E = 1:5, method = "Estimated", C = 0.9)
-# tmp1 = NetEvenness(Norfolk, q=  seq(0,2,0.2), E = 1:5, method = "Empirical")
-# NetEvenness <- function(x,q = seq(0, 2, 0.2),
-#                      datatype = "abundance",
-#                      method = "Estimated",
-#                      nboot = 30,
-#                      conf = 0.95,
-#                      E.class = c(1:5),
-#                      C = NULL){
-#
-#   long = lapply(x, function(da){da%>%as.data.frame()%>%gather(key = "col_sp", value = "abundance")%>%.[,2]})
-#   # EVEN <- lapply(seq_along(long),
-#   #                           function(i){
-#   #                             res = iNEXT4steps::Evenness(long[[i]], q = q,datatype = datatype,
-#   #                                                         method = method, nboot=nboot, E.class = E, C = C)
-#   #                             res[["Coverage"]] = NULL
-#   #                             tab = lapply(E.class, function(j){
-#   #                               tmp = res[[j]]%>%mutate(class = paste0("E", j))
-#   #                               return(tmp)
-#   #                             })%>%do.call("rbind",.)%>%
-#   #                               mutate(Assemblage = names(long)[[i]])
-#   #                             return(tab)
-#   #                           })%>%do.call("rbind",.)
-#   EVEN <- lapply(E.class, function(e){
-#     each_class = lapply(seq_along(long), function(i){
-#       res = iNEXT4steps::Evenness(long[[i]], q = q,datatype = datatype,
-#                                   method = method, nboot=nboot, E.class = e, C = C)
-#       if(method == "Empirical") index = 1
-#       if(method == "Estimated") index = 2
-#       return(res[[index]]%>%mutate(Assemblage = names(long)[[i]]))
-#     })%>%do.call("rbind",.)
-#
-#     each_class%>%mutate(class = paste0("E",e))
-#   })
-#   names(EVEN) = paste0("E",E.class)
-#   return(EVEN)
-# }
+
 NetSpec <- function(x,q = seq(0, 2, 0.2),
                      datatype = "abundance",
                      method = "Estimated",
@@ -2208,10 +2174,10 @@ NetSpec <- function(x,q = seq(0, 2, 0.2),
 }
 
 
-# ggNetEven -------------------------------------------------------------------
+# ggSpec -------------------------------------------------------------------
 #' ggplot for Evenness
 #
-#' \code{ggNetEven} The figure for estimation of Evenness with order q\cr
+#' \code{ggSpec} The figure for estimation of Evenness with order q\cr
 #'
 #' @param output a table generated from Evenness function\cr
 #' @return a figure of estimated sample completeness with order q\cr
@@ -2229,47 +2195,12 @@ NetSpec <- function(x,q = seq(0, 2, 0.2),
 #' @references
 #' Chao,A.and Ricotta,C.(2019).Quantifying evenness and linking it to diversity, beta diversity, and similarity.
 #' @export
-# ggNetEven <- function(output){
-#   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
-#                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
-#   classdata = cbind(do.call(rbind, output))%>%
-#     rename("Method"="method")
-#
-#   fig = classdata%>%
-#     ggplot(aes(x=Order.q, y=Evenness, colour=Assemblage, lty = Method)) +
-#     geom_line(size=1.2) +
-#     scale_colour_manual(values = cbPalette) +
-#     geom_ribbon(data = classdata %>% filter(Method=="Estimated"),
-#                 aes(ymin=Even.LCL, ymax=Even.UCL, fill=Assemblage),
-#                 alpha=0.2, linetype=0) +
-#     geom_ribbon(data = classdata %>% filter(Method=="Empirical"),
-#                 aes(ymin=Even.LCL, ymax=Even.UCL, fill=Assemblage),
-#                 alpha=0.2, linetype=0) +
-#     scale_fill_manual(values = cbPalette) +
-#     labs(x="Order q", y="Evenness") +
-#     # theme_bw(base_size = 18) +
-#     theme(text=element_text(size=18)) +
-#     theme(legend.position = "bottom", legend.box = "vertical",
-#           legend.key.width = unit(1.2,"cm"),
-#           # plot.margin = unit(c(1.5,0.3,1.2,0.3), "lines"),
-#           legend.title = element_blank(),
-#           legend.margin = margin(0,0,0,0),
-#           legend.box.margin = margin(-10,-10,-5,-10),
-#           text = element_text(size=12),
-#           plot.margin = unit(c(5.5,5.5,5.5,5.5), "pt")
-#     )
-#
-#   if (length(output) != 1) fig = fig +
-#     facet_wrap(~class) +
-#     theme(strip.text.x = element_text(size=12, colour = "purple", face="bold"))
-#
-#   return(fig)
-# }
+
 ggSpec <- function(output){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
   classdata = cbind(do.call(rbind, output))%>%
-    rename("Method"="method")
+    dplyr::rename("Method"="method")
 
   fig = classdata%>%
     ggplot(aes(x=Order.q, y=Specialization, colour=Assemblage, lty = Method)) +
@@ -2303,7 +2234,7 @@ ggSpec <- function(output){
 
 #' Evenness main function
 #'
-#' \code{phyNetEvenness} Estimation (Empirical) of Evenness with order q
+#' \code{phySpec} Estimation (Empirical) of Evenness with order q
 #'
 #' R scipts "Evenness" for Chao and Ricotta (2019) Ecology paper.
 #' This R code is for computing Figures 2, 3 and 4 of Chao and Ricotta (2019) paper.
@@ -2349,21 +2280,27 @@ phySpec <- function(x,row.tree = NULL,col.tree = NULL,
                            C = NULL){
   long = lapply(x, function(da){da%>%as.data.frame()%>%gather(key = "col_sp", value = "abundance")%>%.[,2]})
 
+  Spec <- lapply(E.class, function(e){
+    each_class = lapply(seq_along(long), function(i){
+      res = iNEXT4steps::Evenness(long[[i]], q = q,datatype = datatype,
+                                  method = method, nboot=nboot, E.class = e, C = C)
+      res['Coverage'] = NULL
+      res = lapply(res, function(each_class){
+        each_class%>%
+          mutate(Evenness = 1-Evenness, Even.LCL = 1-Even.LCL, Even.UCL = 1-Even.UCL)%>%
+          rename('Specialization'='Evenness', 'Spec.LCL' ='Even.LCL', 'Spec.UCL' ='Even.UCL')%>%
+          mutate(Assemblage = names(long)[[i]])
+      })
+      # if(method == "Empirical") index = 1
+      # if(method == "Estimated") index = 2
+      # return(res[[index]]%>%mutate(Assemblage = names(long)[[i]]))
+      return(res[[1]])
+    })%>%do.call("rbind",.)
 
-
-  EVEN <- lapply(seq_along(long),
-                            function(i){
-                              res = iNEXT4steps::Evenness(long[[i]], q = q,datatype = datatype,
-                                                          method = method, nboot=nboot, E.class = 1:5, C = C)
-                              res[["Coverage"]] = NULL
-                              tab = lapply(E.class, function(j){
-                                tmp = res[[j]]%>%mutate(class = paste0("E", j))
-                                return(tmp)
-                              })%>%do.call("rbind",.)%>%
-                                mutate(Assemblage = names(long)[[i]])
-                              return(tab)
-                            })%>%do.call("rbind",.)
-  return(EVEN)
+    each_class%>%mutate(class = paste0("E",e))
+  })
+  names(Spec) = paste0("E",E.class)
+  return(Spec)
 }
 
 
