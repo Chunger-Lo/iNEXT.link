@@ -45,17 +45,89 @@ puerto.rico[["row.tree"]] = rowtree
 # usethis::use_data(puerto.rico, overwrite = T)
 ```
 
-`iNEXT.link` is a R package providing the rarefaction/extrapolation and asymptotic estimation to achieve fair comparison of network diversity among multiple assemblages (Hsieh and Chao, Systematic Biology, 2017). In this document, we provide a quick introduction demonstrating how to run `iNEXT.link`. The Detailed information about `iNEXT.link` functions is described in the `iNEXT.link` Manual, also available in [CRAN](https://cran.r-project.org/package=PhD). An online version of `iNEXT.link.Online` (<https://chao.shinyapps.io/iNEXT.link.Online/>) is developed for users without R background. The theoretical derivation of network diversity measurements was proposed in xxx. `iNEXT.link` is an extension for [`iNext`](https://cran.r-project.org/package=iNextPD), which computes diversity estimates and its `conf` confidence intervals for the two types of rarefaction and extrapolation (R/E) based on two different sampling data sets, individual-based abundance data and quadrat-based incidence data.
+`iNEXT.link` is a R package providing the rarefaction/extrapolation and asymptotic estimation to achieve fair comparison of network diversity among multiple interaction network. In this document, we provide a quick introduction demonstrating how to run `iNEXT.link`. The Detailed information about `iNEXT.link` functions is described in the `iNEXT.link` Manual, also available in [CRAN](https://cran.r-project.org/package=PhD). An online version of `iNEXT.link.Online` (<https://r717r717.shinyapps.io/iNEXT.link.Online/>) is developed for users without R background. The theoretical derivation of network diversity measurements will be proposed soon. `iNEXT.link` is an extension for [`iNext3D`](https://cran.r-project.org/package=iNext), which computes diversity estimates and its confidence intervals for the two types of rarefaction and extrapolation (R/E) based on two different sampling data sets, individual-based abundance data and quadrat-based incidence data.
 
-There are Four main functions in `iNEXT.link`, including `iNEXT_ND`, `AsyND`, `ObsND` and `estimateND`.
 
-1. `iNEXT_ND`: provides a seamless rarefaction and extrapolation sampling curve for Chao et al.’s Network diversity. See Chao et al. (2010, 2015) and Hsieh and Chao (2017) for pertinent background and methods. It is the network extension of `iNEXT` function in `iNEXT` package.
+Based on the <Network diversity: Statistical esitmation and software development>, for single network, we have a 4-steps procedure to analyze comprehensively, which are 
 
-2. `AsyND`: computes asymptotic network diversity estimates with respect to specified/default diversity order q to infer network diversity (ND) and phylogenetic network diversity (PND).
+1. Assessment of sample completeness  
+2. The asymptotic approach
+3. Non-asymptotic coverage-based rarefaction and extrapolation analysis     
+4: Assement of network specialization
 
-3. `ObsND`: computes empirical (i.e., observed) phylogenetic diversity (PD) and phylogenetic Hill numbers (meanPD, mean phylogenetic diversity) for specified/default order q and reference time; see Chao et al. (2010) for details of PD and meanPD
+Moreover, to assess the dissimilarity between interaction networks, we have an extra step
 
-4. `estimateND`: computes Chao et al.’s (2010) phylogenetic diversity (PD, effective total branch lengths, for diversity order q = 0, 1 and 2) and mean phylogenetic diversity (meanPD, phylogenetic Hill numbers or the effective number of lineages, q = 0, 1 and 2) for given values of sample coverage. See Chao et al. (2010, 2015) and Hsieh and Chao (2017) for formulas and interpretations. It is the phylogenetic extension of `estimateD` in `iNEXT` package.
+  (*) beta diversity and dissimilarity indices.
+
+
+For these analyzing steps, we have corresponding computation functions, and we will go through these functions by steps.
+
+
+## Taxonomic  
+
+### Step1: Assessment of sample completeness  
+
+`NetSC`: Compute the sample completeness over order.q, and returns a dataframe.  
+`ggNetSC`: Visualize the result obtained from `NetSC` with a ggplot2 object.
+
+### Step2: The asymptotic approach  
+
+`ObsND`: Compute the sample empirical network diveristy, and returns a dataframe.  
+`ggObsND`: Visualize the result obtained from `ObsND` with a ggplot2 object.
+
+### Step3: Non-asymptotic coverage-based rarefaction and extrapolation analysis 
+
+`iNEXT_ND`: Compute the sized-based/ coverage-based R/E network diversity, and returns a `iNEXT` object.  
+`ggiNEXT_ND`: Visualize the result obtained from `iNEXT_ND` with a ggplot2 object.
+
+### Step4: Assement of network specialization
+
+`NetSpec`: Compute the interaction specialization over specified Evenness class (E1,E2,E3,E4,E5), and returns a list by class.  
+`ggNetSpec`: Visualize the result obtained from `iNEXT_ND` with a ggplot2 object.
+
+<br><br>
+
+### Extra Step: Beta diversity and dissimilarity
+
+`iNEXT_beta_link`: Compute the coverage-based/ size-based alpha, beta, gamma diversity and dissimilarity indices, and returns a list by index.  
+`ggiNEXT_beta_link`: Visualize the result obtained from `iNEXT_ND` with a ggplot2 object.
+
+## Phylogenetic  
+
+### Step1: Assessment of sample completeness  
+
+`NetSC`: Compute the sample completeness over order.q, and returns a dataframe.  
+`ggNetSC`: Visualize the result obtained from `NetSC` with a ggplot2 object.
+
+### Step2: The asymptotic approach 
+
+`ObsPND`: Compute the sample empirical network diveristy, and returns a dataframe.  
+`ggObsPND`: Visualize the result obtained from `ObsND` with a ggplot2 object.
+
+### Step3: Non-asymptotic coverage-based rarefaction and extrapolation analysis 
+
+`iNEXT_PND`: Compute the sized-based/ coverage-based R/E network diversity, and returns a `iNEXT` object.  
+`ggiNEXT_PND`: Visualize the result obtained from `iNEXT_ND` with a ggplot2 object.
+
+### Step4: Assement of network specialization
+
+`NetSpec`: Compute the interaction specialization over specified Evenness class (E1,E2,E3,E4,E5), and returns a list by class.  
+`ggNetSpec`: Visualize the result obtained from `iNEXT_ND` with a ggplot2 object.
+
+### Extra Step: Beta diversity and dissimilarity
+
+`iNEXT_beta_link`: Compute the coverage-based/ size-based alpha, beta, gamma diversity and dissimilarity indices, and returns a list by index.  
+`ggiNEXT_beta_link`: Visualize the result obtained from `iNEXT_ND` with a ggplot2 object.
+
+
+<br><br>
+
+
+The framework can be summarized as follows.
+
+```{r, echo = F,fig.align = 'left', out.width="85%"}
+knitr::include_graphics("pic/framework.png")
+```
 
 
 <br><font size="5">**SOFTWARE NEEDED TO RUN iNEXT.link IN R:**</font>
@@ -78,38 +150,31 @@ install_github("chaolab2019/chaoUtility")
 ## install iNEXT.links package from CRAN
 install.packages("iNEXT.link")
 ## Or instead, install the latest version from github
-install_github("AnneChao/iNEXT.link")
+install_github("Chunger-Lo/iNEXT.link")
 
 ## import packages
 library(chaoUtility)
 library(phytools)
 library(iNEXT)
-# library(iNEXT.link)
+library(iNEXT.link)
 ```
 
 ```{r, echo = F}
 # library(iNEXT)
-
-source("..//R//iNEXTlink.R")
-source("..//R//subfunction.R")
-source("..//R//myfunc.R")
-library(chaoUtility)
+# source("..//R//iNEXTlink.R")
+# source("..//R//subfunction.R")
+# source("..//R//myfunc.R")
+# library(chaoUtility)
 library(tidyr)
 library(magrittr)
 library(miNEXT.beta)
+library(chaoUtility)
+library(phytools)
 library(iNEXT3D)
-# library(iNEXT.link)
+library(iNEXT.link)
 library(miNEXT.beta)
 library(tidyverse)
 ```
-
-<br><font size="5"><b>DATA FORMAT/INFORMATION</b></font> 
--------------------
-In iNEXT.link package, all four main functions share the same required format of `data`. 
-Now, only abundance data is supported.
-
-Individual‐based abundance data (`datatype="abundance"`): species-by-site matrix/data.frame of species abundances. The row (species) names of data must match the species names in the phylogenetic tree and thus cannot be missing. Users can use the following command to see an example data containing three.
-
 
 ```{r eval=FALSE}
 # include abundance data
@@ -352,7 +417,7 @@ The arguments of this function are described below.
 </tbody>
 </table>
 
-4. <u><font size="3">**estimatePD()**</u></font>:
+4. <u><font size="3">**estimateND()**</u></font>:
 
 ```{r, eval=FALSE}
 estimateND(Norfolk, datatype="abundance", base="coverage",level=0.7, nboot = 30,conf=0.95)
@@ -417,8 +482,108 @@ The arguments of this function are described below.
 </tbody>
 </table>
 
-<br>
-<br>
+5. <u><font size="3">**NetSpec()**</u></font>:
+
+```{r, eval=FALSE}
+NetSpec(Norfolk, q = seq(0,2,1), datatype = "abundance", nboot =30)
+```
+
+The arguments of this function are described below.
+
+<table style="width:100%;">
+<colgroup>
+<col width="20%">
+<col width="80%">
+</colgroup>
+<thead>
+<tr>
+<th align="center">Argument</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code>data</code></td>
+<td align="left"> a matrix/data.frame of species abundances (for abundance data) or species-by-site raw incidence matrix (for incidence data). See the <b>DATA FORMAT/INFORMATION</b> section above for detailed required format.</td>
+</tr>
+<tr>
+<td align="center"><code>nT</code></td>
+<td align="left"> needed only when `datatype = "incidence_raw"`, a sequence of named nonnegative integers specifying the number of sampling units in each assemblage. If `names(nT) = NULL`, automatically assigns "site1", "site2",..., as assemblage names. Ignored if `datatype = "abundance"`.</td>
+</tr>
+<tr>
+<td align="center"><code>datatype</code></td>
+<td align="left"> data type of input data: individual-based abundance data (`datatype = "abundance"`), or species-by-site raw incidence matrix (`datatype = "incidence_raw"`). Default is `"abundance"`.</td>
+</tr>
+<tr>
+<td align="center"><code>tree</code></td>
+<td align="left"> a phylo object describing the phylogenetic tree in Newick format for all observed species in the pooled assemblage.</td>
+</tr>
+<tr>
+<td align="center"><code>q</code></td>
+<td align="left"> a nonnegative value or sequence specifying the diversity order. Default is `c(0,1,2)`.</td>
+</tr>
+<tr>
+<td align="center"><code>type</code></td>
+<td align="left"> desired diversity type: `type = "PD"` for Chao et al. (2010) phylogenetic diversity and `type = "meanPD"` for mean phylogenetic diversity (i.e., phylogenetic Hill number). Default is `"PD"`.</td>
+</tr>
+<tr>
+<td align="center"><code>level</code></td>
+<td align="left"> a positive value or sequence < 1 specifying a particular value of sample coverage. If `NULL`,then `level` will be chosen as the minimum coverage of all sites after extrapolating each site to its double sample sizes. Default is `NULL`.</td>
+</tr>
+<tr>
+<td align="center"><code>nboot</code></td>
+<td align="left"> a positive integer specifying the number of bootstrap replications in assessing sampling uncertainty and constructing confidence intervals. Enter 0 to skip the bootstrap procedures. Default is 50.</td>
+</tr>
+
+
+</tbody>
+</table>
+
+
+<!-- 6. <u><font size="3">**iNEXT_beta_link()**</u></font>: -->
+
+<!-- ```{r, eval=FALSE} -->
+<!-- iNEXT_beta_link(data, coverage_expected = seq(0.5,1,0.025), data_type='abundance', -->
+<!--                 q = c(0, 1, 2),level='taxonomic',  -->
+<!--                 row.tree = rowtree,col.tree = coltree, -->
+<!--                 nboot = 0, conf = 0.95, max_alpha_coverage=F,  -->
+<!--                 by='coverage') -->
+<!-- ``` -->
+
+<!-- The arguments of this function are described below. -->
+
+<!-- <table style="width:100%;"> -->
+<!-- <colgroup> -->
+<!-- <col width="20%"> -->
+<!-- <col width="80%"> -->
+<!-- </colgroup> -->
+<!-- <thead> -->
+<!-- <tr> -->
+<!-- <th align="center">Argument</th> -->
+<!-- <th align="left">Description</th> -->
+<!-- </tr> -->
+<!-- </thead> -->
+<!-- <tbody> -->
+<!-- <tr> -->
+<!-- <td align="center"><code>data</code></td> -->
+<!-- <td align="left"> a matrix/data.frame of species abundances (for abundance data) or species-by-site raw incidence matrix (for incidence data). See the <b>DATA FORMAT/INFORMATION</b> section above for detailed required format.</td> -->
+<!-- </tr> -->
+<!-- <tr> -->
+<!-- <td align="center"><code>datatype</code></td> -->
+<!-- <td align="left"> data type of input data: individual-based abundance data (`datatype = "abundance"`), or species-by-site raw incidence matrix (`datatype = "incidence_raw"`). Default is `"abundance"`.</td> -->
+<!-- </tr> -->
+<!-- <tr> -->
+
+<!-- <tr> -->
+<!-- <td align="center"><code>nboot</code></td> -->
+<!-- <td align="left"> a positive integer specifying the number of bootstrap replications in assessing sampling uncertainty and constructing confidence intervals. Enter 0 to skip the bootstrap procedures. Default is 50.</td> -->
+<!-- </tr> -->
+
+
+<!-- </tbody> -->
+<!-- </table> -->
+<!-- <br> -->
+<!-- <br> -->
 
 #### b. Phylogenetic 
 
@@ -495,7 +660,7 @@ If `endpoint` specified by users is smaller than the reference sample size, `iNE
 2. <u><font size="3">**AsyND()**</u></font>:
 
 ```{r, eval=FALSE}
-# AsyPND(puerto.rico$data, q = c(0,1,2), datatype = "abundance", nboot = 30)
+AsyPND(puerto.rico$data, q = c(0,1,2), datatype = "abundance", nboot = 30)
 ```
 
 The arguments of this function are described below.
@@ -554,10 +719,10 @@ The arguments of this function are described below.
 
 <br>
 
-3. <u><font size="3">**PhdObs()**</u></font>:
+3. <u><font size="3">**ObsPND()**</u></font>:
 
 ```{r, eval=FALSE}
-# AsyPND(data.abu, datatype = "abundance", tree, q = c(0,1,2), datatype = "abundance", nboot = 30)
+ObsPND(data.abu, datatype = "abundance", tree, q = c(0,1,2), datatype = "abundance", nboot = 30)
 ```
 
 The arguments of this function are described below.
@@ -615,7 +780,7 @@ The arguments of this function are described below.
 </tbody>
 </table>
 
-4. <u><font size="3">**estimatePD()**</u></font>:
+4. <u><font size="3">**estimatePND()**</u></font>:
 
 ```{r, eval=FALSE}
 estimatePND <- function(data, datatype = "abundance", tree, q = c(0,1,2), reftime=NULL,
@@ -680,6 +845,67 @@ The arguments of this function are described below.
 
 </tbody>
 </table>
+
+
+5. <u><font size="3">**NetSpec()**</u></font>:
+
+```{r, eval=FALSE}
+NetSpec(Norfolk, q = seq(0,2,1), datatype = "abundance", nboot =30)
+```
+
+The arguments of this function are described below.
+
+<table style="width:100%;">
+<colgroup>
+<col width="20%">
+<col width="80%">
+</colgroup>
+<thead>
+<tr>
+<th align="center">Argument</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code>data</code></td>
+<td align="left"> a matrix/data.frame of species abundances (for abundance data) or species-by-site raw incidence matrix (for incidence data). See the <b>DATA FORMAT/INFORMATION</b> section above for detailed required format.</td>
+</tr>
+<tr>
+<td align="center"><code>nT</code></td>
+<td align="left"> needed only when `datatype = "incidence_raw"`, a sequence of named nonnegative integers specifying the number of sampling units in each assemblage. If `names(nT) = NULL`, automatically assigns "site1", "site2",..., as assemblage names. Ignored if `datatype = "abundance"`.</td>
+</tr>
+<tr>
+<td align="center"><code>datatype</code></td>
+<td align="left"> data type of input data: individual-based abundance data (`datatype = "abundance"`), or species-by-site raw incidence matrix (`datatype = "incidence_raw"`). Default is `"abundance"`.</td>
+</tr>
+<tr>
+<td align="center"><code>tree</code></td>
+<td align="left"> a phylo object describing the phylogenetic tree in Newick format for all observed species in the pooled assemblage.</td>
+</tr>
+<tr>
+<td align="center"><code>q</code></td>
+<td align="left"> a nonnegative value or sequence specifying the diversity order. Default is `c(0,1,2)`.</td>
+</tr>
+<tr>
+<td align="center"><code>type</code></td>
+<td align="left"> desired diversity type: `type = "PD"` for Chao et al. (2010) phylogenetic diversity and `type = "meanPD"` for mean phylogenetic diversity (i.e., phylogenetic Hill number). Default is `"PD"`.</td>
+</tr>
+<tr>
+<td align="center"><code>level</code></td>
+<td align="left"> a positive value or sequence < 1 specifying a particular value of sample coverage. If `NULL`,then `level` will be chosen as the minimum coverage of all sites after extrapolating each site to its double sample sizes. Default is `NULL`.</td>
+</tr>
+<tr>
+<td align="center"><code>nboot</code></td>
+<td align="left"> a positive integer specifying the number of bootstrap replications in assessing sampling uncertainty and constructing confidence intervals. Enter 0 to skip the bootstrap procedures. Default is 50.</td>
+</tr>
+
+
+</tbody>
+</table>
+
+
+
 
 <br>
 <br>
@@ -797,7 +1023,7 @@ The `estimateND()` function returns a table of the computed diversity for specif
 ### 6. Specialization
 
 ```{r, warning=F, message=F}
-spec1 = NetSpec(Norfolk, q = seq(0,2,1), datatype = "abundance", nboot =30)
+spec1 = NetSpec(Norfolk, q = seq(0,2,1), datatype = "abundance", nboot =10)
 ```
 
 ```{r,echo = TRUE ,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
