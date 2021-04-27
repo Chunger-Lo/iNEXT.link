@@ -56,7 +56,7 @@ ggNetSC <- function(output){
 }
 
 #' Interpolation (rarefaction) and extrapolation of Chao et al.’s (2021) network diversity and mean network diversity
-#' Function \code{iNEXTPD} computes network diversity estimates for rarefied samples and extrapolated samples
+#' Function \code{iNEXT3D.link} computes network diversity estimates for rarefied samples and extrapolated samples
 #' along with confidence intervals and related coverage estimates based on Chao et al.’s (2021) network
 #' diversity (ND)
 #' @param data a matrix/data.frame of species
@@ -68,6 +68,7 @@ ggNetSC <- function(output){
 #' merged incidence matrix, where the rows of the matrix refer to all species presented in the merged
 #' data. The row (species) names of data must match the species names in the phylogenetic tree and
 #' thus cannot be missing.
+#' @param class a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.
 #' @param nT needed only when \code{datatype = "incidence_raw"}, a sequence of named nonnegative integers specifying the number of sampling units in each assemblage.
 #' If \code{names(nT) = NULL}, then assemblage are automatically named as "assemblage1", "assemblage2",..., etc. Ignored if \code{datatype = "abundance"}.
 #' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
@@ -84,7 +85,9 @@ ggNetSC <- function(output){
 #' @param nboot a positive integer specifying the number of bootstrap replications when assessing sampling uncertainty and constructing confidence intervals.
 #' Enter 0 to skip the bootstrap procedures. Default is 50.
 #' @param conf a positive number < 1 specifying the level of confidence interval. Default is 0.95.
-#' @import ape ggplot2 dplyr tidytree stats
+#' @param col.tree phylogenetic tree of column assemblage in interaction matrix
+#' @param row.tree phylogenetic tree of row assemblage in interaction matrix.
+#' @import ape ggplot2 dplyr tidytree stats chaoUtility phytools iNEXT3D
 #' @importFrom phyclust get.rooted.tree.height
 #' @return
 #'
@@ -96,195 +99,11 @@ ggNetSC <- function(output){
 #'  \item{\code{$AsyEst}: for
 #' showing asymptotic diversity estimates along with related statistics.}
 #' }
-#' @examples
-#' \dontrun{
-#' # Datatype: abundance data
-#' data(data.abu)
-#' data <- data.abu$data
-#' tree <- data.abu$tree
-#' out <- iNEXT_ND(data = data, q = c(0, 1, 2), nboot = 30)
-#' out
-#' }
-#' @references
-#' Chao, A., Chiu C.-H. and Jost, L. (2010). Phylogenetic diversity measures based on Hill numbers. \emph{Philosophical Transactions of the Royal Society B.}, 365, 3599-3609. \cr\cr
-#' Chao, A., Chiu, C.-H., Hsieh, T. C., Davis, T., Nipperess, D., and Faith, D. (2015). Rarefaction and extrapolation of phylogenetic diversity. \emph{Methods in Ecology and Evolution}, 6, 380-388.\cr\cr
-#' Chao, A., Chiu C.-H. and Jost L. (2016). Phylogenetic diversity measures and their decomposition: a framework based on Hill numbers. pp. 141-172 in Pellens R. and Grandcolas P. (eds)
-#' \emph{Biodiversity Conservation and Phylogenetic Systematics: Preserving our Evolutionary Heritage in an Extinction Crisis}, Springer. \cr\cr
-#' Hsieh, T. C. and Chao, A. (2017). Rarefaction and extrapolation: making fair comparison of abundance-sensitive phylogenetic diversity among multiple assemblages. \emph{Systematic Biology}, 66, 100-111.
-#' @export
-
-iNEXT_ND <- function(x, q = c(0,1,2), datatype = "abundance", size = NULL,
-                     endpoint = NULL, knots = 40, se = TRUE, conf = 0.95, nboot = 30){
-  # User interface
-  TYPE <- c("abundance", "incidence", "incidence_freq", "incidence_raw")
-  if(is.na(pmatch(datatype, TYPE)))
-    stop("invalid datatype")
-  if(pmatch(datatype, TYPE) == -1)
-    stop("ambiguous datatype")
-  datatype <- match.arg(datatype, TYPE)
-  class_x <- class(data)[1]
-
-  if(datatype == "incidence"){
-    stop('datatype="incidence" was no longer supported after v2.0.8,
-         please try datatype="incidence_freq".')
-  }
-  if(datatype=="incidence_freq") datatype <- "incidence"
-
-  if(datatype=="incidence_raw"){
-    if(class_x=="list"){
-      data <- lapply(data, as.incfreq)
-    }else{
-      data <- as.incfreq(data)
-    }
-    datatype <- "incidence"
-  }
-  ## calculate
-  res = list()
-  ## 1. datainfo
-  datainfo = NDinfo(x = x, datatype = datatype)
-
-  ## 2. iNterpolation/ Extrapolation
-  data_long <- lapply(x, function(tab){
-    as.matrix(tab)%>%c()}
-    ## 拉長
-  )
-  INEXT_est <- iNEXT::iNEXT(data_long,q = q,conf = conf,nboot = nboot, knots = knots, se = se, endpoint = endpoint, size = size)
-
-  ## 3. empirical and asymptotic diversity
-  # abund <- lapply(dat, function(x) {
-  #   tmp <- c(as.matrix(x))
-  #   tmp = x
-  #   AsyND(data = tmp, B = 10, q, conf = 0.95)
-  # })
-  # mle = lapply(dat, function(x){
-  #   tmp <- c(as.matrix(x))
-  #   ObsND(data = tmp, B = 10, q, conf = 0.95)
-  # })
-  #
-  # plot.m <- c()
-  # for ( i in 1:length(dat)){
-  #   temp <- abund[[i]][abund[[i]]$Target == "Diversity",-c(2,4)]
-  #   mle1 <- mle[[i]][mle[[i]]$Target == "Diversity",-c(2,4)]
-  #   names(mle1)[2] <- "Estimate"
-  #
-  #   out_est = data.frame(temp, method = "Estimate", Region = names(dat)[i])
-  #   out_emp = data.frame(mle1, method = "Empirical", Region = names(dat)[i])
-  #   plot.m = rbind(plot.m,out_est,out_emp)
-  # }
-  # plot.m$Region <- factor(plot.m$Region,levels = levels(factor(names(dat))))
-  res[[1]] = datainfo
-  res[[2]] = INEXT_est$iNextEst
-  res[[3]] = INEXT_est$AsyEst
-  names(res) = c("DataInfo", "iNextEst", "AsyEst")
-  class(res) <- c("iNEXT")
-  return(res)
-}
-
-#' Exhibit basic data information
 #'
-#' \code{DataInfo}: exhibits basic data information
-#'
-#' @param x a vector/matrix/list of species abundances or incidence frequencies.\cr If \code{datatype = "incidence"},
-#' then the first entry of the input data must be total number of sampling units, followed by species incidence frequencies.
-#' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
-#' sampling-unit-based incidence frequencies data (\code{datatype = "incidence_freq"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).
-#' @return a data.frame of basic data information including sample size, observed species richness, sample coverage estimate, and the first ten abundance/incidence frequency counts.
 #' @examples
-#' \dontrun{
-#' data(Norfolk)
-#' DataInfo(Norfolk, datatype="abundance")
-#' }
-
-#' @export
-NDinfo <- function(x, datatype = "abundance"){
-  table <- lapply(x, function(y){datainf(data = y, datatype = datatype)})%>%do.call(rbind,.)
-  rownames(table) <- names(x)
-  table = rownames_to_column(table, var = "Assemblages")
-  return(table)
-}
-#' Exhibit basic data information
-#'
-#' \code{DataInfo}: exhibits basic data information
-#'
-#' @param x a vector/matrix/list of species abundances or incidence frequencies.\cr If \code{datatype = "incidence"},
-#' then the first entry of the input data must be total number of sampling units, followed by species incidence frequencies.
-#' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
-#' sampling-unit-based incidence frequencies data (\code{datatype = "incidence_freq"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).
-#' @return a data.frame of basic data information including sample size, observed species richness, sample coverage estimate, and the first ten abundance/incidence frequency counts.
-#' @examples
-#' \dontrun{
-#' data(Norfolk)
-#' PNDinfo(Norfolk, datatype="abundance", row.tree = rowtree, col.tree = coltree)
-#' }
-
-#' @export
-PNDinfo <- function(data, datatype = "abundance", row.tree = NULL,col.tree = NULL){
-  table <- lapply(data, function(y){datainfphy(data = y, datatype = datatype,
-                                            row.tree = row.tree,col.tree = col.tree)})%>%
-    do.call(rbind,.)
-  rownames(table) <- names(data)
-  table = rownames_to_column(table, var = "Assemblages")
-  return(table)
-}
-
-#' Interpolation (rarefaction) and extrapolation of Chao et al.’s (2021) network diversity and mean network diversity
-
-#' Function \code{iNEXTPD} computes network diversity estimates for rarefied samples and extrapolated samples
-#' along with confidence intervals and related coverage estimates based on Chao et al.’s (2021) network
-#' diversity (ND)
-#' @param data a matrix/data.frame of species abundances (for abundance data) or species-by-site incidence raw matrix/data.frame (for incidence data).\cr
-#' Abundance data: a species-by-site matrix/data.frame of species abundances. The row (species) names of
-#' data must match the species names in the phylogenetic tree and thus cannot be missing.\cr
-#' Incidence raw data: species-by-site raw incidence matrix/data.frame. When there are N assemblages
-#' and thus N matrices, users must first merge the N matrices by species identity to obtain a large
-#' merged incidence matrix, where the rows of the matrix refer to all species presented in the merged
-#' data. The row (species) names of data must match the species names in the phylogenetic tree and
-#' thus cannot be missing.
-#' @param nT needed only when \code{datatype = "incidence_raw"}, a sequence of named nonnegative integers specifying the number of sampling units in each assemblage.
-#' If \code{names(nT) = NULL}, then assemblage are automatically named as "assemblage1", "assemblage2",..., etc. Ignored if \code{datatype = "abundance"}.
-#' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
-#' or species-by-site raw incidence matrix (\code{datatype = "incidence_raw"}). Default is \code{"abundance"}.
-#' @param q a nonnegative value or sequence specifying the diversity order. Default is \code{c(0,1,2)}.
-#' @param type desired diversity type: \code{type = "PD"} for Chao et al. (2010) phylogenetic diversity
-#' and \code{type = "meanPD"} for mean phylogenetic diversity (phylogenetic Hill number). Default is \code{"PD"}.
-#' @param endpoint a positive integer specifying the endpoint for the rarefaction and extrapolation range.
-#' If \code{NULL}, then \code{endpoint} = double of the reference sample size in each assemblage. It is ignored if \code{size} is given.
-#' @param knots a positive integer specifying the number of equally-spaced knots between 1 and the \code{endpoint}. Default is 40.
-#' @param size a sequence of positive integers specifying the sample sizes for which PD or meanPD estimates will be calculated.
-#' If \code{NULL}, then estimates will be calculated for those sample sizes determined by the specified/default \code{endpoint}
-#' and \code{knots}.
-#' @param nboot a positive integer specifying the number of bootstrap replications when assessing sampling uncertainty and constructing confidence intervals.
-#' Enter 0 to skip the bootstrap procedures. Default is 50.
-#' @param conf a positive number < 1 specifying the level of confidence interval. Default is 0.95.
-#' @import ape
-#' @import ggplot2
-#' @import dplyr
-#' @import tidytree
-#' @importFrom stats rbinom
-#' @importFrom stats rbinom
-#' @importFrom stats qnorm
-#' @importFrom stats sd
-#' @importFrom phyclust get.rooted.tree.height
-#' @return
-#' \itemize{
-#'  \item{\code{$DataInfo}: A dataframe summarizing data information}
-#'  \item{\code{$iNextEst}: coverage-based diversity estimates along with confidence intervals}
-#'  (if \code{nboot > 0}) for showing diversity estimates for rarefied and extrapolated samples along with related statistics;
-#'  \item{\code{$AsyEst}: for
-#' showing asymptotic diversity estimates along with related statistics.}
-#' }
-
-
-#' @examples
-#' \dontrun{
-#' # Datatype: abundance data with phylogenetic tree
 #' data(puerto.rico)
-#' data <- puerto.rico$data
-#' rowtree <- puerto.rico$rowtree
-#' coltree <- puerto.rico$coltree
-#' out <- iNEXT_PND(data = data, row.tree = rowtree, col.tree = coltree, q = c(0, 1, 2))
-#' out
-#' }
+#' iNEXT3D.link(puerto.rico$data, class = 'TD', datatype="abundance")
+#' iNEXT3D.link(puerto.rico$data, class = 'PD', datatype="abundance", row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #' @references
 #' Chao, A., Chiu C.-H. and Jost, L. (2010). Phylogenetic diversity measures based on Hill numbers. \emph{Philosophical Transactions of the Royal Society B.}, 365, 3599-3609. \cr\cr
 #' Chao, A., Chiu, C.-H., Hsieh, T. C., Davis, T., Nipperess, D., and Faith, D. (2015). Rarefaction and extrapolation of phylogenetic diversity. \emph{Methods in Ecology and Evolution}, 6, 380-388.\cr\cr
@@ -292,8 +111,11 @@ PNDinfo <- function(data, datatype = "abundance", row.tree = NULL,col.tree = NUL
 #' \emph{Biodiversity Conservation and Phylogenetic Systematics: Preserving our Evolutionary Heritage in an Extinction Crisis}, Springer. \cr\cr
 #' Hsieh, T. C. and Chao, A. (2017). Rarefaction and extrapolation: making fair comparison of abundance-sensitive phylogenetic diversity among multiple assemblages. \emph{Systematic Biology}, 66, 100-111.
 #' @export
-iNEXT_PND <- function(x, row.tree = NULL,col.tree = NULL,q = c(0,1,2), datatype = "abundance",
-                      size = NULL, endpoint = NULL, knots = 40, se = TRUE, conf = 0.95, nboot = 30){
+
+iNEXT3D.link <- function(x, class, q = c(0,1,2), datatype = "abundance", size = NULL, nT = NULL,
+                         endpoint = NULL, knots = 40, conf = 0.95, nboot = 30,
+                         row.tree = NULL, col.tree = NULL
+                         ){
   # User interface
   TYPE <- c("abundance", "incidence", "incidence_freq", "incidence_raw")
   if(is.na(pmatch(datatype, TYPE)))
@@ -317,31 +139,81 @@ iNEXT_PND <- function(x, row.tree = NULL,col.tree = NULL,q = c(0,1,2), datatype 
     }
     datatype <- "incidence"
   }
-  ## calculate
+  if ( sum(!(class %in% c('TD', 'PD', 'FD', 'AUC')))>0 ){stop("Please select one of below class: 'TD', 'PD', 'FD', 'AUC'", call. = FALSE)}
+
   res = list()
-  ## 1. datainfo
-  datainfo = PNDinfo(data = x, datatype = datatype, row.tree = row.tree,col.tree = col.tree)
+  if(class == 'TD'){
+    ## 1. datainfo
+    datainfo = DataInfo3D.link(data = x, class = class, datatype = datatype)
+    ## 2. iNterpolation/ Extrapolation
+    data_long <- lapply(x, function(tab){
+      as.matrix(tab)%>%c()}
+    )
+    INEXT_est <- iNEXT3D::iNEXT3D(data_long, class = 'TD', q = q,conf = conf,nboot = nboot, knots = knots, endpoint = endpoint, size = size)
 
-  ## 2. iNterpolation/ Extrapolation
-  data_long <- lapply(x, function(tab){
-    as.matrix(tab)%>%c()}
-    ## 拉長
-  )
+    res[[1]] = datainfo
+    res[[2]] = INEXT_est$TDiNextEst
+    res[[3]] = INEXT_est$TDAsyEst
+    names(res) = c("TDInfo", "TDiNextEst", "TDAsyEst")
 
-  NetiNE <- get.netphydiv_iNE(data = x, q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf, knots = knots)
-  ## 3. empirical and asymptotic diversity
-  NetDiv <- get.netphydiv(data = x,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)
+  }else if(class == 'PD'){
+    ## 1. datainfo
+    datainfo = DataInfo3D.link(data = x, class = class, datatype = datatype, row.tree = row.tree,col.tree = col.tree)
+    ## 2. iNterpolation/ Extrapolation
+    data_long <- lapply(x, function(tab){
+      as.matrix(tab)%>%c()}
+      ## 拉長
+    )
+    NetiNE <- get.netphydiv_iNE(data = x, q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf, knots = knots)
+    ## 3. empirical and asymptotic diversity
+    NetDiv <- get.netphydiv(data = x,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)
 
-  res[[1]] = datainfo
-  res[[2]] = NetiNE
-  res[[3]] = NetDiv
-  names(res) = c("DataInfo", "iNextEst", "AsyEst")
-  class(res) <- c("iNEXT")
+    res[[1]] = datainfo
+    res[[2]] = NetiNE
+    res[[3]] = NetDiv
+    names(res) = c("PDInfo", "PDiNextEst", "PDAsyEst")
+
+  }
+
   return(res)
 }
+
+#' Exhibit basic data information
+#'
+#' \code{DataInfo3D.link}: exhibits basic data information
+#'
+#' @param data a vector/matrix/list of species abundances or incidence frequencies.\cr If \code{datatype = "incidence"},
+#' then the first entry of the input data must be total number of sampling units, followed by species incidence frequencies.
+#' @param class a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.
+#' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
+#' sampling-unit-based incidence frequencies data (\code{datatype = "incidence_freq"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).
+#' @return a data.frame of basic data information including sample size, observed species richness, sample coverage estimate, and the first ten abundance/incidence frequency counts.
+#' @examples
+#' data(puerto.rico)
+#' DataInfo3D.link(puerto.rico$data, class = 'TD', datatype="abundance")
+#' DataInfo3D.link(puerto.rico$data, class = 'PD', datatype="abundance", row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
+#' @export
+
+DataInfo3D.link <- function(data, class, datatype = "abundance", row.tree = NULL,col.tree = NULL){
+
+  if(class == 'PD'){
+    table <- lapply(data, function(y){datainfphy(data = y, datatype = datatype,
+                                                 row.tree = row.tree,col.tree = col.tree)})%>%
+      do.call(rbind,.)
+    rownames(table) <- names(data)
+    table = rownames_to_column(table, var = "Assemblages")
+  }else if(class == 'TD'){
+    table <- lapply(data, function(y){datainf(data = y, datatype = datatype)})%>%do.call(rbind,.)
+    rownames(table) <- names(data)
+    table = rownames_to_column(table, var = "Assemblages")
+  }
+  return(table)
+
+}
+
 #' Interpolation (rarefaction) and extrapolation of Chao et al.’s (2021) network diversity and mean network diversity
 
-#' Function \code{iNEXTPD} computes network diversity estimates for rarefied samples and extrapolated samples
+#' Function \code{iNEXT_beta.link} computes network diversity estimates for rarefied samples and extrapolated samples
 #' along with confidence intervals and related coverage estimates based on Chao et al.’s (2021) beta diversity
 #' @param data a matrix/data.frame of species abundances (for abundance data) or species-by-site incidence raw matrix/data.frame (for incidence data).\cr
 #' Abundance data: a species-by-site matrix/data.frame of species abundances. The row (species) names of
@@ -351,16 +223,14 @@ iNEXT_PND <- function(x, row.tree = NULL,col.tree = NULL,q = c(0,1,2), datatype 
 #' merged incidence matrix, where the rows of the matrix refer to all species presented in the merged
 #' data. The row (species) names of data must match the species names in the phylogenetic tree and
 #' thus cannot be missing.
+### @param class a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.
 #' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
 #' or species-by-site raw incidence matrix (\code{datatype = "incidence_raw"}). Default is \code{"abundance"}.
+
 #' @param q a nonnegative value or sequence specifying the diversity order. Default is \code{c(0,1,2)}.
 #' @param type desired diversity type: \code{type = "PD"} for Chao et al. (2010) phylogenetic diversity
 #' and \code{type = "meanPD"} for mean phylogenetic diversity (phylogenetic Hill number). Default is \code{"PD"}.
 
-#' @param knots a positive integer specifying the number of equally-spaced knots between 1 and the \code{endpoint}. Default is 40.
-#' @param size a sequence of positive integers specifying the sample sizes for which PD or meanPD estimates will be calculated.
-#' If \code{NULL}, then estimates will be calculated for those sample sizes determined by the specified/default \code{endpoint}
-#' and \code{knots}.
 #' @param nboot a positive integer specifying the number of bootstrap replications when assessing sampling uncertainty and constructing confidence intervals.
 #' Enter 0 to skip the bootstrap procedures. Default is 50.
 #' @param conf a positive number < 1 specifying the level of confidence interval. Default is 0.95.
@@ -386,10 +256,9 @@ iNEXT_PND <- function(x, row.tree = NULL,col.tree = NULL,q = c(0,1,2), datatype 
 #' @examples
 #' \dontrun{
 #' # example
-#' data(Norfolk)
-#' iNEXT_beta_link(Norfolk, coverage_expected, data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2),
-#' level=c('taxonomic', 'phylogenetic', 'functional'), nboot = 20, conf = 0.95, max_alpha_coverage=F,
-#'  by=c('coverage', 'size'),phy_tree=NULL, reftime = NULL)
+#' data(puerto.rico)
+#' iNEXT_beta.link(x = puerto.rico, class = 'TD',coverage_expected = seq(0.5, 1, 0.5), data_type=c('abundance', 'incidence_raw'),
+#                 q = c(0, 1, 2),level=c('taxonomic', 'phylogenetic', 'functional'), nboot = 20, conf = 0.95, max_alpha_coverage=F,by=c('coverage', 'size'))
 #'
 #'  dissimilarity1 = iNEXT_beta_link(Norfolk, coverage_expected = seq(0.5,1,0.05),
 #'  data_type='abundance', q = c(0, 1, 2),level='taxonomic',
@@ -397,24 +266,21 @@ iNEXT_PND <- function(x, row.tree = NULL,col.tree = NULL,q = c(0,1,2), datatype 
 
 #' }
 #' @references
-#' Chao, A., Chiu C.-H. and Jost, L. (2010). Phylogenetic diversity measures based on Hill numbers. \emph{Philosophical Transactions of the Royal Society B.}, 365, 3599-3609. \cr\cr
-#' Chao, A., Chiu, C.-H., Hsieh, T. C., Davis, T., Nipperess, D., and Faith, D. (2015). Rarefaction and extrapolation of phylogenetic diversity. \emph{Methods in Ecology and Evolution}, 6, 380-388.\cr\cr
-#' Chao, A., Chiu C.-H. and Jost L. (2016). Phylogenetic diversity measures and their decomposition: a framework based on Hill numbers. pp. 141-172 in Pellens R. and Grandcolas P. (eds)
-#' \emph{Biodiversity Conservation and Phylogenetic Systematics: Preserving our Evolutionary Heritage in an Extinction Crisis}, Springer. \cr\cr
-#' Hsieh, T. C. and Chao, A. (2017). Rarefaction and extrapolation: making fair comparison of abundance-sensitive phylogenetic diversity among multiple assemblages. \emph{Systematic Biology}, 66, 100-111.
+#' 	Chao, A., Chazdon, R. L., Colwell, R. K. and Shen, T.-J.(2005). A new statistical approach for assessing similarity of species composition with incidence and abundance data. Ecology Letters 8, 148-159. (pdf file) Spanish translation in pp. 85-96 of Halffter, G. Soberon, J., Koleff, P. and Melic, A. (eds) 2005 Sobre Diversidad Biologica: el Sognificado de las Diversidades Alfa, Beta y Gamma. m3m-Monografias 3ercer Milenio, vol. 4, SEA, CONABIO, Grupo DIVERSITAS & CONACYT, Zaragoza. IV +242 pp.
+#' Chiu, C.-H., Jost, L. and Chao*, A. (2014). Phylogenetic beta diversity, similarity, and differentiation measures based on Hill numbers. Ecological Monographs 84, 21-44.
+#' Chao, A. and Ricotta, C. (2019). Quantifying evenness and linking it to diversity, beta diversity, and similarity. Ecology, 100(12), e02852.
 #' @export
 
 # row.tree = rowtree
 # col.tree = coltree
-# x = puerto.rico
+# x = puerto.rico$data
 # coverage_expected = seq(0.5,1,0.05)
-# level = 'phylogenetic'; data_type = "abundance";conf=0.95;by = 'coverage';nboot=20
+# level = 'phylogenetic'; data_type = "abundance";conf=0.95;by = 'coverage';nboot=20;max_alpha_coverage=F
 # level = 'taxonomic'
 
-iNEXT_beta_link = function(x, coverage_expected = seq(0.5, 1, 0.5), data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2), level=c('taxonomic', 'phylogenetic', 'functional'),
+iNEXT_beta.link = function(x, coverage_expected = seq(0.5, 1, 0.5), data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2), level=c('taxonomic', 'phylogenetic', 'functional'),
                            nboot = 20, conf = 0.95, max_alpha_coverage=F, by=c('coverage', 'size'),
                            row.tree = NULL,col.tree = NULL){
-
   combined = ready4beta(x)
   if(level == 'taxonomic'){
     # dissimilarity <- iNEXT_beta(x = combined, coverage_expected = coverage_expected, data_type = data_type, level = 'taxonomic',
@@ -422,24 +288,15 @@ iNEXT_beta_link = function(x, coverage_expected = seq(0.5, 1, 0.5), data_type=c(
                                 nboot = nboot, conf = conf, max_alpha_coverage = max_alpha_coverage, by = by)
   }
   else if(level == 'phylogenetic'){
-
     dissimilarity = iNEXT_link_phybeta(x = combined, coverage_expected =coverage_expected, "abundance", level = 'phylogenetic',
                                        row.tree = rowtree,col.tree = coltree,
                                        nboot = 0, by = 'coverage')
   }
 
   return(dissimilarity)
-
 }
 
 
-
-# iNEXT_beta_link(x = puerto.rico, coverage_expected = seq(0.5,1,0.05), "abundance", level = 'phylogenetic',
-#                 row.tree = rowtree,col.tree = coltree,
-#                    nboot = 0, by = 'coverage')
-#
-#
-# str(dissimilarity)
 
 iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2), level=c('taxonomic', 'phylogenetic', 'functional'),
                                nboot = 20, conf = 0.95, max_alpha_coverage=F, by=c('coverage', 'size'),
@@ -1566,7 +1423,7 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 # ggiNEXT -------------------------------------------------------------------
 #' ggplot2 extension for an iNEXT object
 #'
-#' \code{ggiNEXT_ND}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXT}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
+#' \code{ggiNEXT3D.link}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXT}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
 #' @param x an \code{iNEXT} object computed by \code{\link{iNEXT}}.
 #' @param type three types of plots: sample-size-based rarefaction/extrapolation curve (\code{type = 1});
 #' sample completeness curve (\code{type = 2}); coverage-based rarefaction/extrapolation curve (\code{type = 3}).
@@ -1587,97 +1444,80 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 #' @examples
 #' \dontrun{
 #' #' data(Norfolk)
-#' out1 <- iNEXT_ND(Norfolk, datatype = "abundance")
-#' ggiNEXT_ND(x = out1, type = 1)
-#' ggiNEXT_ND(x = out1, type = 2)
-#' ggiNEXT_ND(x = out1, type = 3)
+#' out1 <- iNEXT3D.link(Norfolk, class = 'TD',datatype = "abundance")
+#' ggiNEXT3D.link(outcome = out1, type = 1)
+#' ggiNEXT3D.link(x = out1, class = 'TD',type = 2)
+#' ggiNEXT3D.link(x = out1, class = 'TD',type = 3)
+#'
+#' #' data(puerto.rico)
+#' out2 <- iNEXT3D.link(puerto.rico$data, class = 'PD', datatype="abundance", row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
+#' ggiNEXT3D.link(x = out2, class = 'PD',type = 1)
+#' ggiNEXT3D.link(x = out2, class = 'PD',type = 2)
+#' ggiNEXT3D.link(x = out2, class = 'PD',type = 3)
+#'
 #' }
 
-#'
-#' @export
-ggiNEXT_ND <- function(outcome,type = 1,se = TRUE,facet.var = "None",color.var = "Assemblage",grey = FALSE, text.size = 18){
+data(spider)
+out1 <- iNEXT3D(spider, class = 'TD', q = c(0,1,2), datatype = "abundance")
+ggiNEXT3D(out1, facet.var = "Assemblage")
 
-  iNEXT::ggiNEXT(outcome,type = type,facet.var = facet.var, color.var = color.var, se = se, grey = grey) + theme_bw() +
-    theme(legend.position = "bottom",
-          legend.title=element_blank(),
-          legend.box.spacing = unit(0.4, "cm"),
-          text=element_text(size= text.size),
-          legend.key.width = unit(1,"cm")) + ylab("Network diversity")
-}
-# ggiNEXT -------------------------------------------------------------------
-#' ggplot2 extension for an iNEXT object
-#'
-#' \code{ggiNEXT_PND}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXTlink}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
-#' @param x an \code{iNEXT} object computed by \code{\link{iNEXT}}.
-#' @param type three types of plots: sample-size-based rarefaction/extrapolation curve (\code{type = 1});
-#' sample completeness curve (\code{type = 2}); coverage-based rarefaction/extrapolation curve (\code{type = 3}).
-#' @param se a logical variable to display confidence interval around the estimated sampling curve.
-#' @param facet.var create a separate plot for each value of a specified variable:
-#'  no separation \cr (\code{facet.var="None"});
-#'  a separate plot for each diversity order (\code{facet.var="Order.q"});
-#'  a separate plot for each assemblage (\code{facet.var="Assemblage"});
-#'  a separate plot for each combination of order x assemblage (\code{facet.var="Both"}).
-#' @param color.var create curves in different colors for values of a specified variable:
-#'  all curves are in the same color (\code{color.var="None"});
-#'  use different colors for diversity orders (\code{color.var="Order.q"});
-#'  use different colors for sites (\code{color.var="Assemblage"});
-#'  use different colors for combinations of order x assemblage (\code{color.var="Both"}).
-#' @param grey a logical variable to display grey and white ggplot2 theme.
-#' @param ... other arguments passed on to methods. Not currently used.
-#' @return a ggplot2 object
-#' @examples
-#' \dontrun{
-#' data(Norfolk)
-#' out1 <- iNEXT_ND(Norfolk, datatype = "abundance")
-#' ggiNEXT_ND(x = out1, type = 1)
-#' ggiNEXT_ND(x = out1, type = 2)
-#' ggiNEXT_ND(x = out1, type = 3)
-#' }
+iNEXT3D::ggiNEXT3D(outcome,type = type,facet.var = facet.var, color.var = color.var, se = se)
 
 #' @export
-ggiNEXT_PND <- function(outcome,type = 1, stript.size = 14, text.size = 14){
-  iNE <- outcome$iNextEst
-  iNE.sub <- iNE[iNE$method == "observed",]
-  iNE[iNE$method == "observed",]$method <-  "interpolated"
-  ex <- iNE.sub
-  ex$method <- "extrapolated"
-  iNE <- rbind(iNE,ex)
-  iNE$method <- factor(iNE$method,levels = c("interpolated","extrapolated"))
-  iNE$Order.q = paste0("q = ", iNE$Order.q)
-  iNE.sub$Order.q = paste0("q = ", iNE.sub$Order.q)
+ggiNEXT3D.link <- function(outcome, class = 'TD', type = 1,se = TRUE,facet.var = "None",color.var = "Assemblage", text.size = 18){
+  if(class == 'TD'){
+    iNEXT3D::ggiNEXT3D(outcome,type = type,facet.var = facet.var, color.var = color.var, se = se) + theme_bw() +
+      theme(legend.position = "bottom",
+            legend.title=element_blank(),
+            legend.box.spacing = unit(0.4, "cm"),
+            text=element_text(size= text.size),
+            legend.key.width = unit(1,"cm")) + ylab("Network diversity")
 
-  if(type == 1){
-    # size-based
-    ggplot(iNE, aes(x = m,y = PD)) + geom_line(aes(color = Region,linetype = method),size = 1.2) + facet_wrap(~Order.q) +
-      geom_ribbon(aes(x = m,ymax = PD.UCL ,ymin = PD.LCL,fill = Region),alpha = 0.25) +
-      geom_point(aes(x = m,y = PD ,color = Region,shape = Region),size = 5,data = iNE.sub) +
-      theme(legend.position = "bottom",
-            legend.title=element_blank(), strip.text = element_text(size = stript.size),
-            text=element_text(size=text.size),
-            legend.key.width = unit(0.8,"cm"))  +
-      labs(x = "Number of individuals", y = "Network phylogenetic diversity", lty = "Method")+ theme_bw()
-  }else if(type == 3){
-    # coverage-based
-    ggplot(iNE) + geom_line(aes(x = SC,y = PD,color = Region,linetype = method),size = 1.2) + facet_wrap(~Order.q) +
-      geom_ribbon(aes(x = SC,ymax = PD.UCL ,ymin = PD.LCL,fill = Region),alpha = 0.25) +
-      geom_point(aes(x = SC,y = PD ,color = Region,shape = Region),size = 5,data = iNE.sub) + theme_bw() +
-      theme(legend.position = "bottom",
-            legend.title=element_blank(), strip.text = element_text(size = stript.size),
-            text=element_text(size=text.size),
-            legend.key.width = unit(0.8,"cm"))  +
-      labs(x = "Sample coverage", y = "Phylogenetic network diversity", lty = "Method")
+  }else if(class == 'PD'){
+    iNE <- outcome$iNextEst
+    iNE.sub <- iNE[iNE$method == "observed",]
+    iNE[iNE$method == "observed",]$method <-  "interpolated"
+    ex <- iNE.sub
+    ex$method <- "extrapolated"
+    iNE <- rbind(iNE,ex)
+    iNE$method <- factor(iNE$method,levels = c("interpolated","extrapolated"))
+    iNE$Order.q = paste0("q = ", iNE$Order.q)
+    iNE.sub$Order.q = paste0("q = ", iNE.sub$Order.q)
+
+    if(type == 1){
+      # size-based
+      ggplot(iNE, aes(x = m,y = PD)) + geom_line(aes(color = Region,linetype = method),size = 1.2) + facet_wrap(~Order.q) +
+        geom_ribbon(aes(x = m,ymax = PD.UCL ,ymin = PD.LCL,fill = Region),alpha = 0.25) +
+        geom_point(aes(x = m,y = PD ,color = Region,shape = Region),size = 5,data = iNE.sub) +
+        theme(legend.position = "bottom",
+              legend.title=element_blank(), strip.text = element_text(size = stript.size),
+              text=element_text(size=text.size),
+              legend.key.width = unit(0.8,"cm"))  +
+        labs(x = "Number of individuals", y = "Network phylogenetic diversity", lty = "Method")+ theme_bw()
+    }else if(type == 3){
+      # coverage-based
+      ggplot(iNE) + geom_line(aes(x = SC,y = PD,color = Region,linetype = method),size = 1.2) + facet_wrap(~Order.q) +
+        geom_ribbon(aes(x = SC,ymax = PD.UCL ,ymin = PD.LCL,fill = Region),alpha = 0.25) +
+        geom_point(aes(x = SC,y = PD ,color = Region,shape = Region),size = 5,data = iNE.sub) + theme_bw() +
+        theme(legend.position = "bottom",
+              legend.title=element_blank(), strip.text = element_text(size = stript.size),
+              text=element_text(size=text.size),
+              legend.key.width = unit(0.8,"cm"))  +
+        labs(x = "Sample coverage", y = "Phylogenetic network diversity", lty = "Method")
+    }
+    # if(grey){
+    #   g <- g +
+    #     scale_fill_grey(start = 0, end = .4) +
+    #     scale_colour_grey(start = .2, end = .2)
+    # }
   }
-  # if(grey){
-  #   g <- g +
-  #     scale_fill_grey(start = 0, end = .4) +
-  #     scale_colour_grey(start = .2, end = .2)
-  # }
 
 }
+
 # ggiNEXT -------------------------------------------------------------------
 #' ggplot2 extension for an iNEXT object
 #'
-#' \code{ggiNEXT_beta_link}: the \code{\link[ggplot2]{ggplot}} extension for
+#' \code{ggiNEXT_beta.link}: the \code{\link[ggplot2]{ggplot}} extension for
 #' \code{\link{iNEXTlink}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
 #' @param x an \code{iNEXT} object computed by \code{\link{iNEXT}}.
 #' @param type three types of plots: sample-size-based rarefaction/extrapolation curve (\code{type = 1});
@@ -1708,7 +1548,7 @@ ggiNEXT_PND <- function(outcome,type = 1, stript.size = 14, text.size = 14){
 
 
 #' @export
-ggiNEXT_beta_link <- function(output, type = c('B', 'D'), measurement = c('T', 'P', 'F_tau', 'F_AUC'),
+ggiNEXT_beta.link <- function(output, type = c('B', 'D'), measurement = c('T', 'P', 'F_tau', 'F_AUC'),
                               scale='free', main=NULL, transp=0.4, stript.size = 11, text.size = 13){
   # if(length(outcome) == 1){ outcome = outcome}
   if (type == 'B'){
@@ -1812,10 +1652,10 @@ ggiNEXT_beta_link <- function(output, type = c('B', 'D'), measurement = c('T', '
     }
     return(plot)
 }
-# ggAsyD -------------------------------------------------------------------
+# ggAsy3D.link -------------------------------------------------------------------
 #' ggplot for Asymptotic Network diversity
 #'
-#' \code{ggAsyND} Plots q-profile based on the outcome of \code{AsyND} using the ggplot2 package.\cr
+#' \code{ggAsy3D.link} Plots q-profile based on the outcome of \code{AsyND} using the ggplot2 package.\cr
 #' It will only show the confidence interval of 'Estimated'.
 #'
 #' @param outcome the outcome of the functions \code{AsyND} .\cr
@@ -1826,12 +1666,12 @@ ggiNEXT_beta_link <- function(output, type = c('B', 'D'), measurement = c('T', '
 #' ## example for abundance-based data
 #' ## Ex.1
 #' data(Norfolk)
-#' out1 <- AsyND(Norfolk, datatype = "abundance")
-#' ggAsyND(out1)
+#' out1 <- Asy3D.link(Norfolk, datatype = "abundance")
+#' ggAsy3D.link(out1)
 #' }
 
 #' @export
-ggAsyND <- function(outcome, text.size = 14){
+ggAsy3D.link <- function(outcome, text.size = 14){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
   if (sum(unique(outcome$method) %in% c("Estimated", "Empirical")) == 0)
@@ -1849,39 +1689,8 @@ ggAsyND <- function(outcome, text.size = 14){
           legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10),
           text = element_text(size = text.size)
           )
-}
 
-# ggAsyD -------------------------------------------------------------------
-#' ggplot for Asymptotic diversity
-#'
-#' \code{ggAsyPND} Plots q-profile based on the outcome of \code{AsyD} using the ggplot2 package.\cr
-#' It will only show the confidence interval of 'Estimated'.
-#'
-#' @param outcome the outcome of the functions \code{AsyD} .\cr
-#' @return a figure of estimated sample completeness with order q\cr\cr
-#'
-#' @examples
-#' \dontrun{
-#' data(puerto.rico)
-#' out1 <- AsyPND(puerto.rico$data, datatype = "abundance")
-#' ggAsyPND(out1)
-#' }
-#' @export
-ggAsyPND <- function(outcome, text_size = 14){
-  table = outcome
-  cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
-                     "#330066", "#CC79A7", "#0072B2", "#D55E00"))
-  if (sum(unique(table$method) %in% c("Estimated", "Empirical")) == 0)
-    stop("Please use the outcome from specified function 'AsyD'")
-
-  ggplot(table) +
-    geom_line(aes(x = Order.q, y = Estimate,lty = method, color = Region),lwd = 1.4) +
-    geom_ribbon(aes(x = Order.q, ymin = LCL, ymax = UCL,fill = Region,lty = method), alpha = 0.25) + theme_bw() +
-    theme(legend.position = "bottom",
-          legend.title=element_blank(),
-          text=element_text(size=text_size),
-          legend.key.width = unit(1,"cm"))  +
-    labs(x = "Order q", y = "Network phylogenetic diversity", lty = "Method") + scale_linetype_manual(values=c("dashed","solid"))
+  # +labs(x = "Order q", y = "Network phylogenetic diversity", lty = "Method") + scale_linetype_manual(values=c("dashed","solid"))
 }
 
 # AsyND -------------------------------------------------------------------
@@ -1900,45 +1709,31 @@ ggAsyPND <- function(outcome, text_size = 14){
 #' }
 #'
 #' @export
-AsyND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, conf = 0.95){
-  lapply(1:length(data), function(i) {
-    x = data[[i]]
-    assemblage = names(data)[[i]]
-    # tmp <- c(as.matrix(x))
-    # tmp = x
-    res = MakeTable_Proposeprofile(data = x, B = nboot, q, conf = conf)%>%
-      rename("qD"="Estimate", "qD.LCL"="LCL", "qD.UCL"="UCL")%>%
-      mutate(Assemblage = assemblage, method = "Estimated")%>%filter(Target == "Diversity")%>%select(-Target)
-    return(res)
+Asy3D.link <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30, conf = 0.95,
+                       row.tree = NULL, col.tree = NULL){
+  if(class = 'TD'){
+    NetDiv <- lapply(1:length(data), function(i) {
+      x = data[[i]]
+      assemblage = names(data)[[i]]
+      # tmp <- c(as.matrix(x))
+      # tmp = x
+      res = MakeTable_Proposeprofile(data = x, B = nboot, q, conf = conf)%>%
+        rename("qD"="Estimate", "qD.LCL"="LCL", "qD.UCL"="UCL")%>%
+        mutate(Assemblage = assemblage, method = "Estimated")%>%filter(Target == "Diversity")%>%select(-Target)
+      return(res)
     })%>%do.call("rbind",.)
+    return(NetDiv)
+  }
+
+
+
+  else if(class = 'PD'){
+    NetDiv <- get.netphydiv(data = data,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)%>%
+      filter(method == "Estimate")
+
+    return(NetDiv)
+  }
 }
-# AsyPND -------------------------------------------------------------------
-#' Asymptotic Phylogenetic diversity q profile
-#'
-#' \code{AsyPND} The estimated and empirical diversity of order q
-#'
-#' @param outcome the outcome of the functions \code{AsyD} .\cr
-#' @return a table of Asymptotic network diversity q profile
-#'
-#' @examples
-#' \dontrun{
-#' ## Type (1) example for abundance-based data
-#' ## Ex.1
-#' data(puerto.rico$data)
-#' out1 <- AsyND(puerto.rico$data, datatype = "abundance", row.tree = row.tree,col.tree = col.tree)
-#' ggAsyPND(out1)
-#' }
-#' @export
-AsyPND <- function(data = puerto.rico$data, q = seq(0, 2, 0.2), datatype = "abundance",
-                   row.tree = NULL, col.tree = NULL,
-                   nboot = 50, conf = 0.95){
-
-  NetDiv <- get.netphydiv(data = data,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)%>%
-    filter(method == "Estimate")
-
-  return(NetDiv)
-}
-
 
 
 # ObsND -------------------------------------------------------------------
@@ -1958,42 +1753,30 @@ AsyPND <- function(data = puerto.rico$data, q = seq(0, 2, 0.2), datatype = "abun
 #' }
 #' @export
 ObsND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, conf = 0.95){
+  if(class = 'TD'){
+    NetDiv <- lapply(1:length(data), function(i){
+      x = data[[i]]
+      assemblage = names(data)[[i]]
+      tmp <- c(as.matrix(x))
+      ## nboot has to larger than 0
+      res = MakeTable_Empericalprofile(data = x, B = nboot, q, conf = conf)%>%
+        rename("qD"="Emperical", "qD.LCL"="LCL", "qD.UCL"="UCL")%>%
+        mutate(Assemblage = assemblage, method = "Empirical")%>%filter(Target == "Diversity")%>%select(-Target)
+      return(res)
+    })%>%do.call("rbind",.)
+    return(NetDiv)
+  }
 
-  lapply(1:length(data), function(i){
-    x = data[[i]]
-    assemblage = names(data)[[i]]
-    tmp <- c(as.matrix(x))
-    ## nboot has to larger than 0
-    res = MakeTable_Empericalprofile(data = x, B = nboot, q, conf = conf)%>%
-      rename("qD"="Emperical", "qD.LCL"="LCL", "qD.UCL"="UCL")%>%
-      mutate(Assemblage = assemblage, method = "Empirical")%>%filter(Target == "Diversity")%>%select(-Target)
-    return(res)
-  })%>%do.call("rbind",.)
-}
-# ObsPND -------------------------------------------------------------------
-#' Empirical diversity q profile
-#'
-#' \code{ObsND} The estimated and empirical diversity of order q
-#'
-#' @param outcome the outcome of the functions \code{ObsND} .\cr
-#' @return a table of Asymptotic network diversity q profile
-#'
-#' @examples
-#' \dontrun{
-#' ## Example for abundance-based data
-#' data(puerto.rico$data)
-#' out1 <- ObsPND(puerto.rico$data, datatype = "abundance", row.tree = row.tree,col.tree = col.tree)
-#' ggObsPND(out1)
-#' }
-#' @export
-ObsPND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, conf = 0.95, row.tree = NULL, col.tree = NULL){
-  NetDiv <- get.netphydiv(data = data,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)%>%
-    filter(method == "Empirical")
+  else if(class = 'PD'){
+    NetDiv <- get.netphydiv(data = data,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)%>%
+      filter(method == "Empirical")
 
-  return(NetDiv)
+    return(NetDiv)
+  }
 }
 
-# estimateD  -------------------------------------------------------------------
+
+# estimate3D  -------------------------------------------------------------------
 #' Compute species diversity with a particular of sample size/coverage
 #'
 #' \code{estimateND} computes species diversity (Hill numbers with q = 0, 1 and 2) with a particular user-specified level of sample size or sample coverage.
@@ -2010,108 +1793,94 @@ ObsPND <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50,
 
 #'
 #' @export
-estimateND = function(dat,q = c(0, 1, 2),datatype = "abundance",base = "size",
+estimate3D.link = function(dat,q = c(0, 1, 2),datatype = "abundance",base = "size",
                       level = NULL,nboot = 50,conf = 0.95){
-  lapply(1:length(dat), function(i){
-    x = dat[[i]]
-    assemblage = names(dat)[[i]]
-    long = as.matrix(x)%>%c()
-    estimateD(long, q=q,datatype=datatype, base=base,level=level, nboot = nboot,conf=conf)%>%
-      mutate(Assemblage = assemblage)
-  })%>%do.call("rbind",.)
-}
-# estimatedPND  -------------------------------------------------------------------
-#' Compute species diversity with a particular of sample size/coverage
-#'
-#' \code{estimatedPND} computes species diversity (Hill numbers with q = 0, 1 and 2) with a particular user-specified level of sample size or sample coverage.
-#'
-#' @param outcome the outcome of the functions \code{ObsND} .\cr
-#' @return a data.frame of species diversity table including the sample size, sample coverage, method (rarefaction or extrapolation), and diversity estimates with q = 0, 1, and 2 for the user-specified sample size or sample coverage.
-#'
-#' @examples
-#' \dontrun{
-#' data(puerto.rico$data)
-#' out <- estimatedPND(puerto.rico$data, q = c(0,1,2), datatype = "abundance", row.tree = rowtree, col.tree = coltree)
-#' out
-#' }
+  if(class = 'TD'){
+    div = lapply(1:length(dat), function(i){
+      x = dat[[i]]
+      assemblage = names(dat)[[i]]
+      long = as.matrix(x)%>%c()
+      estimateD(long, q=q,datatype=datatype, base=base,level=level, nboot = nboot,conf=conf)%>%
+        mutate(Assemblage = assemblage)
+    })%>%do.call("rbind",.)
 
-#'
-#' @export
-estimatePND <- function(data,q = c(0, 1, 2),datatype = "abundance",
-                         row.tree = NULL, col.tree =NULL,
-                         level = NULL,nboot = 30,conf = 0.95){
-  q <- unique(ceiling(q))
-  ci <- qnorm(conf/2+0.5)
+    return(div)
+  }else if(class = 'PD'){
+    q <- unique(ceiling(q))
+    ci <- qnorm(conf/2+0.5)
 
-  if (is.null(level)) {
-    if (datatype == "abundance") {
-      level <- sapply(data, function(x) {
-        ni <- sum(x)
-        iNEXTPD2:::Coverage(data = x, datatype = datatype, m = 2 * ni, nt = ni)
-      })
+    if (is.null(level)) {
+      if (datatype == "abundance") {
+        level <- sapply(data, function(x) {
+          ni <- sum(x)
+          iNEXTPD2:::Coverage(data = x, datatype = datatype, m = 2 * ni, nt = ni)
+        })
+      }
+      else if (datatype == "incidence_raw") {
+        level <- sapply(data, function(x) {
+          ni <- ncol(x)
+          Coverage(data = x, datatype = datatype, m = 2 *
+                     ni, nt = ni)
+        })
+      }
+      level <- min(level)
     }
-    else if (datatype == "incidence_raw") {
-      level <- sapply(data, function(x) {
-        ni <- ncol(x)
-        Coverage(data = x, datatype = datatype, m = 2 *
-                   ni, nt = ni)
-      })
-    }
-    level <- min(level)
-  }
-  # level =0.7
-  res = lapply(1:length(data), function(i){
-    x = data[[i]]
-    assemblage = names(data)[[i]]
-    long = as.matrix(x)%>%c()
-    m_target = Coverage_to_size(x, C = level)
-    # if(base == "size"){m_target = level}
-    inex <- function(data,m,q,B,row.tree = NULL,col.tree = NULL) {
-      data <- as.matrix(data)
-      n <- sum(data)
-      phydata <- create.aili(data,row.tree = row.tree,col.tree = col.tree)
-      tbar <- sum(phydata$branch.length*phydata$branch.abun)/n
-      boot.sam <- sample.boot.phy(data,B,row.tree = row.tree,col.tree = col.tree)
-      sc <- PhD:::Coverage(data,datatype = "abundance",m,nt =n)
-      # sc <- coverage(data,m)
-      sc.sd <- lapply(boot.sam,function(x){
-        x <- x[x$tgroup == "Tip",]$branch.abun
-        PhD:::Coverage(x,datatype = "abundance",m,nt =n)
-      })
-      sc.sd <- do.call(cbind,sc.sd)
-      sc.sd <- sapply(1:length(m), function(x){
-        sd(sc.sd[x,])
-      })
-      sc.table <- data.frame(m=m,SC = sc, SC.UCL = sc+ci * sc.sd,SC.LCL = sc - ci * sc.sd)
-      out <- lapply(q, function(x){
-        PD <- lapply(m,function(y){
-          my_PhD.m.est(ai = phydata$branch.abun, Lis = phydata$branch.length, m = y, q = x, nt = n, cal = 'PD')/tbar
-          # PhD:::PhD.m.est(phydata,y,x,datatype = "abundance",nt = n)/tbar
-        })%>%unlist()
-        PD.sd <- lapply(boot.sam, function(z){
-          tmp <- lapply(m,function(y){
-            # PhD:::PhD.m.est(z,y,x,datatype = "abundance",nt = n)/tbar
-            my_PhD.m.est(ai = z$branch.abun, Lis = z$branch.length, m = y, q = x, nt = n, cal = 'PD')/tbar
+    # level =0.7
+    res = lapply(1:length(data), function(i){
+      x = data[[i]]
+      assemblage = names(data)[[i]]
+      long = as.matrix(x)%>%c()
+      m_target = Coverage_to_size(x, C = level)
+      # if(base == "size"){m_target = level}
+      inex <- function(data,m,q,B,row.tree = NULL,col.tree = NULL) {
+        data <- as.matrix(data)
+        n <- sum(data)
+        phydata <- create.aili(data,row.tree = row.tree,col.tree = col.tree)
+        tbar <- sum(phydata$branch.length*phydata$branch.abun)/n
+        boot.sam <- sample.boot.phy(data,B,row.tree = row.tree,col.tree = col.tree)
+        sc <- PhD:::Coverage(data,datatype = "abundance",m,nt =n)
+        # sc <- coverage(data,m)
+        sc.sd <- lapply(boot.sam,function(x){
+          x <- x[x$tgroup == "Tip",]$branch.abun
+          PhD:::Coverage(x,datatype = "abundance",m,nt =n)
+        })
+        sc.sd <- do.call(cbind,sc.sd)
+        sc.sd <- sapply(1:length(m), function(x){
+          sd(sc.sd[x,])
+        })
+        sc.table <- data.frame(m=m,SC = sc, SC.UCL = sc+ci * sc.sd,SC.LCL = sc - ci * sc.sd)
+        out <- lapply(q, function(x){
+          PD <- lapply(m,function(y){
+            my_PhD.m.est(ai = phydata$branch.abun, Lis = phydata$branch.length, m = y, q = x, nt = n, cal = 'PD')/tbar
+            # PhD:::PhD.m.est(phydata,y,x,datatype = "abundance",nt = n)/tbar
+          })%>%unlist()
+          PD.sd <- lapply(boot.sam, function(z){
+            tmp <- lapply(m,function(y){
+              # PhD:::PhD.m.est(z,y,x,datatype = "abundance",nt = n)/tbar
+              my_PhD.m.est(ai = z$branch.abun, Lis = z$branch.length, m = y, q = x, nt = n, cal = 'PD')/tbar
+            })
+            unlist(tmp)
           })
-          unlist(tmp)
+          PD.sd <- do.call(cbind,PD.sd)
+          PD.sd <- sapply(1:length(m), function(x){
+            sd(PD.sd[x,])
+          })
+          PD.table <- data.frame(m=m,method = ifelse(m<n,"interpolated",ifelse(n == m,"observed","extrapolated")),
+                                 Order.q = x,PD = PD, PD.UCL = PD+ci * PD.sd,PD.LCL = PD - ci * PD.sd)
+          out <- left_join(PD.table,sc.table)
+          out
         })
-        PD.sd <- do.call(cbind,PD.sd)
-        PD.sd <- sapply(1:length(m), function(x){
-          sd(PD.sd[x,])
-        })
-        PD.table <- data.frame(m=m,method = ifelse(m<n,"interpolated",ifelse(n == m,"observed","extrapolated")),
-                               Order.q = x,PD = PD, PD.UCL = PD+ci * PD.sd,PD.LCL = PD - ci * PD.sd)
-        out <- left_join(PD.table,sc.table)
-        out
-      })
-      do.call(rbind,out)
-    }
+        do.call(rbind,out)
+      }
 
-    inex(data = x,m = m_target, q,B = nboot,row.tree,col.tree)%>%
-      mutate(Assemblage = assemblage)
+      inex(data = x,m = m_target, q,B = nboot,row.tree,col.tree)%>%
+        mutate(Assemblage = assemblage)
 
-  })%>%do.call("rbind",.)
-  return(res)
+    })%>%do.call("rbind",.)
+    return(res)
+  }
+
+
 }
 
 # NetSpec  -------------------------------------------------------------------
