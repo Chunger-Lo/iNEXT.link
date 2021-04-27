@@ -28,7 +28,10 @@ a data.frame of basic data information including sample size, observed species r
 \code{DataInfo3D.link}: exhibits basic data information
 }
 \examples{
+\dontrun{
 data(puerto.rico)
 DataInfo3D.link(puerto.rico$data, class = 'TD', datatype="abundance")
-DataInfo3D.link(puerto.rico$data, class = 'PD', datatype="abundance", row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
+DataInfo3D.link(puerto.rico$data, class = 'PD', datatype="abundance",
+row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
+}
 }

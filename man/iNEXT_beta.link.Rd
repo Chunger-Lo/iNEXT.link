@@ -61,11 +61,8 @@ along with confidence intervals and related coverage estimates based on Chao et 
 \dontrun{
 # example
 data(puerto.rico)
-iNEXT_beta.link(x = puerto.rico, class = 'TD',coverage_expected = seq(0.5, 1, 0.5), data_type=c('abundance', 'incidence_raw'),
-
- dissimilarity1 = iNEXT_beta_link(Norfolk, coverage_expected = seq(0.5,1,0.05),
- data_type='abundance', q = c(0, 1, 2),level='taxonomic',
- nboot = 20, conf = 0.95, max_alpha_coverage=F, by='coverage')
+iNEXT_beta.link(x = puerto.rico,coverage_expected = seq(0.5, 1, 0.5), data_type='abundance',q = c(0, 1, 2),
+level=c('taxonomic', 'phylogenetic', 'functional'), nboot = 20, conf = 0.95, max_alpha_coverage=F,by='coverage')
 }
 }
 \references{

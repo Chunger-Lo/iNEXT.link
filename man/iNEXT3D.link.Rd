@@ -80,9 +80,11 @@ along with confidence intervals and related coverage estimates based on Chao et 
 diversity (ND)
 }
 \examples{
+\dontrun{
 data(puerto.rico)
 iNEXT3D.link(puerto.rico$data, class = 'TD', datatype="abundance")
 iNEXT3D.link(puerto.rico$data, class = 'PD', datatype="abundance", row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
+}
 }
 \references{
 Chao, A., Chiu C.-H. and Jost, L. (2010). Phylogenetic diversity measures based on Hill numbers. \emph{Philosophical Transactions of the Royal Society B.}, 365, 3599-3609. \cr\cr
