@@ -55,9 +55,9 @@ ggSC.link <- function(output){
           legend.key.width = unit(1.2, "cm"), legend.title = element_blank())
 }
 
-# iNEXT3D.link -------------------------------------------------------------------
+# iNEXT.link -------------------------------------------------------------------
 #' Interpolation (rarefaction) and extrapolation of Chao et al.’s (2021) network diversity and mean network diversity
-#' Function \code{iNEXT3D.link} computes network diversity estimates for rarefied samples and extrapolated samples
+#' Function \code{iNEXT.link} computes network diversity estimates for rarefied samples and extrapolated samples
 #' along with confidence intervals and related coverage estimates based on Chao et al.’s (2021) network
 #' diversity (ND)
 #' @param data a matrix/data.frame of species
@@ -104,8 +104,8 @@ ggSC.link <- function(output){
 #' @examples
 #' \dontrun{
 #' data(puerto.rico)
-#' iNEXT3D.link(puerto.rico$data, class = 'TD', datatype="abundance")
-#' iNEXT3D.link(puerto.rico$data, class = 'PD', datatype="abundance", row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
+#' iNEXT.link(puerto.rico$data, class = 'TD', datatype="abundance")
+#' iNEXT.link(puerto.rico$data, class = 'PD', datatype="abundance", row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #' }
 
 #' @references
@@ -116,7 +116,7 @@ ggSC.link <- function(output){
 #' Hsieh, T. C. and Chao, A. (2017). Rarefaction and extrapolation: making fair comparison of abundance-sensitive phylogenetic diversity among multiple assemblages. \emph{Systematic Biology}, 66, 100-111.
 #' @export
 
-iNEXT3D.link <- function(x, class, q = c(0,1,2), datatype = "abundance", size = NULL, nT = NULL,
+iNEXT.link <- function(x, class, q = c(0,1,2), datatype = "abundance", size = NULL, nT = NULL,
                          endpoint = NULL, knots = 40, conf = 0.95, nboot = 30,
                          row.tree = NULL, col.tree = NULL
                          ){
@@ -148,7 +148,7 @@ iNEXT3D.link <- function(x, class, q = c(0,1,2), datatype = "abundance", size = 
   res = list()
   if(class == 'TD'){
     ## 1. datainfo
-    datainfo = DataInfo3D.link(data = x, class = class, datatype = datatype)
+    datainfo = DataInfo.link(data = x, class = class, datatype = datatype)
     ## 2. iNterpolation/ Extrapolation
     data_long <- lapply(x, function(tab){
       as.matrix(tab)%>%c()}
@@ -162,7 +162,7 @@ iNEXT3D.link <- function(x, class, q = c(0,1,2), datatype = "abundance", size = 
 
   }else if(class == 'PD'){
     ## 1. datainfo
-    datainfo = DataInfo3D.link(data = x, class = class, datatype = datatype, row.tree = row.tree,col.tree = col.tree)
+    datainfo = DataInfo.link(data = x, class = class, datatype = datatype, row.tree = row.tree,col.tree = col.tree)
     ## 2. iNterpolation/ Extrapolation
     data_long <- lapply(x, function(tab){
       as.matrix(tab)%>%c()}
@@ -182,10 +182,10 @@ iNEXT3D.link <- function(x, class, q = c(0,1,2), datatype = "abundance", size = 
   return(res)
 }
 
-# DataInfo3D.link ----------------------
+# DataInfo.link ----------------------
 #' Exhibit basic data information
 #'
-#' \code{DataInfo3D.link}: exhibits basic data information
+#' \code{DataInfo.link}: exhibits basic data information
 #'
 #' @param data a vector/matrix/list of species abundances or incidence frequencies.\cr If \code{datatype = "incidence"},
 #' then the first entry of the input data must be total number of sampling units, followed by species incidence frequencies.
@@ -197,14 +197,14 @@ iNEXT3D.link <- function(x, class, q = c(0,1,2), datatype = "abundance", size = 
 #' @examples
 #' \dontrun{
 #' data(puerto.rico)
-#' DataInfo3D.link(puerto.rico$data, class = 'TD', datatype="abundance")
-#' DataInfo3D.link(puerto.rico$data, class = 'PD', datatype="abundance",
+#' DataInfo.link(puerto.rico$data, class = 'TD', datatype="abundance")
+#' DataInfo.link(puerto.rico$data, class = 'PD', datatype="abundance",
 #' row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #' }
 
 #' @export
 
-DataInfo3D.link <- function(data, class, datatype = "abundance", row.tree = NULL,col.tree = NULL){
+DataInfo.link <- function(data, class, datatype = "abundance", row.tree = NULL,col.tree = NULL){
 
   if(class == 'PD'){
     table <- lapply(data, function(y){datainfphy(data = y, datatype = datatype,
@@ -1429,7 +1429,7 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 # ggiNEXT -------------------------------------------------------------------
 #' ggplot2 extension for an iNEXT object
 #'
-#' \code{ggiNEXT3D.link}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXT}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
+#' \code{ggiNEXT.link}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXT}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
 #' @param x an \code{iNEXT} object computed by \code{\link{iNEXT}}.
 #' @param type three types of plots: sample-size-based rarefaction/extrapolation curve (\code{type = 1});
 #' sample completeness curve (\code{type = 2}); coverage-based rarefaction/extrapolation curve (\code{type = 3}).
@@ -1450,22 +1450,22 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 #' @examples
 #' \dontrun{
 #' data(Norfolk)
-#' out1 <- iNEXT3D.link(Norfolk, class = 'TD',datatype = "abundance", nboot = 0)
-#' ggiNEXT3D.link(outcome = out1, type = 1)
-#' ggiNEXT3D.link(outcome = out1, type = 2)
-#' ggiNEXT3D.link(outcome = out1, type = 3)
+#' out1 <- iNEXT.link(Norfolk, class = 'TD',datatype = "abundance", nboot = 0)
+#' ggiNEXT.link(outcome = out1, type = 1)
+#' ggiNEXT.link(outcome = out1, type = 2)
+#' ggiNEXT.link(outcome = out1, type = 3)
 #'
 #' #' data(puerto.rico)
-#' out2 <- iNEXT3D.link(puerto.rico$data, class = 'PD', datatype="abundance",
+#' out2 <- iNEXT.link(puerto.rico$data, class = 'PD', datatype="abundance",
 #' row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
-#' ggiNEXT3D.link(outcome = out2, type = 1)
-#' ggiNEXT3D.link(outcome = out2, type = 2)
-#' ggiNEXT3D.link(outcome = out2, type = 3)
+#' ggiNEXT.link(outcome = out2, type = 1)
+#' ggiNEXT.link(outcome = out2, type = 2)
+#' ggiNEXT.link(outcome = out2, type = 3)
 #' }
 
 
 #' @export
-ggiNEXT3D.link <- function(outcome, class = 'TD', type = 1,se = TRUE,facet.var = "Assemblage",color.var = "Order.q", text.size = 18){
+ggiNEXT.link <- function(outcome, class = 'TD', type = 1,se = TRUE,facet.var = "Assemblage",color.var = "Order.q", text.size = 18){
   if(class == 'TD'){
     iNEXT3D::ggiNEXT3D(outcome,type = type,facet.var = facet.var, color.var = color.var, se = se) +
       theme_bw() +
@@ -1655,10 +1655,10 @@ ggiNEXT_beta.link <- function(output, type = c('B', 'D'), measurement = c('T', '
     return(plot)
 }
 
-# Asy3D.link -------------------------------------------------------------------
+# Asy.link -------------------------------------------------------------------
 #' Asymptotic diversity q profile
 #'
-#' \code{Asy3D.link} The estimated and empirical diversity of order q
+#' \code{Asy.link} The estimated and empirical diversity of order q
 #'
 #' @param outcome the outcome of the functions \code{AsyD} .\cr
 #' @return a table of Asymptoti network diversity q profile
@@ -1667,17 +1667,17 @@ ggiNEXT_beta.link <- function(output, type = c('B', 'D'), measurement = c('T', '
 #' \dontrun{
 #' ## Ex.1
 #' data(Norfolk)
-#' out1 <- Asy3D.link(Norfolk, class = 'TD', datatype = "abundance", nboot = 10)
-#' ggAsy3D.link(out1)
+#' out1 <- Asy.link(Norfolk, class = 'TD', datatype = "abundance", nboot = 10)
+#' ggAsy.link(out1)
 #' ## Ex.2
 #' data(puerto.rico)
-#' out2 <- Asy3D.link(puerto.rico$data, class = 'PD', datatype = "abundance", nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
-#' ggAsy3D.link(out2)
+#' out2 <- Asy.link(puerto.rico$data, class = 'PD', datatype = "abundance", nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
+#' ggAsy.link(out2)
 #' }
 
 #'
 #' @export
-Asy3D.link <- function(data, class = 'TD', q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30, conf = 0.95,
+Asy.link <- function(data, class = 'TD', q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30, conf = 0.95,
                        row.tree = NULL, col.tree = NULL){
   if(class == 'TD'){
     NetDiv <- lapply(1:length(data), function(i) {
@@ -1700,10 +1700,10 @@ Asy3D.link <- function(data, class = 'TD', q = seq(0, 2, 0.2), datatype = "abund
 }
 
 
-# Obs3D.link -------------------------------------------------------------------
+# Obs.link -------------------------------------------------------------------
 #' Empirical diversity q profile
 #'
-#' \code{Obs3D.link} The estimated and empirical diversity of order q
+#' \code{Obs.link} The estimated and empirical diversity of order q
 #'
 #' @param outcome the outcome of the functions \code{ObsND} .\cr
 #' @return a table of Asymptotic network diversity q profile
@@ -1713,16 +1713,16 @@ Asy3D.link <- function(data, class = 'TD', q = seq(0, 2, 0.2), datatype = "abund
 #' ## Example for abundance-based data
 #' ## Ex.1
 #' data(Norfolk)
-#' out1 <- Obs3D.link(Norfolk, class = 'TD', datatype = "abundance", nboot = 30)
-#' ggObs3D.link(out1)
+#' out1 <- Obs.link(Norfolk, class = 'TD', datatype = "abundance", nboot = 30)
+#' ggObs.link(out1)
 #' ## Ex.2
 #' data(puerto.rico)
-#' out2 <- Obs3D.link(data = puerto.rico$data, class = 'PD', datatype = "abundance",
+#' out2 <- Obs.link(data = puerto.rico$data, class = 'PD', datatype = "abundance",
 #" nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
-#' ggObs3D.link(out2)
+#' ggObs.link(out2)
 #' }
 #' @export
-Obs3D.link <- function(data, class = 'TD', q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, conf = 0.95,
+Obs.link <- function(data, class = 'TD', q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, conf = 0.95,
                        col.tree = NULL, row.tree = NULL){
   if(class == 'TD'){
     NetDiv <- lapply(1:length(data), function(i){
@@ -1748,10 +1748,10 @@ Obs3D.link <- function(data, class = 'TD', q = seq(0, 2, 0.2), datatype = "abund
 }
 
 
-# ggObs3D.link -------------------------------------------------------------------
+# ggObs.link -------------------------------------------------------------------
 #' ggplot for Asymptotic Network diversity
 #'
-#' \code{ggObs3D.link} Plots q-profile based on the outcome of \code{Obs3D.link} using the ggplot2 package.\cr
+#' \code{ggObs.link} Plots q-profile based on the outcome of \code{Obs.link} using the ggplot2 package.\cr
 #' It will only show the confidence interval of 'Estimated'.
 #'
 #' @param outcome the outcome of the functions \code{AsyND} .\cr
@@ -1761,17 +1761,17 @@ Obs3D.link <- function(data, class = 'TD', q = seq(0, 2, 0.2), datatype = "abund
 #' \dontrun{
 #' ## Ex.1
 #' data(Norfolk)
-#' out1 <- Obs3D.link(Norfolk, class = 'TD', datatype = "abundance", nboot = 10)
-#' ggObs3D.link(out1)
+#' out1 <- Obs.link(Norfolk, class = 'TD', datatype = "abundance", nboot = 10)
+#' ggObs.link(out1)
 #' ## Ex.2
 #' data(puerto.rico)
-#' out2 <- Obs3D.link(puerto.rico$data, class = 'PD', datatype = "abundance",
+#' out2 <- Obs.link(puerto.rico$data, class = 'PD', datatype = "abundance",
 #' nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
-#' ggObs3D.link(out2)
+#' ggObs.link(out2)
 #' }
 
 #' @export
-ggObs3D.link <- function(outcome, text.size = 14){
+ggObs.link <- function(outcome, text.size = 14){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
   if (sum(unique(outcome$method) %in% c("Estimated", "Empirical")) == 0)
@@ -1792,10 +1792,10 @@ ggObs3D.link <- function(outcome, text.size = 14){
 
   # +labs(x = "Order q", y = "Network phylogenetic diversity", lty = "Method") + scale_linetype_manual(values=c("dashed","solid"))
 }
-# ggAsy3D.link -------------------------------------------------------------------
+# ggAsy.link -------------------------------------------------------------------
 #' ggplot for Asymptotic Network diversity
 #'
-#' \code{ggAsy3D.link} Plots q-profile based on the outcome of \code{Asy3D.link} using the ggplot2 package.\cr
+#' \code{ggAsy.link} Plots q-profile based on the outcome of \code{Asy.link} using the ggplot2 package.\cr
 #' It will only show the confidence interval of 'Estimated'.
 #'
 #' @param outcome the outcome of the functions \code{AsyND} .\cr
@@ -1805,17 +1805,17 @@ ggObs3D.link <- function(outcome, text.size = 14){
 #' \dontrun{
 #' ## Ex.1
 #' data(Norfolk)
-#' out1 <- Asy3D.link(Norfolk, class = 'TD', datatype = "abundance", nboot = 10)
-#' ggAsy3D.link(out1)
+#' out1 <- Asy.link(Norfolk, class = 'TD', datatype = "abundance", nboot = 10)
+#' ggAsy.link(out1)
 #' ## Ex.2
 #' data(puerto.rico)
-#' out2 <- Asy3D.link(puerto.rico$data, class = 'PD', datatype = "abundance",
+#' out2 <- Asy.link(puerto.rico$data, class = 'PD', datatype = "abundance",
 #' nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
-#' ggAsy3D.link(out2)
+#' ggAsy.link(out2)
 #' }
 
 #' @export
-ggAsy3D.link <- function(outcome, text.size = 14){
+ggAsy.link <- function(outcome, text.size = 14){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
   if (sum(unique(outcome$method) %in% c("Estimated", "Empirical")) == 0)
@@ -1837,10 +1837,10 @@ ggAsy3D.link <- function(outcome, text.size = 14){
   # +labs(x = "Order q", y = "Network phylogenetic diversity", lty = "Method") + scale_linetype_manual(values=c("dashed","solid"))
 }
 
-# estimate3D  -------------------------------------------------------------------
+# estimateD.link  -------------------------------------------------------------------
 #' Compute species diversity with a particular of sample size/coverage
 #'
-#' \code{estimate3D.link} computes species diversity (Hill numbers with q = 0, 1 and 2) with a particular user-specified level of sample size or sample coverage.
+#' \code{estimateD.link} computes species diversity (Hill numbers with q = 0, 1 and 2) with a particular user-specified level of sample size or sample coverage.
 #'
 #' @param outcome the outcome of the functions \code{ObsND} .\cr
 #' @param class a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold. Besides,'AUC' is the fourth choice which
@@ -1866,10 +1866,8 @@ ggAsy3D.link <- function(outcome, text.size = 14){
 #' out1 <- estimate3D.link(Norfolk, datatype="abundance", base="coverage", level=0.7, nboot = 30)
 #' out2 <- estimate3D.link(Norfolk, datatype="abundance", base="size", level=0.7, nboot = 30)
 #' }
-
-#'
 #' @export
-estimate3D.link = function(dat,q = c(0, 1, 2),datatype = "abundance",base = "size",
+estimateD.link = function(dat, class = 'TD', q = c(0, 1, 2),datatype = "abundance",base = "size",
                       level = NULL,nboot = 50,conf = 0.95){
   if(class == 'TD'){
     div = lapply(1:length(dat), function(i){
@@ -1912,6 +1910,8 @@ estimate3D.link = function(dat,q = c(0, 1, 2),datatype = "abundance",base = "siz
         data <- as.matrix(data)
         n <- sum(data)
         phydata <- create.aili(data,row.tree = row.tree,col.tree = col.tree)
+        ## why tbar can be calculated by this?
+        ## (ai * Li) / n
         tbar <- sum(phydata$branch.length*phydata$branch.abun)/n
         boot.sam <- sample.boot.phy(data,B,row.tree = row.tree,col.tree = col.tree)
         sc <- PhD:::Coverage(data,datatype = "abundance",m,nt =n)
@@ -1955,14 +1955,12 @@ estimate3D.link = function(dat,q = c(0, 1, 2),datatype = "abundance",base = "siz
     })%>%do.call("rbind",.)
     return(res)
   }
-
-
 }
 
 # NetSpec  -------------------------------------------------------------------
 #' Specialization Estimation of Evenness with order q
 #'
-#' \code{Spec3D.link} computes Evenness Estimation of Evenness with order q.
+#' \code{Spec.link} computes Evenness Estimation of Evenness with order q.
 #'
 #' @param outcome the outcome of the functions \code{ObsND} .\cr
 #' @return A list of estimated(empirical) evenness with order q.
@@ -1975,9 +1973,9 @@ estimate3D.link = function(dat,q = c(0, 1, 2),datatype = "abundance",base = "siz
 #' @examples
 #' \dontrun{
 #' data(Norfolk)
-#' Est <- Spec3D.link(x = Norfolk, datatype = "abundance", q = c(0,1,2),
+#' Est <- Spec.link(x = Norfolk, datatype = "abundance", q = c(0,1,2),
 #' nboot = 30, method = "Estimated")
-#' Emp <- Spec3D.link(x = Norfolk, datatype = "abundance", q = c(0,1,2),
+#' Emp <- Spec.link(x = Norfolk, datatype = "abundance", q = c(0,1,2),
 #' nboot = 30, method = "Empirical")
 #' Est
 #' Emp
@@ -1987,7 +1985,7 @@ estimate3D.link = function(dat,q = c(0, 1, 2),datatype = "abundance",base = "siz
 
 #' @export
 
-Spec3D.link <- function(x,q = seq(0, 2, 0.2),
+Spec.link <- function(x,q = seq(0, 2, 0.2),
                      datatype = "abundance",
                      method = "Estimated",
                      nboot = 30,
@@ -2047,10 +2045,10 @@ Spec3D.link <- function(x,q = seq(0, 2, 0.2),
 }
 
 
-# ggSpec3D.link -------------------------------------------------------------------
+# ggSpec.link -------------------------------------------------------------------
 #' ggplot for Evenness
 #
-#' \code{ggSpec3D.link} The figure for estimation of Evenness with order q\cr
+#' \code{ggSpec.link} The figure for estimation of Evenness with order q\cr
 #'
 #' @param output a table generated from Evenness function\cr
 #' @return a figure of estimated sample completeness with order q\cr
@@ -2058,8 +2056,8 @@ Spec3D.link <- function(x,q = seq(0, 2, 0.2),
 #' @examples
 #' \dontrun{
 #' data(Norfolk)
-#' Est <- Spec3D.link(x = Norfolk, class = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
-#' Emp <- Spec3D.link(x = Norfolk, class = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
+#' Est <- Spec.link(x = Norfolk, class = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
+#' Emp <- Spec.link(x = Norfolk, class = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
 #' Est
 #' Emp
 #' ggSpec(Est)
@@ -2069,7 +2067,7 @@ Spec3D.link <- function(x,q = seq(0, 2, 0.2),
 #' Chao,A.and Ricotta,C.(2019).Quantifying evenness and linking it to diversity, beta diversity, and similarity.
 #' @export
 
-ggSpec3D.link <- function(output){
+ggSpec.link <- function(output){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
   classdata = cbind(do.call(rbind, output))%>%
