@@ -329,7 +329,7 @@ long_to_wide = function(data_long = bootstrap_data_gamma){
 }
 
 create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
-  if (class(data) != "matrix") { data <- as.matrix(data) }
+  if (class(data)[1] != "matrix") { data <- as.matrix(data) }
 
   if ((is.null(row.tree)) == 0 & (is.null(col.tree) == 1)){
     tip <- row.tree$tip.label[-match(rownames(data),row.tree$tip.label)]
@@ -348,7 +348,6 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
     out <- data.frame(branch.abun = tmp$branch.abun, branch.length = tmp$branch.length,
                       tgroup = tmp$tgroup,interaction = tmp$interaction)
   }
-  ## beetles example
   if ((is.null(row.tree) == 1) & (is.null(col.tree) == 0)){
     tip <- col.tree$tip.label[-match(colnames(data),col.tree$tip.label)]
     mytree <- drop.tip(col.tree,tip)
@@ -383,13 +382,15 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
     }
     tmp <- do.call(rbind,tmp)
     #tmp[is.na(tmp)] <- 0
-    t1 <- as.data.frame(tmp[,c(4,7,8)])
-    t1 <- spread(t1,Species,branch.abun)
-    rownames(t1) <- t1[,1]
-    mat <- as.matrix(t1[,-1])
+    t1 <- tmp%>%as.data.frame()%>%dplyr::select(label, branch.abun, Species)
+    # t1 <- as.data.frame(tmp[,c(4,7,8)])
+    t1 <- spread(t1,Species,branch.abun)%>%column_to_rownames("label")%>%as.matrix()
+    # rownames(t1) <- t1[,1]
+    mat <- as.matrix(t1)
     label <- unique(tmp$label)
     species <- unique(tmp$Species)
-    # # mat <- matrix(0,length(label),length(species))
+
+    # mat <- matrix(0,length(label),length(species))
     # rownames(mat) <- label
     # colnames(mat) <- species
     # for (i in seq_len(nrow(mat))) {
@@ -399,6 +400,7 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
     #     }
     #   }
     # }
+    ### col by col
     tmp1 <- apply(mat, 1, function(abun){
       phyExpandData(x=abun, labels=rownames(data), phy=mytree.row, datatype="abundance")
     })
@@ -408,6 +410,7 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
     tmp1 <- do.call(rbind,tmp1)
     # t2 <- as.data.frame(tmp1[,c(3,4,5,7,8)])
     t2 <- as.data.frame(tmp1[, c("branch.length", 'label','tgroup','node.age','branch.abun','Species')])
+
     tmp1[is.na(tmp1)] <- 0
     t2$r.length <- 0
     t2$r.group <- 0
@@ -621,19 +624,22 @@ hierachical.PD <- function(phydata,mat) {
 
 sample.boot.phy <- function(data,B,row.tree = NULL,col.tree = NULL) {
   data <- as.matrix(data)
-  n <- sum(sapply(unique(c(data)), function(x){x*sum(data == x)}))
+  # n <- sum(sapply(unique(c(data)), function(x){x*sum(data == x)}))
+  n <- sum(data_straight)
   f1 <- sum(data == 1)
   f2 <- sum(data == 2)
   f0 <- ceiling(ifelse(f2 > 0 ,(n-1)/n*f1^2/2/f2,(n-1)/n*f1*(f1-1)/2))
+
   adjust.pi <- function(data) {
-    data <- c(data)
-    f1 <- sum(data == 1)
-    f2 <- sum(data == 2)
-    n <- sum(sapply(unique(data), function(x){x*sum(data == x)}))
+    data_straight <- c(data)
+    # f1 <- sum(data_straight == 1)
+    # f2 <- sum(data_straight == 2)
+    ## n <- sum(sapply(unique(data_straight), function(x){x*sum(data_straight == x)}))
+    # n <- sum(data_straight)
     C.hat <- 1-f1/n*ifelse(f2 ==0,ifelse(f1 == 0,0,2/((n-1)*(f1-1)+2)),2*f2/((n-1)*f1+2*f2))
-    lambda <- (1-C.hat)/sum(data/n*(1-data/n)^n)
-    f0 <- ceiling(ifelse(f2 > 0 ,(n-1)/n*f1^2/2/f2,(n-1)/n*f1*(f1-1)/2))
-    p.seen <- data/n*(1-lambda*(1-data/n)^n)
+    lambda <- (1-C.hat)/sum(data_straight/n*(1-data_straight/n)^n)
+    # f0 <- ceiling(ifelse(f2 > 0 ,(n-1)/n*f1^2/2/f2,(n-1)/n*f1*(f1-1)/2))
+    p.seen <- data_straight/n*(1-lambda*(1-data_straight/n)^n)
     p.seen <- p.seen[p.seen>0]
     p.unseen <- (1-C.hat)/f0
     list(seen = p.seen,unseen = p.unseen)
@@ -644,36 +650,21 @@ sample.boot.phy <- function(data,B,row.tree = NULL,col.tree = NULL) {
   g0 <- ifelse(g2>g1*f2/2/f1,(n-1)/n*g1^2/2/g2,(n-1)/n*g1*(f1-1)/2/(f2+1))/f0
   pi <- adjust.pi(data)
   data[data>0] <- pi$seen
-  p <- create.aili(data,row.tree,col.tree)
-  p <- rbind(p,data.frame(branch.abun = rep(pi$unseen,f0),branch.length = g0,tgroup = "Tip",interaction = "unseen"))
-    p[p$tgroup == "Root",]$branch.abun <- 1
-  # xi <- function(data,row.tree,col.tree){
-  #     tmp <- data
-  #     n <- sum(sapply(unique(c(tmp)), function(y){y*sum(tmp == y)}))
-  #     f1 <- sum(tmp == 1)
-  #     f2 <- sum(tmp == 2)
-  #     f0 <- ceiling(ifelse(f2 > 0 ,(n-1)/n*f1^2/2/f2,(n-1)/n*f1*(f1-1)/2))
-  #     phy <- create.aili(tmp,row.tree,col.tree)
-  #     g1 <- sum(phy$branch.length[phy$branch.abun==1])
-  #     g2 <- sum(phy$branch.length[phy$branch.abun==2])
-  #     g0 <- ifelse(g2>g1*f2/2/f1,(n-1)/n*g1^2/2/g2,(n-1)/n*g1*(f1-1)/2/(f2+1))/f0
-  #     pi <- adjust.pi(data)
-  #     tmp[tmp>0] <- pi$seen
-  #     p <- create.aili(tmp,row.tree,col.tree)
-  #     p <- rbind(p,data.frame(branch.abun = rep(pi$unseen,f0),branch.length = g0,tgroup = "Tip",interaction = "unseen"))
-    #     p[p$tgroup == "Root",]$branch.abun <- 1
-  #     ai <- rbinom(1,ni,p)
-  #     tmp <- matrix(ai[1:length(tmp)],nrow(tmp),ncol(tmp),dimnames = list(rownames(tmp),colnames(tmp)))
-  #     out <- create.aili(tmp,row.tree = rowtree,col.tree = coltree)
-  #     out <- rbind(out,data.frame(branch.abun = ai[-c(1:length(tmp))],branch.length=g0, tgroup="Tip",interaction = paste("Unseen species",la[la >length(tmp)]-length(tmp))))
-  #     out
-  #   })
-  #   names(out) <- names(data)
-  #   out
-  # }
+
+  seen_interaction_aili = create.aili(data,row.tree,col.tree)
+  unseen_interaction_aili = data.frame(branch.abun = rep(pi$unseen,f0), branch.length = g0 / f0,
+                                       tgroup = "Tip",interaction = "unseen")
+  p <- rbind(seen_interaction_aili,unseen_interaction_aili)
+  p[p$tgroup == "Root",]$branch.abun <- 1
+
+  total_nodes_num = nrow(p)
+
   lapply(1:B, function(x){
-    ai <- rbinom(nrow(p),n,p$branch.abun)
-    out <- data.frame(branch.abun = ai,branch.length = p$branch.length,tgroup = p$tgroup,interaction = p$interaction)
+    ai <- rbinom(total_nodes_num,n,p$branch.abun)
+    # rmultinom(n = 1, size = total_nodes_num, prob =  p$branch.abun)%>%c()
+    out <- cbind(ai, p[,c("branch.length", "tgroup", "interaction")])
+    colnames(out)[1] = 'branch.abun'
+    # out <- data.frame(branch.abun = ai,branch.length = p$branch.length,tgroup = p$tgroup,interaction = p$interaction)
     out <- out[out$branch.abun>0,]
   })
 }
