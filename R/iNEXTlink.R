@@ -116,7 +116,7 @@ ggSC.link <- function(output){
 #' Hsieh, T. C. and Chao, A. (2017). Rarefaction and extrapolation: making fair comparison of abundance-sensitive phylogenetic diversity among multiple assemblages. \emph{Systematic Biology}, 66, 100-111.
 #' @export
 
-iNEXT.link <- function(x, class, q = c(0,1,2), datatype = "abundance", size = NULL, nT = NULL,
+iNEXT.link <- function(x, diversity = 'TD', q = c(0,1,2), datatype = "abundance", size = NULL, nT = NULL,
                          endpoint = NULL, knots = 40, conf = 0.95, nboot = 30,
                          row.tree = NULL, col.tree = NULL
                          ){
