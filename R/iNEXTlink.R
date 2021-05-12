@@ -69,7 +69,7 @@ ggSC.link <- function(output){
 #' merged incidence matrix, where the rows of the matrix refer to all species presented in the merged
 #' data. The row (species) names of data must match the species names in the phylogenetic tree and
 #' thus cannot be missing.
-#' @param class a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.
+#' @param diversity a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.
 #' @param nT needed only when \code{datatype = "incidence_raw"}, a sequence of named nonnegative integers specifying the number of sampling units in each assemblage.
 #' If \code{names(nT) = NULL}, then assemblage are automatically named as "assemblage1", "assemblage2",..., etc. Ignored if \code{datatype = "abundance"}.
 #' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
@@ -143,7 +143,8 @@ iNEXT.link <- function(x, diversity = 'TD', q = c(0,1,2), datatype = "abundance"
     }
     datatype <- "incidence"
   }
-  if ( sum(!(class %in% c('TD', 'PD', 'FD', 'AUC')))>0 ){stop("Please select one of below class: 'TD', 'PD', 'FD', 'AUC'", call. = FALSE)}
+  if ( sum(!(diversity %in% c('TD', 'PD', 'FD', 'AUC')))>0 ){stop("Please select one of below diversity: 'TD', 'PD', 'FD'",
+                                                                  call. = FALSE)}
 
   res = list()
   if(diversity == 'TD'){
@@ -189,7 +190,7 @@ iNEXT.link <- function(x, diversity = 'TD', q = c(0,1,2), datatype = "abundance"
 #'
 #' @param data a vector/matrix/list of species abundances or incidence frequencies.\cr If \code{datatype = "incidence"},
 #' then the first entry of the input data must be total number of sampling units, followed by species incidence frequencies.
-#' @param class a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.
+#' @param diversity a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.
 #' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
 #' sampling-unit-based incidence frequencies data (\code{datatype = "incidence_freq"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).
 #' @return a data.frame of basic data information including sample size, observed species richness, sample coverage estimate, and the first ten abundance/incidence frequency counts.
@@ -235,7 +236,7 @@ DataInfo.link <- function(data, class, datatype = "abundance", row.tree = NULL,c
 #' merged incidence matrix, where the rows of the matrix refer to all species presented in the merged
 #' data. The row (species) names of data must match the species names in the phylogenetic tree and
 #' thus cannot be missing.
-### @param class a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.
+### @param diversity a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.
 #' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
 #' or species-by-site raw incidence matrix (\code{datatype = "incidence_raw"}). Default is \code{"abundance"}.
 
@@ -284,16 +285,18 @@ DataInfo.link <- function(data, class, datatype = "abundance", row.tree = NULL,c
 # level = 'phylogenetic'; data_type = "abundance";conf=0.95;by = 'coverage';nboot=20;max_alpha_coverage=F
 # level = 'taxonomic'
 
-iNEXT_beta.link = function(x, coverage_expected = seq(0.5, 1, 0.5), data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2), level=c('taxonomic', 'phylogenetic', 'functional'),
+iNEXT_beta.link = function(x, coverage_expected = seq(0.5, 1, 0.5), data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2),
+                           level=c('taxonomic', 'phylogenetic', 'functional'),
+                           diversity = 'TD',
                            nboot = 20, conf = 0.95, max_alpha_coverage=F, by=c('coverage', 'size'),
                            row.tree = NULL,col.tree = NULL){
   combined = ready4beta(x)
-  if(level == 'taxonomic'){
+  if(diversity == 'taxonomic'){
     # dissimilarity <- iNEXT_beta(x = combined, coverage_expected = coverage_expected, data_type = data_type, level = 'taxonomic',
     dissimilarity <- iNEXT_beta(x = combined, coverage_expected = coverage_expected, data_type = data_type, level = 'taxonomic',
                                 nboot = nboot, conf = conf, max_alpha_coverage = max_alpha_coverage, by = by)
   }
-  else if(level == 'phylogenetic'){
+  else if(diversity == 'phylogenetic'){
     dissimilarity = iNEXT_link_phybeta(x = combined, coverage_expected =coverage_expected, "abundance", level = 'phylogenetic',
                                        row.tree = rowtree,col.tree = coltree,
                                        nboot = 0, by = 'coverage')
@@ -304,7 +307,8 @@ iNEXT_beta.link = function(x, coverage_expected = seq(0.5, 1, 0.5), data_type=c(
 
 
 
-iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2), level=c('taxonomic', 'phylogenetic', 'functional'),
+iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2),
+                               level=c('taxonomic', 'phylogenetic', 'functional'),
                                nboot = 20, conf = 0.95, max_alpha_coverage=F, by=c('coverage', 'size'),
                                row.tree = NULL,col.tree = NULL){
   if(data_type=='abundance'){
@@ -1845,7 +1849,7 @@ ggAsy.link <- function(outcome, text.size = 14){
 #' \code{estimateD.link} computes species diversity (Hill numbers with q = 0, 1 and 2) with a particular user-specified level of sample size or sample coverage.
 #'
 #' @param outcome the outcome of the functions \code{ObsND} .\cr
-#' @param class a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold. Besides,'AUC' is the fourth choice which
+#' @param diversity a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold. Besides,'AUC' is the fourth choice which
 #' integrates several threshold functional diversity to get diversity.
 #' @param q a numerical vector of the order of Hill number.
 #' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
