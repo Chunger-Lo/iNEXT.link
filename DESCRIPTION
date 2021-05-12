@@ -1,7 +1,7 @@
 Package: iNEXT.link
 Type: Package
 Title: Network diversity iNterpolation/Extrapolation Estimation
-Version: 0.1.0
+Version: 0.2.0
 Author: Anne Chao, Chung-E Lo
 Maintainer: Anne Chao <chao@stat.nthu.edu.tw>
 Description: Provides functions for network diversity analysis. 
