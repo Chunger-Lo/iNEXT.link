@@ -7,6 +7,7 @@
 Spec.link(
   x,
   q = seq(0, 2, 0.2),
+  diversity = "TD",
   datatype = "abundance",
   method = "Estimated",
   nboot = 30,

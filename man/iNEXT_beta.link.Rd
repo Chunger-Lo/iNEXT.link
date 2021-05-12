@@ -12,6 +12,7 @@ iNEXT_beta.link(
   data_type = c("abundance", "incidence_raw"),
   q = c(0, 1, 2),
   level = c("taxonomic", "phylogenetic", "functional"),
+  diversity = "TD",
   nboot = 20,
   conf = 0.95,
   max_alpha_coverage = F,

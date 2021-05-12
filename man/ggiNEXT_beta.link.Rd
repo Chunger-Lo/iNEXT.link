@@ -7,7 +7,7 @@
 ggiNEXT_beta.link(
   output,
   type = c("B", "D"),
-  measurement = c("T", "P", "F_tau", "F_AUC"),
+  diversity = "TD",
   scale = "free",
   main = NULL,
   transp = 0.4,

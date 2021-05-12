@@ -149,12 +149,12 @@ iNEXT.link <- function(x, diversity = 'TD', q = c(0,1,2), datatype = "abundance"
   res = list()
   if(diversity == 'TD'){
     ## 1. datainfo
-    datainfo = DataInfo.link(data = x, class = class, datatype = datatype)
+    datainfo = DataInfo.link(data = x, diversity = diversity, datatype = datatype)
     ## 2. iNterpolation/ Extrapolation
     data_long <- lapply(x, function(tab){
       as.matrix(tab)%>%c()}
     )
-    INEXT_est <- iNEXT3D::iNEXT3D(data_long, diversity = 'TD', q = q,conf = conf,nboot = nboot, knots = knots, endpoint = endpoint, size = size)
+    INEXT_est <- iNEXT3D::iNEXT3D(data_long, class = 'TD', q = q,conf = conf,nboot = nboot, knots = knots, endpoint = endpoint, size = size)
 
     res[[1]] = datainfo
     res[[2]] = INEXT_est$TDiNextEst
@@ -163,13 +163,14 @@ iNEXT.link <- function(x, diversity = 'TD', q = c(0,1,2), datatype = "abundance"
 
   }else if(diversity == 'PD'){
     ## 1. datainfo
-    datainfo = DataInfo.link(data = x, class = class, datatype = datatype, row.tree = row.tree,col.tree = col.tree)
+    datainfo = DataInfo.link(data = x, diversity = diversity, datatype = datatype, row.tree = row.tree,col.tree = col.tree)
     ## 2. iNterpolation/ Extrapolation
     data_long <- lapply(x, function(tab){
       as.matrix(tab)%>%c()}
       ## 拉長
     )
-    NetiNE <- get.netphydiv_iNE(data = x, q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf, knots = knots)
+    NetiNE <- get.netphydiv_iNE(data = x, q = q,B = nboot,row.tree = row.tree,
+                                col.tree = col.tree,conf = conf, knots = knots)
     ## 3. empirical and asymptotic diversity
     NetDiv <- get.netphydiv(data = x,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)
 
@@ -205,7 +206,7 @@ iNEXT.link <- function(x, diversity = 'TD', q = c(0,1,2), datatype = "abundance"
 
 #' @export
 
-DataInfo.link <- function(data, class, datatype = "abundance", row.tree = NULL,col.tree = NULL){
+DataInfo.link <- function(data, diversity = 'TD', datatype = "abundance", row.tree = NULL,col.tree = NULL){
 
   if(diversity == 'PD'){
     table <- lapply(data, function(y){datainfphy(data = y, datatype = datatype,
@@ -291,14 +292,14 @@ iNEXT_beta.link = function(x, coverage_expected = seq(0.5, 1, 0.5), data_type=c(
                            nboot = 20, conf = 0.95, max_alpha_coverage=F, by=c('coverage', 'size'),
                            row.tree = NULL,col.tree = NULL){
   combined = ready4beta(x)
-  if(diversity == 'taxonomic'){
+  if(diversity == 'TD'){
     # dissimilarity <- iNEXT_beta(x = combined, coverage_expected = coverage_expected, data_type = data_type, level = 'taxonomic',
     dissimilarity <- iNEXT_beta(x = combined, coverage_expected = coverage_expected, data_type = data_type, level = 'taxonomic',
                                 nboot = nboot, conf = conf, max_alpha_coverage = max_alpha_coverage, by = by)
   }
-  else if(diversity == 'phylogenetic'){
+  else if(diversity == 'PD'){
     dissimilarity = iNEXT_link_phybeta(x = combined, coverage_expected =coverage_expected, "abundance", level = 'phylogenetic',
-                                       row.tree = rowtree,col.tree = coltree,
+                                       row.tree = row.tree,col.tree = col.tree,
                                        nboot = 0, by = 'coverage')
   }
 
@@ -1469,20 +1470,19 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 
 
 #' @export
-ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var = "Assemblage",color.var = "Order.q", text.size = 18){
+ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var = "Assemblage",
+                         color.var = "Order.q", text.size = 18, stript.size = 16){
   if(diversity == 'TD'){
-    iNEXT3D::ggiNEXT3D(outcome, type = type, facet.var = facet.var,
-                       color.var = color.var, se = se) +
-      # theme_bw() +
-      # theme(legend.position = "bottom",
-      #       legend.title=element_blank(),
-      #       legend.box.spacing = unit(0.4, "cm"),
-      #       text=element_text(size= text.size),
-      #       legend.key.width = unit(1,"cm")) +
+    iNEXT3D::ggiNEXT3D(outcome, type = type, facet.var = facet.var,color.var = color.var, se = se)[[1]] +
       ylab("Network diversity")
-
+    # theme_bw() +
+    # theme(legend.position = "bottom",
+    #       legend.title=element_blank(),
+    #       legend.box.spacing = unit(0.4, "cm"),
+    #       text=element_text(size= text.size),
+    #       legend.key.width = unit(1,"cm")) +
   }else if(diversity == 'PD'){
-    iNE <- outcome$iNextEst
+    iNE <- outcome$PDiNextEst
     iNE.sub <- iNE[iNE$method == "observed",]
     iNE[iNE$method == "observed",]$method <-  "interpolated"
     ex <- iNE.sub
@@ -1556,7 +1556,8 @@ ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var
 
 
 #' @export
-ggiNEXT_beta.link <- function(output, type = c('B', 'D'), measurement = c('T', 'P', 'F_tau', 'F_AUC'),
+ggiNEXT_beta.link <- function(output, type = c('B', 'D'),
+                              diversity = 'TD',
                               scale='free', main=NULL, transp=0.4, stript.size = 11, text.size = 13){
   # if(length(outcome) == 1){ outcome = outcome}
   if (type == 'B'){
@@ -1587,10 +1588,8 @@ ggiNEXT_beta.link <- function(output, type = c('B', 'D'), measurement = c('T', '
 
       }
 
-      if (measurement=='T') { ylab = "Taxonomic diversity" }
-      if (measurement=='P') { ylab = "Phylogenetic Hill number" }
-      if (measurement=='F_tau') { ylab = "Functional diversity (given tau)" }
-      if (measurement=='F_AUC') { ylab = "Functional diversity (AUC)" }
+      if (diversity=='TD') { ylab = "Taxonomic diversity" }
+      if (diversity=='PD') { ylab = "Phylogenetic Hill number" }
 
     }
 
@@ -1626,10 +1625,8 @@ ggiNEXT_beta.link <- function(output, type = c('B', 'D'), measurement = c('T', '
 
       }
 
-      if (measurement=='T') { ylab = "Taxonomic dissimilarity" }
-      if (measurement=='P') { ylab = "Phylogenetic dissimilarity" }
-      if (measurement=='F_tau') { ylab = "Functional dissimilarity (given tau)" }
-      if (measurement=='F_AUC') { ylab = "Functional dissimilarity (AUC)" }
+      if (diversity=='TD') { ylab = "Taxonomic dissimilarity" }
+      if (diversity=='PD') { ylab = "Phylogenetic dissimilarity" }
 
     }
 
@@ -1692,14 +1689,19 @@ Asy.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abu
       # tmp <- c(as.matrix(x))
       # tmp = x
       res = MakeTable_Proposeprofile(data = x, B = nboot, q, conf = conf)%>%
-        rename("qD"="Estimate", "qD.LCL"="LCL", "qD.UCL"="UCL")%>%
-        mutate(Assemblage = assemblage, method = "Estimated")%>%filter(Target == "Diversity")%>%select(-Target)
+        mutate(Network = assemblage, method = "Estimate")%>%
+        filter(Target == "Diversity")%>%select(-Target, -`s.e.`)%>%
+        rename("qD"="Estimate", "qD.LCL"="LCL", "qD.UCL"="UCL", 'Method' = 'method')
+
       return(res)
     })%>%do.call("rbind",.)
     return(NetDiv)
   }else if(diversity == 'PD'){
     NetDiv <- get.netphydiv(data = data,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)%>%
-      filter(method == "Estimate")
+      filter(method == "Estimate")%>%
+      mutate(method = ifelse(method == 'Estimate','Estimated',method ))%>%
+      dplyr::select(Order.q, Estimate, LCL, UCL, Region, method )%>%
+      set_colnames(c('Order.q', 'qD', 'qD.LCL','qD.UCL', 'Network', 'Method'))
 
     return(NetDiv)
   }
@@ -1737,8 +1739,9 @@ Obs.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abu
       tmp <- c(as.matrix(x))
       ## nboot has to larger than 0
       res = MakeTable_Empericalprofile(data = x, B = nboot, q, conf = conf)%>%
-        rename("qD"="Emperical", "qD.LCL"="LCL", "qD.UCL"="UCL")%>%
-        mutate(Assemblage = assemblage, method = "Empirical")%>%filter(Target == "Diversity")%>%select(-Target)
+        mutate(Network = assemblage, method = "Empirical")%>%
+        filter(Target == "Diversity")%>%select(-Target, -`s.e.`)%>%
+        rename("qD"="Emperical", "qD.LCL"="LCL", "qD.UCL"="UCL", 'Method' = 'method')
       return(res)
     })%>%do.call("rbind",.)
     return(NetDiv)
@@ -1746,10 +1749,10 @@ Obs.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abu
 
   else if(diversity == 'PD'){
     NetDiv <- get.netphydiv(data = data,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)%>%
-      filter(method == "Empirical")
-
+      filter(method == "Empirical")%>%
+      dplyr::select(Order.q, Estimate, LCL, UCL, Region, method )%>%
+      set_colnames(c('Order.q', 'qD', 'qD.LCL','qD.UCL', 'Network', 'Method'))
     return(NetDiv)
-
   }
 }
 
@@ -1780,13 +1783,13 @@ Obs.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abu
 ggObs.link <- function(outcome, text.size = 14){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
-  if (sum(unique(outcome$method) %in% c("Estimated", "Empirical")) == 0)
-    stop("Please use the outcome from specified function 'AsyD'")
+  # if (sum(unique(outcome$method) %in% c("Estimated", "Empirical")) == 0)
+  #   stop("Please use the outcome from specified function 'AsyD'")
 
-  ggplot(outcome, aes(x = Order.q, y = qD, colour = Assemblage, lty = method)) +
+  ggplot(outcome, aes(x = Order.q, y = qD, colour = Network, lty = Method)) +
     geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
     geom_ribbon(data = outcome[outcome$method == "Empirical", ],
-                aes(ymin = qD.LCL, ymax = qD.UCL, fill = Assemblage), alpha = 0.2, linetype = 0) +
+                aes(ymin = qD.LCL, ymax = qD.UCL, fill = Network), alpha = 0.2, linetype = 0) +
     scale_fill_manual(values = cbPalette) +
     scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
     labs(x = "Order q", y = "Network diversity") + theme(text = element_text(size = 10)) +
@@ -1824,13 +1827,13 @@ ggObs.link <- function(outcome, text.size = 14){
 ggAsy.link <- function(outcome, text.size = 14){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
-  if (sum(unique(outcome$method) %in% c("Estimated", "Empirical")) == 0)
-    stop("Please use the outcome from specified function 'AsyD'")
+  # if (sum(unique(outcome$method) %in% c("Estimate", "Empirical")) == 0)
+  #   stop("Please use the outcome from specified function 'AsyD'")
 
-  ggplot(outcome, aes(x = Order.q, y = qD, colour = Assemblage, lty = method)) +
+  ggplot(outcome, aes(x = Order.q, y = qD, colour = Network, lty = Method)) +
     geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
     geom_ribbon(data = outcome[outcome$method == "Estimated", ],
-                aes(ymin = qD.LCL, ymax = qD.UCL, fill = Assemblage), alpha = 0.2, linetype = 0) +
+                aes(ymin = qD.LCL, ymax = qD.UCL, fill = Network), alpha = 0.2, linetype = 0) +
     scale_fill_manual(values = cbPalette) +
     scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
     labs(x = "Order q", y = "Network diversity") + theme(text = element_text(size = 10)) +
@@ -1992,6 +1995,7 @@ estimateD.link = function(dat, diversity = 'TD', q = c(0, 1, 2),datatype = "abun
 #' @export
 
 Spec.link <- function(x,q = seq(0, 2, 0.2),
+                      diversity = 'TD',
                      datatype = "abundance",
                      method = "Estimated",
                      nboot = 30,
@@ -2049,7 +2053,6 @@ Spec.link <- function(x,q = seq(0, 2, 0.2),
     return(Spec)
   }
 }
-
 
 # ggSpec.link -------------------------------------------------------------------
 #' ggplot for Evenness

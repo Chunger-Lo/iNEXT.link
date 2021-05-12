@@ -625,7 +625,7 @@ hierachical.PD <- function(phydata,mat) {
 sample.boot.phy <- function(data,B,row.tree = NULL,col.tree = NULL) {
   data <- as.matrix(data)
   # n <- sum(sapply(unique(c(data)), function(x){x*sum(data == x)}))
-  n <- sum(data_straight)
+  n <- sum(data)
   f1 <- sum(data == 1)
   f2 <- sum(data == 2)
   f0 <- ceiling(ifelse(f2 > 0 ,(n-1)/n*f1^2/2/f2,(n-1)/n*f1*(f1-1)/2))

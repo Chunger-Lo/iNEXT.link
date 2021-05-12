@@ -6,7 +6,7 @@
 \usage{
 estimateD.link(
   dat,
-  class = "TD",
+  diversity = "TD",
   q = c(0, 1, 2),
   datatype = "abundance",
   base = "size",
@@ -16,7 +16,7 @@ estimateD.link(
 )
 }
 \arguments{
-\item{class}{a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold. Besides,'AUC' is the fourth choice which
+\item{diversity}{a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold. Besides,'AUC' is the fourth choice which
 integrates several threshold functional diversity to get diversity.}
 
 \item{q}{a numerical vector of the order of Hill number.}
@@ -36,11 +36,11 @@ If \code{base="coverage"} and \code{level=NULL}, then this function computes the
 
 \item{outcome}{the outcome of the functions \code{ObsND} .\cr}
 
-\item{tree}{a phylo object describing the phylogenetic tree in Newick format for all observed species in the pooled assemblage. It is necessary when \code{class = 'PD'}.}
+\item{tree}{a phylo object describing the phylogenetic tree in Newick format for all observed species in the pooled assemblage. It is necessary when \code{diversity = 'PD'}.}
 
 \item{nT}{needed only for the matrix or data.frame which \code{datatype = "incidence_raw"}, a sequence of named nonnegative integers specifying the number of sampling units in each assemblage.
 If \code{names(nT) = NULL}, then assemblage are automatically named as "assemblage1", "assemblage2",..., etc.
-It is necessary when \code{class = 'PD'} and \code{datatype = "incidence_raw"}.}
+It is necessary when \code{diversity = 'PD'} and \code{datatype = "incidence_raw"}.}
 }
 \value{
 a data.frame of species diversity table including the sample size, sample coverage, method (rarefaction or extrapolation), and diversity estimates with q = 0, 1, and 2 for the user-specified sample size or sample coverage.

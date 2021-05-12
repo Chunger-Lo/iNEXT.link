@@ -4,14 +4,15 @@
 \alias{ggiNEXT.link}
 \title{ggplot2 extension for an iNEXT object}
 \usage{
-ggiNEXT.link(
+\method{ggiNEXT}{link}(
   outcome,
-  class = "TD",
+  diversity = "TD",
   type = 1,
   se = TRUE,
   facet.var = "Assemblage",
   color.var = "Order.q",
-  text.size = 18
+  text.size = 18,
+  stript.size = 16
 )
 }
 \arguments{
@@ -47,13 +48,13 @@ a ggplot2 object
 \examples{
 \dontrun{
 data(Norfolk)
-out1 <- iNEXT.link(Norfolk, class = 'TD',datatype = "abundance", nboot = 0)
+out1 <- iNEXT.link(Norfolk, diversity = 'TD',datatype = "abundance", nboot = 0)
 ggiNEXT.link(outcome = out1, type = 1)
 ggiNEXT.link(outcome = out1, type = 2)
 ggiNEXT.link(outcome = out1, type = 3)
 
 #' data(puerto.rico)
-out2 <- iNEXT.link(puerto.rico$data, class = 'PD', datatype="abundance",
+out2 <- iNEXT.link(puerto.rico$data, diversity = 'PD', datatype="abundance",
 row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 ggiNEXT.link(outcome = out2, type = 1)
 ggiNEXT.link(outcome = out2, type = 2)

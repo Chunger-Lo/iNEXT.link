@@ -9,7 +9,7 @@ diversity (ND)}
 \usage{
 iNEXT.link(
   x,
-  class,
+  diversity = "TD",
   q = c(0, 1, 2),
   datatype = "abundance",
   size = NULL,
@@ -23,7 +23,7 @@ iNEXT.link(
 )
 }
 \arguments{
-\item{class}{a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.}
+\item{diversity}{a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.}
 
 \item{q}{a nonnegative value or sequence specifying the diversity order. Default is \code{c(0,1,2)}.}
 
@@ -82,8 +82,8 @@ diversity (ND)
 \examples{
 \dontrun{
 data(puerto.rico)
-iNEXT.link(puerto.rico$data, class = 'TD', datatype="abundance")
-iNEXT.link(puerto.rico$data, class = 'PD', datatype="abundance", row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
+iNEXT.link(puerto.rico$data, diversity = 'TD', datatype="abundance")
+iNEXT.link(puerto.rico$data, diversity = 'PD', datatype="abundance", row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 }
 }
 \references{

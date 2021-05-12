@@ -6,7 +6,7 @@
 \usage{
 DataInfo.link(
   data,
-  class,
+  diversity = "TD",
   datatype = "abundance",
   row.tree = NULL,
   col.tree = NULL
@@ -16,7 +16,7 @@ DataInfo.link(
 \item{data}{a vector/matrix/list of species abundances or incidence frequencies.\cr If \code{datatype = "incidence"},
 then the first entry of the input data must be total number of sampling units, followed by species incidence frequencies.}
 
-\item{class}{a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.}
+\item{diversity}{a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.}
 
 \item{datatype}{data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
 sampling-unit-based incidence frequencies data (\code{datatype = "incidence_freq"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).}
@@ -30,8 +30,8 @@ a data.frame of basic data information including sample size, observed species r
 \examples{
 \dontrun{
 data(puerto.rico)
-DataInfo.link(puerto.rico$data, class = 'TD', datatype="abundance")
-DataInfo.link(puerto.rico$data, class = 'PD', datatype="abundance",
+DataInfo.link(puerto.rico$data, diversity = 'TD', datatype="abundance")
+DataInfo.link(puerto.rico$data, diversity = 'PD', datatype="abundance",
 row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 }
 }

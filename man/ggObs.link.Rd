@@ -20,11 +20,11 @@ It will only show the confidence interval of 'Estimated'.
 \dontrun{
 ## Ex.1
 data(Norfolk)
-out1 <- Obs.link(Norfolk, class = 'TD', datatype = "abundance", nboot = 10)
+out1 <- Obs.link(Norfolk, diversity = 'TD', datatype = "abundance", nboot = 10)
 ggObs.link(out1)
 ## Ex.2
 data(puerto.rico)
-out2 <- Obs.link(puerto.rico$data, class = 'PD', datatype = "abundance",
+out2 <- Obs.link(puerto.rico$data, diversity = 'PD', datatype = "abundance",
 nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 ggObs.link(out2)
 }

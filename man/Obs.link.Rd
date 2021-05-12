@@ -6,7 +6,7 @@
 \usage{
 Obs.link(
   data,
-  class = "TD",
+  diversity = "TD",
   q = seq(0, 2, 0.2),
   datatype = "abundance",
   nboot = 50,
@@ -29,11 +29,11 @@ a table of Asymptotic network diversity q profile
 ## Example for abundance-based data
 ## Ex.1
 data(Norfolk)
-out1 <- Obs.link(Norfolk, class = 'TD', datatype = "abundance", nboot = 30)
+out1 <- Obs.link(Norfolk, diversity = 'TD', datatype = "abundance", nboot = 30)
 ggObs.link(out1)
 ## Ex.2
 data(puerto.rico)
-out2 <- Obs.link(data = puerto.rico$data, class = 'PD', datatype = "abundance",
+out2 <- Obs.link(data = puerto.rico$data, diversity = 'PD', datatype = "abundance",
 ggObs.link(out2)
 }
 }

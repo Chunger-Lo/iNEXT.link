@@ -20,8 +20,8 @@ ggplot for Evenness
 \examples{
 \dontrun{
 data(Norfolk)
-Est <- Spec.link(x = Norfolk, class = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
-Emp <- Spec.link(x = Norfolk, class = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
+Est <- Spec.link(x = Norfolk, diversity = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
+Emp <- Spec.link(x = Norfolk, diversity = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
 Est
 Emp
 ggSpec(Est)
