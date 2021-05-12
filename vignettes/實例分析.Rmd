@@ -15,52 +15,7 @@ knitr::opts_chunk$set(
   warning = FALSE, message = FALSE,
   comment = ""
 )
-#devtools::load_all(".")
-library(ggplot2)
-#library(kableExtra)
-library(knitr)
-library(tibble)
-library(iNEXT)
-library(sets)
-
-Shelfanger <- read.table("F://Chao//Network diversity//shinyapp//heir.entropy//data//Shelfanger.txt")
-Hickling <- read.table("F://Chao//Network diversity//shinyapp//heir.entropy//data/Hickling.txt")
-Norfolk <- list(Shelfanger = Shelfanger,Hickling = Hickling)
-# usethis::use_data(Norfolk, overwrite = T)
-
-Caguana <- read.table("F://Chao//Network diversity//shinyapp//heir.entropy//data/Caguana.txt")
-Cialitos <- read.table("F://Chao//Network diversity//shinyapp//heir.entropy//data/Cialitos.txt")
-Cordillera <- read.table("F://Chao//Network diversity//shinyapp//heir.entropy//data/Cordillera.txt")
-Fronton <- read.table("F://Chao//Network diversity//shinyapp//heir.entropy//data/Fronton.txt")
-data <- list(Cordillera = Cordillera,Caguana = Caguana,Fronton = Fronton,Cialitos = Cialitos)
-
-library(phytools)
-rowtree <- read.newick("F://Chao//Network diversity//shinyapp//heir.entropy//tree/rowtree.txt")
-coltree <- read.newick("F://Chao//Network diversity//shinyapp//heir.entropy//tree/coltree.txt")
-
-puerto.rico = list()
-puerto.rico[["data"]] = data
-puerto.rico[["col.tree"]] = coltree
-puerto.rico[["row.tree"]] = rowtree
-# usethis::use_data(puerto.rico, overwrite = T)
 ```
-
-`iNEXT.link` is a R package providing the rarefaction/extrapolation and asymptotic estimation to achieve fair comparison of network diversity among multiple interaction network. In this document, we provide a quick introduction demonstrating how to run `iNEXT.link`. The Detailed information about `iNEXT.link` functions is described in the `iNEXT.link` Manual, also available in [CRAN](https://cran.r-project.org/package=PhD). An online version of `iNEXT.link.Online` (<https://r717r717.shinyapps.io/iNEXT.link.Online/>) is developed for users without R background. The theoretical derivation of network diversity measurements will be proposed soon. `iNEXT.link` is an extension for [`iNext3D`](https://cran.r-project.org/package=iNext), which computes diversity estimates and its confidence intervals for the two types of rarefaction and extrapolation (R/E) based on two different sampling data sets, individual-based abundance data and quadrat-based incidence data.
-
-
-Based on the <Network diversity: Statistical esitmation and software development>, for single network, we have a 4-steps procedure to analyze comprehensively, which are 
-
-1. Assessment of sample completeness  
-2. The asymptotic approach
-3. Non-asymptotic coverage-based rarefaction and extrapolation analysis     
-4: Assement of network specialization
-
-Moreover, to assess the dissimilarity between interaction networks, we have an extra step
-
-  (*) beta diversity and dissimilarity indices.
-
-
-For these analyzing steps, we have corresponding computation functions, and we will go through these functions by steps.
 
 
 根據我們前述的四步驟分析,
@@ -95,7 +50,7 @@ library(dplyr)
 ```
 
 
-```{r, echo  =F}
+```{r, echo = F}
 
 Shelfanger <- read.table("F://Chao//Network diversity//shinyapp//heir.entropy//data//Shelfanger.txt")
 Hickling <- read.table("F://Chao//Network diversity//shinyapp//heir.entropy//data/Hickling.txt")
@@ -120,12 +75,42 @@ puerto.rico[["row.tree"]] = rowtree
 
 ## 例子一、Norfolk英國草地資料
 
+
+```{r,message = F, warning=F}
+sc1 <- SC.link(x = Norfolk, datatype = "abundance", nboot = 10)
+inext = iNEXT.link(x = Norfolk, class = 'TD', datatype = "abundance", nboot = 30)
+asy = Asy.link(data = Norfolk, class = 'TD', datatype = "abundance", nboot = 30)
+```
+
+
 ### 步驟一、樣本涵蓋率的評估
+
+```{r fig.height=4, fig.width=6}
+kable(sc1)
+ggSC.link(sc1)
+```
+
 ### 步驟二、漸近法
+
+```{r fig.height=4, fig.width=6}
+inext$TDAsyEst
+ggAsy.link(asy)
+```
+
 ### 步驟三、樣本涵蓋率稀釋與預測
+
+```{r fig.height=4, fig.width=6}
+inext$TDiNextEst$coverage_based
+ggiNEXT.link(inext)
+
+iNEXT3D::ggiNEXT3D(inext,type = 2)
+```
+
 ### 步驟四、網路專一性
 
+```{r fig.height=4, fig.width=6}
 
+```
 
 
 ## 例子二、波多黎各鳥類捕蟲資料
@@ -138,56 +123,10 @@ puerto.rico[["row.tree"]] = rowtree
 
 
 
-<br><font size="5"><b>iNEXT.link VIA EXAMPLES: Network diversity analysis (taxonomic)</b></font>
--------------------
-
-```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
-library(ade4)
-library(tidyverse)
-library(ape)
-library(dplyr)
-```
-
-
-### Main function: 
-
-### 1.`NetSC()`: 
-
-```{r,eval=T, message = F, warning=F}
-sc1 <- NetSC(x = Norfolk, datatype = "abundance", nboot = 10)
-```
-
-```{r}
-ggNetSC(sc1)
-```
 
 ### 2.`iNEXT_ND()`: 
 
 
-```{r,eval=T, message = F, warning=F}
-sample1 <- iNEXT_ND(x = Norfolk, datatype = "abundance", nboot = 30)
-```
-
-`iNEXT_ND()` returns a list containing three objects:
-
-* `$DataInfo`: The same table from function **NDInfo()**, which summarizes some network statistics for each assemblage, including reference sample size (`n`), number of observed species (`S.obs`), Connectance, the first two rare species frequency counts.
-
-```{r}
-kable(sample1$DataInfo)
-```
-
-
-* `$iNextEst`: Size-based / coverage-based diversity estimates along with confidence intervals and related statistics. 
-
-#### size-based
-```{r}
-kable(head(sample1$iNextEst$size_based,5))
-```
-
-#### coverage-based
-```{r}
-kable(head(sample1$iNextEst$coverage_based,5))
-```
 
 
 * `$AsyEst`: Asymptotic/ Empirical diversity estimates along with confidence intervals and related statistics.

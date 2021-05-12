@@ -104,8 +104,8 @@ ggSC.link <- function(output){
 #' @examples
 #' \dontrun{
 #' data(puerto.rico)
-#' iNEXT.link(puerto.rico$data, class = 'TD', datatype="abundance")
-#' iNEXT.link(puerto.rico$data, class = 'PD', datatype="abundance", row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
+#' iNEXT.link(puerto.rico$data, diversity = 'TD', datatype="abundance")
+#' iNEXT.link(puerto.rico$data, diversity = 'PD', datatype="abundance", row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #' }
 
 #' @references
@@ -146,21 +146,21 @@ iNEXT.link <- function(x, class, q = c(0,1,2), datatype = "abundance", size = NU
   if ( sum(!(class %in% c('TD', 'PD', 'FD', 'AUC')))>0 ){stop("Please select one of below class: 'TD', 'PD', 'FD', 'AUC'", call. = FALSE)}
 
   res = list()
-  if(class == 'TD'){
+  if(diversity == 'TD'){
     ## 1. datainfo
     datainfo = DataInfo.link(data = x, class = class, datatype = datatype)
     ## 2. iNterpolation/ Extrapolation
     data_long <- lapply(x, function(tab){
       as.matrix(tab)%>%c()}
     )
-    INEXT_est <- iNEXT3D::iNEXT3D(data_long, class = 'TD', q = q,conf = conf,nboot = nboot, knots = knots, endpoint = endpoint, size = size)
+    INEXT_est <- iNEXT3D::iNEXT3D(data_long, diversity = 'TD', q = q,conf = conf,nboot = nboot, knots = knots, endpoint = endpoint, size = size)
 
     res[[1]] = datainfo
     res[[2]] = INEXT_est$TDiNextEst
     res[[3]] = INEXT_est$TDAsyEst
     names(res) = c("TDInfo", "TDiNextEst", "TDAsyEst")
 
-  }else if(class == 'PD'){
+  }else if(diversity == 'PD'){
     ## 1. datainfo
     datainfo = DataInfo.link(data = x, class = class, datatype = datatype, row.tree = row.tree,col.tree = col.tree)
     ## 2. iNterpolation/ Extrapolation
@@ -197,8 +197,8 @@ iNEXT.link <- function(x, class, q = c(0,1,2), datatype = "abundance", size = NU
 #' @examples
 #' \dontrun{
 #' data(puerto.rico)
-#' DataInfo.link(puerto.rico$data, class = 'TD', datatype="abundance")
-#' DataInfo.link(puerto.rico$data, class = 'PD', datatype="abundance",
+#' DataInfo.link(puerto.rico$data, diversity = 'TD', datatype="abundance")
+#' DataInfo.link(puerto.rico$data, diversity = 'PD', datatype="abundance",
 #' row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #' }
 
@@ -206,13 +206,13 @@ iNEXT.link <- function(x, class, q = c(0,1,2), datatype = "abundance", size = NU
 
 DataInfo.link <- function(data, class, datatype = "abundance", row.tree = NULL,col.tree = NULL){
 
-  if(class == 'PD'){
+  if(diversity == 'PD'){
     table <- lapply(data, function(y){datainfphy(data = y, datatype = datatype,
                                                  row.tree = row.tree,col.tree = col.tree)})%>%
       do.call(rbind,.)
     rownames(table) <- names(data)
     table = tibble::rownames_to_column(table, var = "Assemblages")
-  }else if(class == 'TD'){
+  }else if(diversity == 'TD'){
     table <- lapply(data, function(y){datainf(data = y, datatype = datatype)})%>%do.call(rbind,.)
     rownames(table) <- names(data)
     table = tibble::rownames_to_column(table, var = "Assemblages")
@@ -1450,13 +1450,13 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 #' @examples
 #' \dontrun{
 #' data(Norfolk)
-#' out1 <- iNEXT.link(Norfolk, class = 'TD',datatype = "abundance", nboot = 0)
+#' out1 <- iNEXT.link(Norfolk, diversity = 'TD',datatype = "abundance", nboot = 0)
 #' ggiNEXT.link(outcome = out1, type = 1)
 #' ggiNEXT.link(outcome = out1, type = 2)
 #' ggiNEXT.link(outcome = out1, type = 3)
 #'
 #' #' data(puerto.rico)
-#' out2 <- iNEXT.link(puerto.rico$data, class = 'PD', datatype="abundance",
+#' out2 <- iNEXT.link(puerto.rico$data, diversity = 'PD', datatype="abundance",
 #' row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #' ggiNEXT.link(outcome = out2, type = 1)
 #' ggiNEXT.link(outcome = out2, type = 2)
@@ -1465,17 +1465,19 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 
 
 #' @export
-ggiNEXT.link <- function(outcome, class = 'TD', type = 1,se = TRUE,facet.var = "Assemblage",color.var = "Order.q", text.size = 18){
-  if(class == 'TD'){
-    iNEXT3D::ggiNEXT3D(outcome,type = type,facet.var = facet.var, color.var = color.var, se = se) +
-      theme_bw() +
-      theme(legend.position = "bottom",
-            legend.title=element_blank(),
-            legend.box.spacing = unit(0.4, "cm"),
-            text=element_text(size= text.size),
-            legend.key.width = unit(1,"cm")) + ylab("Network diversity")
+ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var = "Assemblage",color.var = "Order.q", text.size = 18){
+  if(diversity == 'TD'){
+    iNEXT3D::ggiNEXT3D(outcome, type = type, facet.var = facet.var,
+                       color.var = color.var, se = se) +
+      # theme_bw() +
+      # theme(legend.position = "bottom",
+      #       legend.title=element_blank(),
+      #       legend.box.spacing = unit(0.4, "cm"),
+      #       text=element_text(size= text.size),
+      #       legend.key.width = unit(1,"cm")) +
+      ylab("Network diversity")
 
-  }else if(class == 'PD'){
+  }else if(diversity == 'PD'){
     iNE <- outcome$iNextEst
     iNE.sub <- iNE[iNE$method == "observed",]
     iNE[iNE$method == "observed",]$method <-  "interpolated"
@@ -1667,19 +1669,19 @@ ggiNEXT_beta.link <- function(output, type = c('B', 'D'), measurement = c('T', '
 #' \dontrun{
 #' ## Ex.1
 #' data(Norfolk)
-#' out1 <- Asy.link(Norfolk, class = 'TD', datatype = "abundance", nboot = 10)
+#' out1 <- Asy.link(Norfolk, diversity = 'TD', datatype = "abundance", nboot = 10)
 #' ggAsy.link(out1)
 #' ## Ex.2
 #' data(puerto.rico)
-#' out2 <- Asy.link(puerto.rico$data, class = 'PD', datatype = "abundance", nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
+#' out2 <- Asy.link(puerto.rico$data, diversity = 'PD', datatype = "abundance", nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #' ggAsy.link(out2)
 #' }
 
 #'
 #' @export
-Asy.link <- function(data, class = 'TD', q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30, conf = 0.95,
+Asy.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30, conf = 0.95,
                        row.tree = NULL, col.tree = NULL){
-  if(class == 'TD'){
+  if(diversity == 'TD'){
     NetDiv <- lapply(1:length(data), function(i) {
       x = data[[i]]
       assemblage = names(data)[[i]]
@@ -1691,7 +1693,7 @@ Asy.link <- function(data, class = 'TD', q = seq(0, 2, 0.2), datatype = "abundan
       return(res)
     })%>%do.call("rbind",.)
     return(NetDiv)
-  }else if(class == 'PD'){
+  }else if(diversity == 'PD'){
     NetDiv <- get.netphydiv(data = data,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)%>%
       filter(method == "Estimate")
 
@@ -1713,18 +1715,18 @@ Asy.link <- function(data, class = 'TD', q = seq(0, 2, 0.2), datatype = "abundan
 #' ## Example for abundance-based data
 #' ## Ex.1
 #' data(Norfolk)
-#' out1 <- Obs.link(Norfolk, class = 'TD', datatype = "abundance", nboot = 30)
+#' out1 <- Obs.link(Norfolk, diversity = 'TD', datatype = "abundance", nboot = 30)
 #' ggObs.link(out1)
 #' ## Ex.2
 #' data(puerto.rico)
-#' out2 <- Obs.link(data = puerto.rico$data, class = 'PD', datatype = "abundance",
+#' out2 <- Obs.link(data = puerto.rico$data, diversity = 'PD', datatype = "abundance",
 #" nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #' ggObs.link(out2)
 #' }
 #' @export
-Obs.link <- function(data, class = 'TD', q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, conf = 0.95,
+Obs.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, conf = 0.95,
                        col.tree = NULL, row.tree = NULL){
-  if(class == 'TD'){
+  if(diversity == 'TD'){
     NetDiv <- lapply(1:length(data), function(i){
       x = data[[i]]
       assemblage = names(data)[[i]]
@@ -1738,7 +1740,7 @@ Obs.link <- function(data, class = 'TD', q = seq(0, 2, 0.2), datatype = "abundan
     return(NetDiv)
   }
 
-  else if(class == 'PD'){
+  else if(diversity == 'PD'){
     NetDiv <- get.netphydiv(data = data,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)%>%
       filter(method == "Empirical")
 
@@ -1761,11 +1763,11 @@ Obs.link <- function(data, class = 'TD', q = seq(0, 2, 0.2), datatype = "abundan
 #' \dontrun{
 #' ## Ex.1
 #' data(Norfolk)
-#' out1 <- Obs.link(Norfolk, class = 'TD', datatype = "abundance", nboot = 10)
+#' out1 <- Obs.link(Norfolk, diversity = 'TD', datatype = "abundance", nboot = 10)
 #' ggObs.link(out1)
 #' ## Ex.2
 #' data(puerto.rico)
-#' out2 <- Obs.link(puerto.rico$data, class = 'PD', datatype = "abundance",
+#' out2 <- Obs.link(puerto.rico$data, diversity = 'PD', datatype = "abundance",
 #' nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #' ggObs.link(out2)
 #' }
@@ -1805,11 +1807,11 @@ ggObs.link <- function(outcome, text.size = 14){
 #' \dontrun{
 #' ## Ex.1
 #' data(Norfolk)
-#' out1 <- Asy.link(Norfolk, class = 'TD', datatype = "abundance", nboot = 10)
+#' out1 <- Asy.link(Norfolk, diversity = 'TD', datatype = "abundance", nboot = 10)
 #' ggAsy.link(out1)
 #' ## Ex.2
 #' data(puerto.rico)
-#' out2 <- Asy.link(puerto.rico$data, class = 'PD', datatype = "abundance",
+#' out2 <- Asy.link(puerto.rico$data, diversity = 'PD', datatype = "abundance",
 #' nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #' ggAsy.link(out2)
 #' }
@@ -1854,10 +1856,10 @@ ggAsy.link <- function(outcome, text.size = 14){
 #' If \code{base="size"} and \code{level=NULL}, then this function computes the diversity estimates for the minimum sample size among all sites extrapolated to double reference sizes.
 #' If \code{base="coverage"} and \code{level=NULL}, then this function computes the diversity estimates for the minimum sample coverage among all sites extrapolated to double reference sizes.
 #' @param conf a positive number < 1 specifying the level of confidence interval, default is 0.95.
-#' @param tree a phylo object describing the phylogenetic tree in Newick format for all observed species in the pooled assemblage. It is necessary when \code{class = 'PD'}.
+#' @param tree a phylo object describing the phylogenetic tree in Newick format for all observed species in the pooled assemblage. It is necessary when \code{diversity = 'PD'}.
 #' @param nT needed only for the matrix or data.frame which \code{datatype = "incidence_raw"}, a sequence of named nonnegative integers specifying the number of sampling units in each assemblage.
 #' If \code{names(nT) = NULL}, then assemblage are automatically named as "assemblage1", "assemblage2",..., etc.
-#' It is necessary when \code{class = 'PD'} and \code{datatype = "incidence_raw"}.
+#' It is necessary when \code{diversity = 'PD'} and \code{datatype = "incidence_raw"}.
 #' @return a data.frame of species diversity table including the sample size, sample coverage, method (rarefaction or extrapolation), and diversity estimates with q = 0, 1, and 2 for the user-specified sample size or sample coverage.
 #'
 #' @examples
@@ -1867,9 +1869,9 @@ ggAsy.link <- function(outcome, text.size = 14){
 #' out2 <- estimate3D.link(Norfolk, datatype="abundance", base="size", level=0.7, nboot = 30)
 #' }
 #' @export
-estimateD.link = function(dat, class = 'TD', q = c(0, 1, 2),datatype = "abundance",base = "size",
+estimateD.link = function(dat, diversity = 'TD', q = c(0, 1, 2),datatype = "abundance",base = "size",
                       level = NULL,nboot = 50,conf = 0.95){
-  if(class == 'TD'){
+  if(diversity == 'TD'){
     div = lapply(1:length(dat), function(i){
       x = dat[[i]]
       assemblage = names(dat)[[i]]
@@ -1879,7 +1881,7 @@ estimateD.link = function(dat, class = 'TD', q = c(0, 1, 2),datatype = "abundanc
     })%>%do.call("rbind",.)
 
     return(div)
-  }else if(class == 'PD'){
+  }else if(diversity == 'PD'){
     q <- unique(ceiling(q))
     ci <- qnorm(conf/2+0.5)
 
@@ -1992,7 +1994,7 @@ Spec.link <- function(x,q = seq(0, 2, 0.2),
                      conf = 0.95,
                      E.class = c(1:5),
                      C = NULL){
-  if (class == 'TD'){
+  if (diversity == 'TD'){
     long = lapply(x, function(da){da%>%as.data.frame()%>%gather(key = "col_sp", value = "abundance")%>%.[,2]})
 
     Spec <- lapply(E.class, function(e){
@@ -2017,7 +2019,7 @@ Spec.link <- function(x,q = seq(0, 2, 0.2),
     names(Spec) = paste0("E",E.class)
     return(Spec)
 
-  }else if (class == 'PD'){
+  }else if (diversity == 'PD'){
     long = lapply(x, function(da){da%>%as.data.frame()%>%gather(key = "col_sp", value = "abundance")%>%.[,2]})
 
     Spec <- lapply(E.class, function(e){
@@ -2056,8 +2058,8 @@ Spec.link <- function(x,q = seq(0, 2, 0.2),
 #' @examples
 #' \dontrun{
 #' data(Norfolk)
-#' Est <- Spec.link(x = Norfolk, class = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
-#' Emp <- Spec.link(x = Norfolk, class = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
+#' Est <- Spec.link(x = Norfolk, diversity = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
+#' Emp <- Spec.link(x = Norfolk, diversity = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
 #' Est
 #' Emp
 #' ggSpec(Est)
