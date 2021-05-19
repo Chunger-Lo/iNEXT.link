@@ -21,7 +21,7 @@ library(ggpubr)
 library(knitr)
 library(flextable)
 library(tibble)
-library(iNEXT)
+library(iNEXT.3D)
 library(sets)
 library(tidyr)
 library(ade4)
@@ -29,16 +29,9 @@ library(tidyverse)
 library(ape)
 library(dplyr)
 library(phytools)
-library(miNEXT.beta)
 library(magrittr)
 library(chaoUtility)
 library(future.apply)
-
-load('..//data//Norfolk.rda')
-load('..//data//puerto.rico.rda')
-
-coltree = puerto.rico$col.tree
-rowtree = puerto.rico$row.tree
 ```
 
 ```{r}
@@ -101,11 +94,11 @@ datainf_pool%>%
 ```{r, message = F, warning=F}
 # bef = Sys.time()
 # b = 50
-# sample1 <- iNEXT.link(x = network_list, diversity = 'TD', datatype = "abundance", nboot = b)
-# asy1 = Asy.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
-# obs1 = Obs.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
-# sc1 <- SC.link(x = network_list, datatype = "abundance", nboot = b)
-# spec1 = Spec.link(network_list, q = seq(0,2,1), datatype = "abundance", nboot = b)
+sample1 <- iNEXT.link(x = network_list, diversity = 'TD', datatype = "abundance", nboot = b)
+asy1 = Asy.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
+obs1 = Obs.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
+sc1 <- SC.link(x = network_list, datatype = "abundance", nboot = b)
+spec1 = Spec.link(network_list, q = seq(0,2,1), datatype = "abundance", nboot = b)
 # # Beta
 # dissimilarity_pool = iNEXT_beta.link(x = beetles_pool$data, coverage_expected = seq(0.5,0.95,0.05),data_type='abundance',q = c(0, 1, 2),diversity='TD',
 #                                  nboot = b, conf = 0.95, max_alpha_coverage=F, by='coverage')

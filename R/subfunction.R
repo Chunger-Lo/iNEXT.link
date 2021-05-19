@@ -73,31 +73,6 @@ plot.tree2 <- function(mat){
   diagonalNetwork(useRtreeList,fontSize = 27, opacity = 10, linkColour = "#828282", nodeStroke = "#6495ED")
 }
 
-
-#########
-# #taxonomy
-# datainf <- function(data){
-#   if (class(data)!="dataframe") data <- as.data.frame(data)
-#   a1 <- matrix(0,17,1,dimnames=list(1:17, "value"))
-#   rownames(a1) <- c("n", "S.obs","Links.obs","S.obs.row","S.obs.col","Connectance", "Coverage","f1","f2","f3","f4","f5","f6","f7","f8","f9","f10")
-#   a1[1,1] <- as.integer(sum(data))
-#   a1[2,1] <-  sum(ncol(data),nrow(data))
-#   a1[3,1] <-  sum(data>0)
-#   a1[4,1] <-  nrow(data)
-#   a1[5,1] <-  ncol(data)
-#   a1[6,1] <-  round(sum(data>0)/ncol(data)/nrow(data),4)
-#   a1[8:17,1] <- c(sum(data==1),sum(data==2),sum(data==3),sum(data==4),sum(data==5),sum(data==6),sum(data==7),sum(data==8),sum(data==9),sum(data==10))
-#   f1 = sum(data==1)
-#   f2 = sum(data==2)
-#   n = sum(data)
-#   # C.hat
-#   a1[7,1] <- round(1 - (f1/n)*((n-1)*f1/((n-1)*f1+2*f2)),4)
-#   a1 = data.frame(a1)
-#   return(a1)
-# }
-## even
-
-# q
 Diversity_profile <- function(x,q){
   x = x[x>0]
   n = sum(x)
@@ -206,28 +181,6 @@ MakeTable_Empericalprofile = function(data, B, q, conf){
   return(output)
 }
 
-# AsyND = function(data, B, q, conf){
-#   Diversity = bootstrap_forq(data, B, q, conf, Diversity_profile)
-#   Entropy = bootstrap_forq(data, B, q, conf, Diversity_Tsallis)
-#   # tmp <- Diversity_Tsallis(Diversity[,1],q)
-#   # Entropy = cbind("estimate"=tmp,"sd"=Diversity[,2],"LCL"=tmp-Diversity[,2],"UCL"=tmp+Diversity[,2])
-#   output = rbind(data.frame("Order.q" = q,"Target"="Diversity","Estimate"=Diversity[,1],"s.e."=Diversity[,2],"LCL"=Diversity[,3],"UCL"=Diversity[,4]),
-#                  data.frame("Order.q" = q,"Target"="Entropy","Estimate"=Entropy[,1],"s.e."=Entropy[,2],"LCL"=Entropy[,3],"UCL"=Entropy[,4]))
-#   output[,c(1,3,4,5,6)] = round(output[,c(1,3,4,5,6)],9)
-#
-#   return(output)
-# }
-# ObsND = function(data, B, q, conf){
-#   Diversity = bootstrap_forq( data, B,q,conf,Diversity_profile_MLE)
-#   Entropy = bootstrap_forq( data, B,q,conf,Diversity_Tsallis_MLE)
-#   # tmp <- Diversity_Tsallis(Diversity[,1],q)
-#   # Entropy = cbind("estimate"=tmp,"sd"=Diversity[,2],"LCL"=tmp-Diversity[,2],"UCL"=tmp+Diversity[,2])
-#   output = rbind(data.frame("Order.q" = q,"Target"="Diversity","Emperical"=Diversity[,1],"s.e."=Diversity[,2],"LCL"=Diversity[,3],"UCL"=Diversity[,4]),
-#                  data.frame("Order.q" = q,"Target"="Entropy","Emperical"=Entropy[,1],"s.e."=Entropy[,2],"LCL"=Entropy[,3],"UCL"=Entropy[,4]))
-#   output[,c(1,3,4,5,6)] = round(output[,c(1,3,4,5,6)],9)
-#
-#   return(output)
-# }
 
 ### Evenness
 # x = Norfolk
@@ -286,6 +239,9 @@ Evenness.profile <- function(x, q, datatype = c("abundance","incidence_freq"), m
 ###
 ready4beta <- function(x){
   ### 拉長所有interaction, 視為不同subplot, 取聯集補0
+  ## transform 2d matrix to vector
+  ## expand to the union of all networks
+  ## replace na to zero
   data_long <- lapply(x, function(tab){
     tab = rownames_to_column(tab, "row.name")
     long = gather(data = tab,key = "col.name", value= "abundance", -row.name)

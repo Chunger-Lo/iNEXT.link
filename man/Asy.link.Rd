@@ -35,5 +35,4 @@ data(puerto.rico)
 out2 <- Asy.link(puerto.rico$data, diversity = 'PD', datatype = "abundance", nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 ggAsy.link(out2)
 }
-
 }

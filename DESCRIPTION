@@ -31,11 +31,11 @@ Imports:
     sets,
     phyclust,
     utils,
-    iNEXT3D,
-    iNEXT4steps,
+    iNEXT.3D,
+    iNEXT.4steps,
     miNEXT.beta
 LinkingTo: Rcpp
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
-Remotes: cherry05166/iNEXT3D, KaiHsiangHu/iNEXTPD2, KaiHsiangHu/iNEXT4steps, Chunger-Lo/miNEXT.beta
+Remotes: AnneChao/iNEXT.3D, KaiHsiangHu/iNEXTPD2, KaiHsiangHu/iNEXT4.steps, Chunger-Lo/miNEXT.beta

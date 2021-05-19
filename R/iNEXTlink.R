@@ -23,7 +23,7 @@ SC.link <- function(x, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30, c
   data_long <- lapply(x, function(tab){
     as.matrix(tab)%>%c()}
   )
-  res = iNEXT4steps::SC(x = data_long, q = q, datatype = datatype, nboot = nboot, conf = conf)
+  res = iNEXT.4steps::SC(x = data_long, q = q, datatype = datatype, nboot = nboot, conf = conf)
   return(res)
 }
 
@@ -88,7 +88,7 @@ ggSC.link <- function(output){
 #' @param conf a positive number < 1 specifying the level of confidence interval. Default is 0.95.
 #' @param col.tree phylogenetic tree of column assemblage in interaction matrix
 #' @param row.tree phylogenetic tree of row assemblage in interaction matrix.
-#' @import ape ggplot2 dplyr tidytree stats chaoUtility phytools iNEXT3D
+#' @import ape ggplot2 dplyr tidytree stats chaoUtility phytools iNEXT.3D
 #' @importFrom phyclust get.rooted.tree.height
 #' @return
 
@@ -153,7 +153,7 @@ iNEXT.link <- function(x, diversity = 'TD', q = c(0,1,2), datatype = "abundance"
     data_long <- lapply(x, function(tab){
       as.matrix(tab)%>%c()}
     )
-    INEXT_est <- iNEXT3D::iNEXT3D(data_long, diversity = 'TD', q = q,conf = conf,
+    INEXT_est <- iNEXT.3D::iNEXT3D(data_long, diversity = 'TD', q = q,conf = conf,
                                   nboot = nboot, knots = knots, endpoint = endpoint, size = size)
 
     res[[1]] = datainfo
@@ -272,20 +272,12 @@ DataInfo.link <- function(data, diversity = 'TD', datatype = "abundance", row.tr
 #' data(puerto.rico)
 #' iNEXT_beta.link(x = puerto.rico,coverage_expected = seq(0.5, 1, 0.5), data_type='abundance',q = c(0, 1, 2),
 #' level=c('taxonomic', 'phylogenetic', 'functional'), nboot = 20, conf = 0.95, max_alpha_coverage=F,by='coverage')
-
 #' }
 #' @references
 #' Chao, A., Chazdon, R. L., Colwell, R. K. and Shen, T.-J.(2005). A new statistical approach for assessing similarity of species composition with incidence and abundance data. Ecology Letters 8, 148-159. (pdf file) Spanish translation in pp. 85-96 of Halffter, G. Soberon, J., Koleff, P. and Melic, A. (eds) 2005 Sobre Diversidad Biologica: el Sognificado de las Diversidades Alfa, Beta y Gamma. m3m-Monografias 3ercer Milenio, vol. 4, SEA, CONABIO, Grupo DIVERSITAS & CONACYT, Zaragoza. IV +242 pp.
 #' Chiu, C.-H., Jost, L. and Chao*, A. (2014). Phylogenetic beta diversity, similarity, and differentiation measures based on Hill numbers. Ecological Monographs 84, 21-44.
 #' Chao, A. and Ricotta, C. (2019). Quantifying evenness and linking it to diversity, beta diversity, and similarity. Ecology, 100(12), e02852.
 #' @export
-
-# row.tree = rowtree
-# col.tree = coltree
-# x = puerto.rico$data
-# coverage_expected = seq(0.5,1,0.05)
-# level = 'phylogenetic'; data_type = "abundance";conf=0.95;by = 'coverage';nboot=20;max_alpha_coverage=F
-# level = 'taxonomic'
 
 iNEXT_beta.link = function(x, coverage_expected = seq(0.5, 1, 0.5), data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2),
                            level=c('taxonomic', 'phylogenetic', 'functional'),
@@ -718,7 +710,7 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 #' ggplot2 extension for an iNEXT object
 #'
 #' \code{ggiNEXT.link}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXT}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
-#' @param x an \code{iNEXT} object computed by \code{\link{iNEXT}}.
+#' @param x an \code{iNEXT.3D} object computed by \code{\link{iNEXT.3D}}.
 #' @param type three types of plots: sample-size-based rarefaction/extrapolation curve (\code{type = 1});
 #' sample completeness curve (\code{type = 2}); coverage-based rarefaction/extrapolation curve (\code{type = 3}).
 #' @param se a logical variable to display confidence interval around the estimated sampling curve.
@@ -750,14 +742,10 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 #' ggiNEXT.link(outcome = out2, type = 2)
 #' ggiNEXT.link(outcome = out2, type = 3)
 #' }
-
-
 #' @export
 ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var = "Assemblage",
                          color.var = "Order.q", text.size = 12, stript.size = 12){
   if(diversity == 'TD'){
-    # iNEXT3D::ggiNEXT3D(outcome, type = type, facet.var = facet.var,color.var = color.var, se = se)[[1]] +
-    #   ylab("Network diversity")
 
     iNE <- outcome$iNextEst$coverage_based
     iNE.sub <- iNE[iNE$Method == "Observed",]
@@ -877,9 +865,7 @@ ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var
 #'
 #' ggiNEXT_beta_link(out, type = 1,se = TRUE,facet = "None",color = "Assemblage",grey = FALSE, text_size = 10)
 #' }
-
-
-#' @export.
+#' @export
 
 ggiNEXT_beta.link <- function(output, type = c('B', 'D'),
                               diversity = 'TD',
@@ -1107,8 +1093,6 @@ ggiNEXT_beta.link <- function(output, type = c('B', 'D'),
 #' out2 <- Asy.link(puerto.rico$data, diversity = 'PD', datatype = "abundance", nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #' ggAsy.link(out2)
 #' }
-
-#'
 #' @export
 Asy.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30, conf = 0.95,
                      row.tree = NULL, col.tree = NULL){
@@ -1253,7 +1237,6 @@ ggObs.link <- function(outcome, text.size = 14){
 #' nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #' ggAsy.link(out2)
 #' }
-
 #' @export
 ggAsy.link <- function(outcome, text.size = 14){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
@@ -1314,7 +1297,7 @@ estimateD.link = function(dat, diversity = 'TD', q = c(0, 1, 2),datatype = "abun
       x = dat[[i]]
       assemblage = names(dat)[[i]]
       long = as.matrix(x)%>%c()
-      iNEXT3D::estimate3D(long, q=q,datatype=datatype, base=base,
+      iNEXT.3D::estimate3D(long, q=q,datatype=datatype, base=base,
                           diversity = 'TD', nboot = nboot,conf=conf)%>%
         mutate(Assemblage = assemblage)
     })%>%do.call("rbind",.)
@@ -1423,7 +1406,6 @@ estimateD.link = function(dat, diversity = 'TD', q = c(0, 1, 2),datatype = "abun
 #' ggSpec(Est)
 #' ggSpec(Emp)
 #' }
-
 #' @export
 
 Spec.link <- function(x,q = seq(0, 2, 0.2),
@@ -1439,7 +1421,7 @@ Spec.link <- function(x,q = seq(0, 2, 0.2),
 
     Spec <- lapply(E.class, function(e){
       each_class = lapply(seq_along(long), function(i){
-        res = iNEXT4steps::Evenness(long[[i]], q = q,datatype = datatype,
+        res = iNEXT.4steps::Evenness(long[[i]], q = q,datatype = datatype,
                                     method = method, nboot=nboot, E.class = e, C = C)
         res['Coverage'] = NULL
         res = lapply(res, function(each_class){
@@ -1464,7 +1446,7 @@ Spec.link <- function(x,q = seq(0, 2, 0.2),
 
     Spec <- lapply(E.class, function(e){
       each_class = lapply(seq_along(long), function(i){
-        res = iNEXT4steps::Evenness(long[[i]], q = q,datatype = datatype,
+        res = iNEXT.4steps::Evenness(long[[i]], q = q,datatype = datatype,
                                     method = method, nboot=nboot, E.class = e, C = C)
         res['Coverage'] = NULL
         res = lapply(res, function(each_class){

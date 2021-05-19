@@ -11,8 +11,8 @@ ggiNEXT.link(
   se = TRUE,
   facet.var = "Assemblage",
   color.var = "Order.q",
-  text.size = 18,
-  stript.size = 16
+  text.size = 12,
+  stript.size = 12
 )
 }
 \arguments{
@@ -33,7 +33,7 @@ use different colors for diversity orders (\code{color.var="Order.q"});
 use different colors for sites (\code{color.var="Assemblage"});
 use different colors for combinations of order x assemblage (\code{color.var="Both"}).}
 
-\item{x}{an \code{iNEXT} object computed by \code{\link{iNEXT}}.}
+\item{x}{an \code{iNEXT.3D} object computed by \code{\link{iNEXT.3D}}.}
 
 \item{grey}{a logical variable to display grey and white ggplot2 theme.}
 
