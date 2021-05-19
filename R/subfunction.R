@@ -318,11 +318,18 @@ ready4beta <- function(x){
   combined = column_to_rownames(combined, "sp")
 }
 #########
-long_to_wide = function(data_long = bootstrap_data_gamma){
-  temp = data_long%>%as.data.frame()%>%rownames_to_column("sp")%>%
-    separate("sp", into = c("row_sp", "col_sp"), sep = "_")%>%
-    rename("abundance"=".")
-  mat = temp%>%spread(key = "col_sp", value = "abundance")%>%column_to_rownames("row_sp")
+long_to_wide = function(data_long = data_gamma){
+  n <- 2
+  reg <- paste0('((?:[^_]*_){',n,'})(.*)')
+
+  temp = data_long%>%as.data.frame()%>%rownames_to_column("sp")
+
+  splitted  = sapply(temp$sp, function(str){
+    strapply(str, reg, c, simplify =~ sub('_$', '', x))
+  })%>%t()%>%as.data.frame()%>% remove_rownames()%>%set_colnames(c('row_sp', 'col_sp'))
+
+  mat = splitted%>%cbind(abundance = temp$.)%>%
+    spread(key = "col_sp", value = "abundance")%>%column_to_rownames("row_sp")
   mat[is.na(mat)] = 0
 
   return(mat)
@@ -341,29 +348,33 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
     tmp <- lapply(1:length(tmp), function(x){
       tmp1 <- as.data.frame(tmp[[x]])
       tmp1$spe.c <- colnames(data)[x]
-      tmp1$interaction <- paste(tmp1$label,tmp1$spe.c,sep = "-")
+      tmp1$interaction <- paste(tmp1$label,tmp1$spe.c,sep = "_")
       tmp1
     })
     tmp <- do.call(rbind,tmp)
     out <- data.frame(branch.abun = tmp$branch.abun, branch.length = tmp$branch.length,
                       tgroup = tmp$tgroup,interaction = tmp$interaction)
   }
+  ## beetles (only coltree)
   if ((is.null(row.tree) == 1) & (is.null(col.tree) == 0)){
-    tip <- col.tree$tip.label[-match(colnames(data),col.tree$tip.label)]
-    mytree <- drop.tip(col.tree,tip)
+    ind = is.na(match(colnames(data),col.tree$tip.label))
+    tip_notin_data <- col.tree$tip.label[ind]
+    mytree <- drop.tip(col.tree,tip_notin_data)
     mytree <- phylo2phytree(mytree)
+
     tmp <- apply(data, 1, function(abun){
+      # phyBranchAL_Abu(phylo = mytree, data = abun, rootExtend = T, refT = NULL)
       phyExpandData(x=abun, labels=colnames(data), phy=mytree, datatype="abundance")
     })
     tmp <- lapply(1:length(tmp), function(x){
-      tmp1 <- as.data.frame(tmp[[x]])
+      tmp1 <- tmp[[x]]%>%as.data.frame()
       tmp1$spe.r <- rownames(data)[x]
-      tmp1$interaction <- paste(tmp1$spe.r,tmp1$label,sep = "-")
+      tmp1$interaction <- paste(tmp1$spe.r,tmp1$label,sep = "_")
       tmp1
     })
     tmp <- do.call(rbind,tmp)
     out <- data.frame(branch.abun = tmp$branch.abun, branch.length = tmp$branch.length,tgroup = tmp$tgroup,interaction = tmp$interaction)
-
+    out$branch.abun[is.na(out$branch.abun)] = 0
   }
 
   if ((is.null(row.tree) == 0) & (is.null(col.tree) == 0)){
@@ -420,12 +431,12 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
       t2[t2$Species == label[i],]$r.group <-  tmp[tmp$label == label[i],]$tgroup[1]
     }
     t2$group <- ifelse(t2$tgroup == t2$r.group,t2$tgroup,"Inode")
-    t2$interaction <- paste(t2$label,t2$Species,sep = "-")
+    t2$interaction <- paste(t2$label,t2$Species,sep = "_")
 
     out <- data.frame(branch.abun = t2$branch.abun, branch.length = t2$branch.length*t2$r.length,
                       tgroup = t2$group, interaction = t2$interaction)
   }
-  out <- out[out$branch.abun > 0,]
+  # out <- out[out$branch.abun > 0,]
   # out <- na.omit(out)
   # out <- out[order(out$tgroup,decreasing = T),]
   rownames(out) <- NULL
@@ -457,7 +468,7 @@ expanddata <- function(data){
       tmp <- as.data.frame(x)
     tmp$spe.r <- rownames(tmp)
     tmp1 <- gather(tmp,spe.c,abun,-spe.r)
-    tmp2 <- data.frame(link = paste(tmp1$spe.r,tmp1$spe.c,sep = "-"),abun = tmp1$abun)
+    tmp2 <- data.frame(link = paste(tmp1$spe.r,tmp1$spe.c,sep = "_"),abun = tmp1$abun)
     out <- tmp2[tmp2$abun >0,]
     }
     if(ncol(x) == 1){
@@ -649,13 +660,16 @@ sample.boot.phy <- function(data,B,row.tree = NULL,col.tree = NULL) {
   g2 <- sum(phy$branch.length[phy$branch.abun==2])
   g0 <- ifelse(g2>g1*f2/2/f1,(n-1)/n*g1^2/2/g2,(n-1)/n*g1*(f1-1)/2/(f2+1))/f0
   pi <- adjust.pi(data)
-  data[data>0] <- pi$seen
+  # a_i -> p_i
+  pi_matrix = data
+  pi_matrix[pi_matrix>0] <- pi$seen
 
-  seen_interaction_aili = create.aili(data,row.tree,col.tree)
+  # transfrom pi from S1xS1 to B1xB2
+  seen_interaction_aili = create.aili(pi_matrix,row.tree,col.tree)
   unseen_interaction_aili = data.frame(branch.abun = rep(pi$unseen,f0), branch.length = g0 / f0,
                                        tgroup = "Tip",interaction = "unseen")
-  p <- rbind(seen_interaction_aili,unseen_interaction_aili)
-  p[p$tgroup == "Root",]$branch.abun <- 1
+  p <- rbind(seen_interaction_aili,unseen_interaction_aili)%>%
+    mutate(branch.abun = ifelse(tgroup == 'Root', 1, branch.abun))
 
   total_nodes_num = nrow(p)
 
@@ -668,16 +682,16 @@ sample.boot.phy <- function(data,B,row.tree = NULL,col.tree = NULL) {
     out <- out[out$branch.abun>0,]
   })
 }
+
 get.netphydiv <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf) {
-  phydata <- lapply(data,function(x){
-    create.aili(x,row.tree = row.tree,col.tree = col.tree)
-  })
+  plan(multisession)
+  phydata <- future_lapply(data,function(x){
+    create.aili(x,row.tree = row.tree,col.tree = col.tree)%>%
+      filter(branch.abun > 0)
+  }, future.seed=NULL)
 
   mle <- lapply(phydata, function(x){
-        # iNEXTPD2:::
-        # iNEXTPD2::PhdObs(x, datatype = "abundace", tree = )
-        # PhD:::PD.qprofile(x,q,cal = "PD",nt = sum(x[x$tgroup == "Tip","branch.abun"]))/
-        PhD:::PD.qprofile(aL = x, q = q, cal = "PD", nt = sum(x[x$tgroup == "Tip","branch.abun"]))/
+      PhD:::PD.qprofile(aL = x, q = q, cal = "PD", nt = sum(x[x$tgroup == "Tip","branch.abun"]))/
       sum(x$branch.abun*x$branch.length)*sum(x[x$tgroup == "Tip",]$branch.abun)
   })
   est <- lapply(phydata,function(x){
@@ -693,11 +707,12 @@ get.netphydiv <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf) {
   boot.sam <- lapply(data, function(x){
     sample.boot.phy(x,B =B,row.tree = row.tree,col.tree = col.tree)
   })
-  mle.boot <- lapply(boot.sam, function(x){
+  plan(multisession)
+  mle.boot <- future_lapply(boot.sam, function(x){
     lapply(x, function(y){
           PhD:::PD.qprofile(y,q,cal = "PD",nt = sum(y[y$tgroup == "Tip",]$branch.abun))/sum(y$branch.abun*y$branch.length)*sum(y[y$tgroup == "Tip",]$branch.abun)
     })
-  })
+  }, future.seed=NULL)
   mle.sd <- lapply(mle.boot, function(x){
     tmp <- do.call(rbind,x)
     sapply(1:length(q), function(x){
@@ -756,7 +771,8 @@ get.netphydiv_iNE <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf, kno
     })
     sc.table <- data.frame(m=m,SC = sc, SC.UCL = sc+ci * sc.sd,SC.LCL = sc - ci * sc.sd)
     out <- lapply(q, function(x){
-      PD <- lapply(m,function(y){
+      plan(multisession)
+      PD <- future_lapply(m,function(y){
        my_PhD.m.est(ai = phydata$branch.abun, Lis = phydata$branch.length, m = y, q = x, nt = n, cal = 'PD')/tbar
         # PhD:::PhD.m.est(phydata,y,x,datatype = "abundance",nt = n)/tbar
       })%>%unlist()
@@ -777,6 +793,12 @@ get.netphydiv_iNE <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf, kno
     })
     do.call(rbind,out)
   }
+
+
+
+  # out <- future_lapply(data, FUN = function(x){
+  #   inex(data = x,q,B,row.tree,col.tree)
+  # })
   out <- lapply(data, function(x){
     inex(data = x,q,B,row.tree,col.tree)
   })
@@ -879,5 +901,144 @@ get.netphyhiera <- function(data,mat,q,B,row.tree = NULL,col.tree = NULL,conf){
   })
   out <- rbind(gamma,do.call(rbind,alpha),do.call(rbind,beta))
   out
+}
+
+bootstrap_population_multiple_network = function(data, data_gamma, data_type){
+
+  if (data_type == 'abundance'){
+
+    S_obs = sum(data_gamma > 0)
+    n = sum(data_gamma)
+    f1 = sum(data_gamma == 1)
+    f2 = sum(data_gamma == 2)
+    f0_hat = ifelse(f2 == 0, (n - 1)/n * f1 * (f1 - 1)/2, (n - 1)/n * f1^2/2/f2) %>% ceiling()
+
+    output = apply(data, 2, function(x){
+
+      p_i_hat = chaoUtility:::bootp_one_abu(Spec = x, zero = T)
+
+      ## with unseen species (interaction)
+      if(length(p_i_hat) != length(x)){
+
+        p_i_hat_unobs = p_i_hat[length(p_i_hat)]
+        p_i_hat_obs = p_i_hat[1:length(x)]
+        p_i_hat = c(p_i_hat_obs, rep(0, f0_hat))
+        candidate = which(p_i_hat==0)
+
+        chosen = sample(x = candidate, size = min(length(p_i_hat) - length(x), length(candidate)), replace = F)
+        p_i_hat[chosen] = (1-sum(p_i_hat))/length(chosen)
+
+        p_i_hat
+
+      } else {
+
+        p_i_hat = c(p_i_hat, rep(0, f0_hat))
+        p_i_hat
+
+      }
+    })
+  }
+
+  if (data_type == 'incidence'){
+
+    S_obs = sum(data_gamma > 0)
+    t = data_gamma[1]
+    Q1 = sum(data_gamma == 1)
+    Q2 = sum(data_gamma == 2)
+    Q0_hat = if ( Q2 == 0 ){( (t-1)/t ) * ( Q1*(Q1-1)/2 )} else {( (t-1)/t ) * ( (Q1^2) / (2*Q2) )} %>% ceiling
+
+    output = apply(data, 2, function(x){
+
+      pi_i_hat = chaoUtility:::bootp_one_inc(Spec = x, zero = T)
+
+      if(length(pi_i_hat) != length(x)){
+
+        pi_i_hat_unobs = pi_i_hat[length(pi_i_hat)]
+        pi_i_hat_obs = pi_i_hat[1:length(x)]
+        pi_i_hat = c(pi_i_hat_obs, rep(0, Q0_hat))
+        candidate = which(pi_i_hat==0)
+        chosen = sample(x = candidate, size = min(length(pi_i_hat) - length(x), length(candidate)), replace = F)
+        pi_i_hat[chosen] = pi_i_hat_unobs
+
+        pi_i_hat
+
+      } else {
+
+        pi_i_hat = c(pi_i_hat, rep(0, Q0_hat))
+        pi_i_hat
+
+      }
+    })
+  }
+  return(output)
+}
+
+bootstrap_population_multiple_assemblage = function(data, data_gamma, data_type){
+
+  if (data_type == 'abundance'){
+
+    S_obs = sum(data_gamma > 0)
+    n = sum(data_gamma)
+    f1 = sum(data_gamma == 1)
+    f2 = sum(data_gamma == 2)
+    f0_hat = ifelse(f2 == 0, (n - 1)/n * f1 * (f1 - 1)/2, (n - 1)/n * f1^2/2/f2) %>% ceiling()
+
+    output = apply(data, 2, function(x){
+
+      p_i_hat = chaoUtility:::bootp_one_abu(Spec = x, zero = T)
+
+      if(length(p_i_hat) != length(x)){
+
+        p_i_hat_unobs = p_i_hat[length(p_i_hat)]
+        p_i_hat_obs = p_i_hat[1:length(x)]
+        p_i_hat = c(p_i_hat_obs, rep(0, f0_hat))
+        candidate = which(p_i_hat==0)
+
+        chosen = sample(x = candidate, size = min(length(p_i_hat) - length(x), length(candidate)), replace = F)
+        p_i_hat[chosen] = (1-sum(p_i_hat))/length(chosen)
+
+        p_i_hat
+
+      } else {
+
+        p_i_hat = c(p_i_hat, rep(0, f0_hat))
+        p_i_hat
+
+      }
+    })
+  }
+
+  if (data_type == 'incidence'){
+
+    S_obs = sum(data_gamma > 0)
+    t = data_gamma[1]
+    Q1 = sum(data_gamma == 1)
+    Q2 = sum(data_gamma == 2)
+    Q0_hat = if ( Q2 == 0 ){( (t-1)/t ) * ( Q1*(Q1-1)/2 )} else {( (t-1)/t ) * ( (Q1^2) / (2*Q2) )} %>% ceiling
+
+    output = apply(data, 2, function(x){
+
+      pi_i_hat = chaoUtility:::bootp_one_inc(Spec = x, zero = T)
+
+      if(length(pi_i_hat) != length(x)){
+
+        pi_i_hat_unobs = pi_i_hat[length(pi_i_hat)]
+        pi_i_hat_obs = pi_i_hat[1:length(x)]
+        pi_i_hat = c(pi_i_hat_obs, rep(0, Q0_hat))
+        candidate = which(pi_i_hat==0)
+        chosen = sample(x = candidate, size = min(length(pi_i_hat) - length(x), length(candidate)), replace = F)
+        pi_i_hat[chosen] = pi_i_hat_unobs
+
+        pi_i_hat
+
+      } else {
+
+        pi_i_hat = c(pi_i_hat, rep(0, Q0_hat))
+        pi_i_hat
+
+      }
+    })
+  }
+  return(output)
 }
 

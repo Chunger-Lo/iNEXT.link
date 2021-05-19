@@ -4,7 +4,7 @@
 \alias{ggiNEXT.link}
 \title{ggplot2 extension for an iNEXT object}
 \usage{
-\method{ggiNEXT}{link}(
+ggiNEXT.link(
   outcome,
   diversity = "TD",
   type = 1,

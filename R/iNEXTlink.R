@@ -50,7 +50,7 @@ ggSC.link <- function(output){
     geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
     geom_ribbon(aes(ymin = SC.LCL, ymax = SC.UCL, fill = Assemblage),
                 alpha = 0.2, linetype = 0) + scale_fill_manual(values = cbPalette) +
-    labs(x = "Order q", y = "Sample completeness") + theme(text = element_text(size = 18)) +
+    labs(x = "Order q", y = "Sample completeness") + theme(text = element_text(size = 12)) +
     theme(legend.position = "bottom", legend.box = "vertical",
           legend.key.width = unit(1.2, "cm"), legend.title = element_blank())
 }
@@ -91,8 +91,7 @@ ggSC.link <- function(output){
 #' @import ape ggplot2 dplyr tidytree stats chaoUtility phytools iNEXT3D
 #' @importFrom phyclust get.rooted.tree.height
 #' @return
-#'
-#'
+
 #' \itemize{
 #'  \item{\code{$DataInfo}: A dataframe summarizing data information}
 #'  \item{\code{$iNextEst}: coverage-based diversity estimates along with confidence intervals}
@@ -154,16 +153,18 @@ iNEXT.link <- function(x, diversity = 'TD', q = c(0,1,2), datatype = "abundance"
     data_long <- lapply(x, function(tab){
       as.matrix(tab)%>%c()}
     )
-    INEXT_est <- iNEXT3D::iNEXT3D(data_long, class = 'TD', q = q,conf = conf,nboot = nboot, knots = knots, endpoint = endpoint, size = size)
+    INEXT_est <- iNEXT3D::iNEXT3D(data_long, diversity = 'TD', q = q,conf = conf,
+                                  nboot = nboot, knots = knots, endpoint = endpoint, size = size)
 
     res[[1]] = datainfo
-    res[[2]] = INEXT_est$TDiNextEst
-    res[[3]] = INEXT_est$TDAsyEst
-    names(res) = c("TDInfo", "TDiNextEst", "TDAsyEst")
+    res[[2]] = INEXT_est$iNextEst
+    res[[3]] = INEXT_est$AsyEst
+    names(res) = c("DataInfo", "iNextEst", "AsyEst")
 
   }else if(diversity == 'PD'){
     ## 1. datainfo
-    datainfo = DataInfo.link(data = x, diversity = diversity, datatype = datatype, row.tree = row.tree,col.tree = col.tree)
+    datainfo = DataInfo.link(data = x, diversity = diversity, datatype = datatype,
+                             row.tree = row.tree, col.tree = col.tree)
     ## 2. iNterpolation/ Extrapolation
     data_long <- lapply(x, function(tab){
       as.matrix(tab)%>%c()}
@@ -177,7 +178,7 @@ iNEXT.link <- function(x, diversity = 'TD', q = c(0,1,2), datatype = "abundance"
     res[[1]] = datainfo
     res[[2]] = NetiNE
     res[[3]] = NetDiv
-    names(res) = c("PDInfo", "PDiNextEst", "PDAsyEst")
+    names(res) = c("DataInfo", "iNextEst", "AsyEst")
 
   }
 
@@ -291,16 +292,20 @@ iNEXT_beta.link = function(x, coverage_expected = seq(0.5, 1, 0.5), data_type=c(
                            diversity = 'TD',
                            nboot = 20, conf = 0.95, max_alpha_coverage=F, by=c('coverage', 'size'),
                            row.tree = NULL,col.tree = NULL){
-  combined = ready4beta(x)
+  if(class(x[[1]]) == 'data.frame' ){x = list(x); }
+  combined_list = lapply(x, function(y){
+    ready4beta(y)%>%filter_all(any_vars(. != 0))
+  })
   if(diversity == 'TD'){
     # dissimilarity <- iNEXT_beta(x = combined, coverage_expected = coverage_expected, data_type = data_type, level = 'taxonomic',
-    dissimilarity <- iNEXT_beta(x = combined, coverage_expected = coverage_expected, data_type = data_type, level = 'taxonomic',
+    dissimilarity <- iNEXT_beta(x = combined_list, coverage_expected = coverage_expected, data_type = data_type, level = 'taxonomic',
                                 nboot = nboot, conf = conf, max_alpha_coverage = max_alpha_coverage, by = by)
   }
   else if(diversity == 'PD'){
-    dissimilarity = iNEXT_link_phybeta(x = combined, coverage_expected =coverage_expected, "abundance", level = 'phylogenetic',
+    dissimilarity = iNEXT_link_phybeta(x = combined_list, coverage_expected =coverage_expected,
+                                       data_type = data_type,
                                        row.tree = row.tree,col.tree = col.tree,
-                                       nboot = 0, by = 'coverage')
+                                       nboot = nboot, by = 'coverage')
   }
 
   return(dissimilarity)
@@ -309,12 +314,11 @@ iNEXT_beta.link = function(x, coverage_expected = seq(0.5, 1, 0.5), data_type=c(
 
 
 iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'incidence_raw'), q = c(0, 1, 2),
-                               level=c('taxonomic', 'phylogenetic', 'functional'),
                                nboot = 20, conf = 0.95, max_alpha_coverage=F, by=c('coverage', 'size'),
                                row.tree = NULL,col.tree = NULL){
   if(data_type=='abundance'){
 
-    if( class(x)=="data.frame" | class(x)=="matrix" ) x = list(Region_1 = x)
+    if(class(x)=="data.frame" | class(x)=="matrix" ) x = list(Region_1 = x)
 
     if(class(x)== "list"){
       if(is.null(names(x))) region_names = paste0("Region_", 1:length(x)) else region_names = names(x)
@@ -334,25 +338,6 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 
   if(is.null(conf)) conf = 0.95
   tmp = qnorm(1 - (1 - conf)/2)
-
-  if(level=='phylogenetic'){
-
-    if (data_type=='abundance') {
-      pool.data = do.call(cbind, data_list) %>% rowSums
-    }
-
-    else if (data_type=='incidence_raw') {
-      pool.data = do.call(cbind, data_list[[1]]) %>% rowSums
-
-    }
-    pool.name = names(pool.data[pool.data>0])
-    # tip = phy_tree$tip.label[-match(pool.name, phy_tree$tip.label)]
-    # mytree = drop.tip(phy_tree, tip)
-    # H_max = get.rooted.tree.height(mytree)
-    # if(is.null(reftime)) { reft = H_max
-    # } else if (reftime <= 0) { stop("Reference time must be greater than 0. Use NULL to set it to pooled tree height.", call. = FALSE)
-    # } else { reft = reftime }
-  }
 
   for_each_region = function(data, region_name, N){
 
@@ -377,1053 +362,351 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
       if (by=='coverage') m_alpha = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(data_alpha, i, data_type='abundance'))
 
     }
-    if (data_type=='incidence_raw') {
 
-      sampling_units = sapply(data, ncol)
-      if (length(unique(sampling_units)) > 1) stop("unsupported data structure: the sampling units of all regions must be the same.")
-      if (length(unique(sampling_units)) == 1) n = unique(sampling_units)
+    if (data_type=='abundance') {
+      ### 1. aL_table_gamma
+      data_gamma_2d = long_to_wide(data_gamma)
 
-      gamma = Reduce('+', data)
-      gamma[gamma>1] = 1
-      data_gamma_raw = gamma
-      data_gamma_freq = c(n, rowSums(gamma))
+      aL_table_gamma = create.aili(data_gamma_2d, row.tree = row.tree, col.tree = col.tree) %>%
+        select(branch.abun, branch.length, tgroup)%>%
+        filter(branch.abun>0)
 
-      data_alpha_freq = sapply(data, rowSums) %>% c(n, .)
+      ### 2. aL_table_alpha
+      plan(multisession)
+      aL_table_alpha =  future_lapply(1:N, function(i){
+        x = data[data[,i]>0,i]
+        names(x) = rownames(data)[data[,i]>0]
 
-      # data_gamma_freq = data_gamma_freq[data_gamma_freq>0]
-      # data_alpha_freq = data_alpha_freq[data_alpha_freq>0]
+        aL_table = create.aili(data = x%>%long_to_wide(),row.tree = row.tree, col.tree=col.tree )%>%
+          select(branch.abun, branch.length, tgroup)%>%
+          filter(branch.abun>0)
+        return(aL_table)
+      }, future.seed = TRUE)%>%do.call("rbind",.)
 
-      data_2D = apply(sapply(data, rowSums), 2, function(x) c(n, x)) %>% as.data.frame
 
-      ref_gamma = iNEXT:::Chat.Sam(data_gamma_freq, n)
-      if (by=='size') ref_alpha = ref_gamma
-      if (by=='coverage') ref_alpha = iNEXT:::Chat.Sam(data_alpha_freq, n)
-      ref_alpha_max = iNEXT:::Chat.Sam(data_alpha_freq, n*2)
-
-      coverage_expected = c(coverage_expected, ref_gamma, ref_alpha, ref_alpha_max) %>% sort %>% unique
-      # coverage_expected = coverage_expected[coverage_expected<1]
-
-      m_gamma = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(data_gamma_freq, i, data_type='incidence_freq'))
-      if (by=='size') m_alpha = m_gamma
-      if (by=='coverage') m_alpha = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(data_alpha_freq, i, data_type='incidence_raw'))
-
-    }
-
-    if (level=='phylogenetic') {
-
-      if (data_type=='abundance') {
-        data_gamma_2d = long_to_wide(data_gamma)
-        aL_table_gamma = create.aili(data_gamma_2d, row.tree = row.tree, col.tree = col.tree) %>%
-          select(branch.abun, branch.length, tgroup)
-
-        n <- sum(data_gamma)
-        cal = 'PD'
-
-        qPDm <- iNEXTPD2:::PhD.m.est(ai = aL_table_gamma$branch.abun,Lis = aL_table_gamma$branch.length%>%as.matrix(),m = m_gamma,
-                                     q = c(0,1,2),nt = n,cal = cal)
-        # %>% as.numeric()
-
-        # qPDm <- iNEXTPD2:::PhD.m.est(ai = aL$treeNabu$branch.abun,Lis = aL$BLbyT,m = m_gamma,
-        #                              q = c(0,1,2),nt = n,cal = cal) %>% as.numeric()
-
-        # iNEXTPD2:::PhD.m.est(ai = aL_table_gamma, lis, m = m_gamma , q = c(0,1,2), nt = n, cal)
-        gamma = qPDm %>% t %>%
-          as.data.frame %>%
+      get_phylogenetic_alpha_gamma <- function(aL_table_gamma, aL_table_alpha, n, m_gamma, m_alpha){
+        ## 1. gamma
+        qPDm <- iNEXTPD2:::PhD.m.est(ai = aL_table_gamma$branch.abun,
+                                     Lis = aL_table_gamma$branch.length%>%as.matrix(),m = m_gamma,
+                                     q = c(0,1,2),nt = n,cal = 'PD')
+        gamma = qPDm %>% t %>%as.data.frame %>%
           set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
           mutate(Coverage_expected=rep(coverage_expected, 3), Coverage_real=rep(iNEXT:::Chat.Ind(data_gamma, m_gamma), 3),
                  Size=rep(m_gamma, 3))%>%
           mutate(Method = ifelse(Coverage_expected>=ref_gamma, ifelse(Coverage_expected==ref_gamma, 'Observed', 'Extrapolated'), 'Interpolated'))
-        # gamma = iNEXTPD2:::PhD.m.est(ai = ai_B[isn0],Lis = Li_b[isn0,,drop=F],
-        #                              m=m[[i]],q=q,nt = n,cal = cal) %>% t %>%
-        #   as.data.frame %>%
-        #   set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
-        #   mutate(Coverage_expected=rep(coverage_expected, 3), Coverage_real=rep(iNEXT:::Chat.Ind(data_gamma, m_gamma), 3),
-        #          Size=rep(m_gamma, 3))
-        aL_table_alpha = c()
 
-        for (i in 1:N){
+        ## 2. alpha
+        qPDm = PhD:::PhD.m.est(ai = aL_table_alpha$branch.abun, Lis = aL_table_alpha$branch.length%>%as.matrix(),
+                               m = m_alpha,q = c(0,1,2),nt = n,cal = 'PD')
 
-          x = data[data[,i]>0,i]
-          names(x) = rownames(data)[data[,i]>0]
-
-          # aL = phyBranchAL_Abu(phylo = phy_tree, data = x, rootExtend = T, refT = reft)
-          # aL$treeNabu$branch.length = aL$BLbyT[,1]
-          # aL_table = aL$treeNabu %>% select(branch.abun, branch.length, tgroup)
-          #
-          # aL_table_alpha = rbind(aL_table_alpha, aL_table)
-          aL_table = create.aili(data = x%>%long_to_wide(),row.tree = row.tree, col.tree=col.tree )%>% select(branch.abun, branch.length, tgroup)
-
-          aL_table_alpha = rbind(aL_table_alpha, aL_table)
-
-        }
-
-        # qPDm = PhD:::PhD.m.est(aL=aL_table_alpha, m=m_alpha, Q=c(0,1,2), datatype='abundance', nt=n)
-        qPDm = PhD:::PhD.m.est(ai = aL_table_alpha$branch.abun,Lis = aL_table_alpha$branch.length%>%as.matrix(),m = m_alpha,
-        q = c(0,1,2),nt = n,cal = cal)
-        # qPDm = iNEXTPD2:::PhD.m.est(aL=aL_table_alpha, m=m_alpha, Q=c(0,1,2), datatype='abundance', nt=n)
         qPDm = qPDm/N
         alpha = qPDm %>% t %>% as.data.frame %>%
           set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
           mutate(Coverage_expected=rep(coverage_expected, 3), Coverage_real=rep(iNEXT:::Chat.Ind(data_alpha, m_alpha), 3), Size=rep(m_alpha, 3))%>%
           mutate(Method = ifelse(Coverage_expected>=ref_gamma, ifelse(Coverage_expected==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated'))
-
+        res = list()
+        res[['gamma']] = gamma
+        res[['alpha']] = alpha
+        return(res)
       }
 
-      if (data_type=='incidence_raw') {
-
-        aL = phyBranchAL_Inc(phylo=phy_tree, data=as.matrix(data_gamma_raw), datatype = "incidence_raw", refT = reft, rootExtend = T)
-        aL$treeNabu$branch.length = aL$BLbyT[,1]
-        aL_table_gamma = aL$treeNabu %>% select(branch.abun, branch.length, tgroup)
-
-        gamma = PhD:::PhD.m.est(aL = aL_table_gamma, m = m_gamma, Q = c(0,1,2), datatype = 'incidence_raw', nt = n) %>% t %>% as.data.frame %>%
-          set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
-          mutate(Coverage_expected=rep(coverage_expected, 3), Coverage_real=rep(iNEXT:::Chat.Sam(data_gamma_freq, m_gamma), 3), Size=rep(m_gamma, 3))
-
-        aL_table_alpha = c()
-
-        for (i in 1:N){
-
-          x = data[[i]]
-
-          aL = phyBranchAL_Inc(phylo = phy_tree, data = x, datatype = "incidence_raw", rootExtend = T, refT = reft)
-          aL$treeNabu$branch.length = aL$BLbyT[,1]
-          aL_table = aL$treeNabu %>% select(branch.abun, branch.length, tgroup)
-
-          aL_table_alpha = rbind(aL_table_alpha, aL_table)
-
-        }
-
-        alpha = (PhD:::PhD.m.est(aL = aL_table_alpha, m = m_alpha, Q = c(0,1,2), datatype = 'incidence_raw', nt = n)/N) %>% t %>% as.data.frame %>%
-          set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
-          mutate(Coverage_expected=rep(coverage_expected, 3), Coverage_real=rep(iNEXT:::Chat.Sam(data_alpha_freq, m_alpha), 3), Size=rep(m_alpha, 3))
-
-
-      }
-
-      gamma = (gamma %>%
-                 mutate(Method = ifelse(Coverage_expected>=ref_gamma,
-                                        ifelse(Coverage_expected==ref_gamma, 'Observed', 'Extrapolated'), 'Interpolated')))[,c(2,1,6,3,4,5)] %>%
-        set_colnames(c('Estimate', 'Order', 'Method', 'Coverage_expected', 'Coverage_real', 'Size'))
-
-      if (max_alpha_coverage==T) under_max_alpha = !((gamma$Order==0) & (gamma$Coverage_expected>ref_alpha_max)) else under_max_alpha = gamma$Coverage_expected>0
-      gamma = gamma[under_max_alpha,]
-      gamma$Order = as.numeric(gamma$Order)
-
-
-      alpha = (alpha %>%
-                 mutate(Method = ifelse(Coverage_expected>=ref_alpha, ifelse(Coverage_expected==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated')))[,c(2,1,6,3,4,5)] %>%
-        set_colnames(c('Estimate', 'Order', 'Method', 'Coverage_expected', 'Coverage_real', 'Size'))
-
-      alpha = alpha[under_max_alpha,]
-      alpha$Order = as.numeric(alpha$Order)
-
-      beta = alpha
-      beta$Estimate = gamma$Estimate/alpha$Estimate
-      beta[beta == "Observed"] = "Observed_alpha"
-      beta = beta %>% rbind(., cbind(gamma %>% filter(Method == "Observed") %>% select(Estimate) / alpha %>% filter(Method == "Observed") %>% select(Estimate),
-                                     Order = q, Method = "Observed", Coverage_expected = NA, Coverage_real = NA, Size = beta[beta$Method == "Observed_alpha", 'Size']))
-
-      C = beta %>% mutate(Estimate = ifelse(Order==1, log(Estimate)/log(N), (Estimate^(1-Order) - 1)/(N^(1-Order)-1)))
-      U = beta %>% mutate(Estimate = ifelse(Order==1, log(Estimate)/log(N), (Estimate^(Order-1) - 1)/(N^(Order-1)-1)))
-      V = beta %>% mutate(Estimate = (Estimate-1)/(N-1))
-      S = beta %>% mutate(Estimate = (1/Estimate-1)/(1/N-1))
-
-      if(nboot>1){
-        se = future_lapply(1:nboot, function(i){
-
-          if (data_type=='abundance') {
-            # tree_bt = phy_tree
-            bootstrap_population = bootstrap_population_multiple_assemblage(data, data_gamma, 'abundance')
-            p_bt = bootstrap_population
-            unseen_p = p_bt[-(1:nrow(data)),] %>% matrix(ncol=ncol(data))
-
-            if ( nrow(p_bt) > nrow(data) & sum(unseen_p)>0 ){
-
-              unseen = unseen_p[which(rowSums(unseen_p)>0),]
-              unseen = matrix(unseen, ncol = ncol(unseen_p), byrow = T)
-              p_bt = rbind(p_bt[(1:nrow(data)),], unseen)
-              unseen_name = sapply(1:nrow(unseen), function(i) paste0('unseen_', i))
-              rownames(p_bt) = c(rownames(data), unseen_name)
-
-              bootstrap_sample = sapply(1:ncol(data), function(k) rmultinom(n = 1, size = sum(data[,k]), prob = p_bt[,k]))
-              x_bt = bootstrap_sample
-
-              rownames(x_bt) = rownames(p_bt)
-
-              if ( sum(x_bt[-(1:nrow(data)),])>0 ){
-                # g0_hat = apply(data, 2, function(x){
-                #
-                #   n = sum(x)
-                #   f1 = sum(x==1)
-                #   f2 = sum(x==2)
-                #
-                #   # aL = phyBranchAL_Abu(phylo = phy_tree, data = x, rootExtend = T, refT = reft)
-                #   # aL$treeNabu$branch.length = aL$BLbyT[,1]
-                #   aL = create.aili(x%>%long_to_wide(), row.tree, col.tree)
-                #
-                #   aL = aL$treeNabu %>% select(branch.abun,branch.length)
-                #   g1 = aL$branch.length[aL$branch.abun==1] %>% sum
-                #   g2 = aL$branch.length[aL$branch.abun==2] %>% sum
-                #   g0_hat = ifelse( g2>((g1*f2)/(2*f1)) , ((n-1)/n)*(g1^2/(2*g2)) , ((n-1)/n)*(g1*(f1-1)/(2*(f2+1))) )
-                #   g0_hat
-                #
-                # })
-                g0_hat = sapply(1:ncol(data), function(j){
-                  x = data[,j]
-                  names(x) = rownames(data)
-                  n = sum(x)
-                  f1 = sum(x==1)
-                  f2 = sum(x==2)
-
-                  # aL = phyBranchAL_Abu(phylo = phy_tree, data = x, rootExtend = T, refT = reft)
-                  # aL$treeNabu$branch.length = aL$BLbyT[,1]
-                  aL = create.aili(x%>%long_to_wide(), row.tree, col.tree)%>% select(branch.abun,branch.length)
-                  g1 = aL$branch.length[aL$branch.abun==1] %>% sum
-                  g2 = aL$branch.length[aL$branch.abun==2] %>% sum
-                  g0_hat = ifelse( g2>((g1*f2)/(2*f1)) , ((n-1)/n)*(g1^2/(2*g2)) , ((n-1)/n)*(g1*(f1-1)/(2*(f2+1))) )
-                  g0_hat
-
-                })
-
-                te = (x_bt[1:nrow(data),]*(data==0))>0
-                used_length = sapply(1:ncol(data), function(i) {
-
-                  if (sum(te[,i])==0) return(0) else {
-
-                    aili = create.aili(x_bt[1:nrow(data),i]%>%long_to_wide(), row.tree, col.tree)
-                    aili%>%
-                      subset(interaction %in% (names(which(te[,i]==TRUE))%>%str_replace("_", "-")) ) %>%
-                      select(branch.length) %>% sum
-
-                    # phyBranchAL_Abu(phylo = phy_tree, data = x_bt[1:nrow(data),i], rootExtend = T, refT = reft)$treeNabu %>%
-                    #   subset(label %in% names(which(te[,i]==TRUE))) %>% select(branch.length) %>% sum
-
-                  }
-
-                })
-
-                g0_hat = g0_hat-used_length
-                g0_hat[g0_hat<0] = 0
-
-                unseen_sample = x_bt[-(1:nrow(data)),]
-                if (is.vector(unseen_sample)) unseen_sample = matrix(unseen_sample, ncol=ncol(x_bt), byrow=T)
-
-                L0_hat = sapply(1:length(g0_hat), function(i) if(sum(unseen_sample[,i]>0)>0) (g0_hat[i] / nrow(unseen)) else 0 )
-
-                L0_hat = rowSums((matrix(L0_hat, nrow(unseen_sample), ncol(unseen_sample), byrow=T) * unseen_sample)) / rowSums(unseen_sample)
-                L0_hat[which(rowSums(unseen_sample)==0)] = 0
-
-                # for (i in 1:length(L0_hat)){
-                #
-                #   tip = list(edge=matrix(c(2,1),1,2),
-                #              tip.label=unseen_name[i],
-                #              edge.length=L0_hat[i],
-                #              Nnode=1)
-                #   class(tip) = "phylo"
-                #
-                #   tree_bt = tree_bt + tip
-                #
-                # }
-
-              } else {
-
-                x_bt = x_bt[1:nrow(data),]
-                p_bt = p_bt[1:nrow(data),]
-
-              }
-
-            } else {
-
-              p_bt = p_bt[1:nrow(data),]
-              x_bt = sapply(1:ncol(data), function(k) rmultinom(n = 1, size = sum(data[,k]), prob = p_bt[,k]))
-              rownames(x_bt) = rownames(data)
-
-            }
-
-            bootstrap_data_gamma = rowSums(x_bt)
-            bootstrap_data_gamma = bootstrap_data_gamma[bootstrap_data_gamma>0]
-            bootstrap_data_alpha = as.matrix(x_bt) %>% as.vector
-            bootstrap_data_alpha = bootstrap_data_alpha[bootstrap_data_alpha>0]
-
-            m_gamma = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(bootstrap_data_gamma, i, data_type='abundance'))
-            m_alpha = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(bootstrap_data_alpha, i, data_type='abundance'))
-
-            # aL = phyBranchAL_Abu(phylo = tree_bt, data = bootstrap_data_gamma, rootExtend = T, refT = reft)
-            # aL$treeNabu$branch.length = aL$BLbyT[,1]
-            # aL_table_gamma = aL$treeNabu %>% select(branch.abun, branch.length, tgroup)
-
-            ### 不確定如何處理unseen species in bootstraped sample, (long to wide)
-            aL_table_gamma = create.aili(data = bootstrap_data_gamma%>%long_to_wide(), row.tree = row.tree, col.tree)%>%
-              select(branch.abun, branch.length, tgroup)
-
-            gamma = iNEXTPD2:::PhD.m.est(ai = aL_table_gamma$branch.abun,Lis = aL_table_gamma$branch.length%>%as.matrix(),m = m_gamma,
-                                 q = c(0,1,2),nt = n,cal = cal) %>% t %>%as.data.frame%>%
-              set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
-              mutate(Coverage_expected=rep(coverage_expected, 3), Coverage_real=rep(iNEXT:::Chat.Ind(data_gamma, m_gamma), 3),
-                     Size=rep(m_gamma, 3))
-
-            # gamma = as.vector(PhD:::PhD.m.est(aL=aL_table_gamma, m=m_gamma, Q=c(0,1,2), datatype='abundance', nt=n) %>% t)
-
-
-            aL_table_alpha = c()
-
-            # for (i in 1:N){
-            #
-            #   # x = x_bt[x_bt[,i]>0,i]
-            #   # names(x) = rownames(p_bt)[x_bt[,i]>0]
-            #
-            #   x = x_bt[,i]
-            #   names(x) = rownames(p_bt)
-            #   x = x[x_bt[,i]>0]
-            #
-            #   aL = phyBranchAL_Abu(phylo = tree_bt, data = x, rootExtend = T, refT = reft)
-            #   aL$treeNabu$branch.length = aL$BLbyT[,1]
-            #   aL_table = aL$treeNabu %>% select(branch.abun, branch.length, tgroup)
-            #
-            #   aL_table_alpha = rbind(aL_table_alpha, aL_table)
-            #
-            # }
-            for (i in 1:N){
-
-              x = x_bt[x_bt[,i]>0,i]
-              names(x) = rownames(x_bt)[x_bt[,i]>0]
-              aL_table = create.aili(data = x%>%long_to_wide(),row.tree = row.tree, col.tree=col.tree)%>% select(branch.abun, branch.length, tgroup)
-              aL_table_alpha = rbind(aL_table_alpha, aL_table)
-
-            }
-            qPDm = PhD:::PhD.m.est(ai = aL_table_alpha$branch.abun,Lis = aL_table_alpha$branch.length%>%as.matrix(),m = m_alpha,
-                                   q = c(0,1,2),nt = n,cal = cal)
-            qPDm = qPDm/N
-            alpha = qPDm %>% t %>% as.data.frame %>%
-              set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
-              mutate(Coverage_expected=rep(coverage_expected, 3), Coverage_real=rep(iNEXT:::Chat.Ind(data_alpha, m_alpha), 3), Size=rep(m_alpha, 3))
-            # alpha = as.vector((PhD:::PhD.m.est(aL=aL_table_alpha, m=m_alpha, Q=c(0,1,2), datatype='abundance', nt=n)/N) %>% t)
-
-          }
-
-          if (data_type=='incidence_raw') {
-
-            tree_bt = phy_tree
-
-            bootstrap_population = bootstrap_population_multiple_assemblage(data_2D, data_gamma_freq, 'incidence')
-            p_bt = bootstrap_population
-            unseen_p = p_bt[-(1:nrow(data[[1]])),] %>% matrix(ncol=N)
-
-            if ( nrow(p_bt) > nrow(data[[1]]) & sum(unseen_p)>0 ){
-
-              unseen = unseen_p[which(rowSums(unseen_p)>0),]
-              unseen = matrix(unseen, ncol = ncol(unseen_p), byrow = T)
-              p_bt = rbind(p_bt[(1:nrow(data[[1]])),], unseen)
-              unseen_name = sapply(1:nrow(unseen), function(i) paste0('unseen_', i))
-              rownames(p_bt) = c(rownames(data[[1]]), unseen_name)
-
-              raw = lapply(1:ncol(p_bt), function(j){
-
-                lapply(1:nrow(p_bt), function(i) rbinom(n=n, size=1, prob=p_bt[i,j])) %>% do.call(rbind,.)
-
-              })
-
-              for (i in 1:length(raw)) rownames(raw[[i]]) = rownames(p_bt)
-
-              if ( lapply(1:length(raw), function(i) raw[[i]][-(1:nrow(data[[1]])),]) %>% do.call(sum,.)>0 ){
-
-                R0_hat = sapply(data, function(x){
-
-                  nT = ncol(x)
-                  Q1 = sum(rowSums(x)==1)
-                  Q2 = sum(rowSums(x)==2)
-
-                  aL = phyBranchAL_Inc(phylo = phy_tree, data = x, datatype = "incidence_raw", rootExtend = T, refT = reft)
-
-                  aL$treeNabu$branch.length = aL$BLbyT[,1]
-                  aL = aL$treeNabu %>% select(branch.abun,branch.length)
-                  R1 = aL$branch.length[aL$branch.abun==1] %>% sum
-                  R2 = aL$branch.length[aL$branch.abun==2] %>% sum
-                  R0_hat = ifelse( R2>((R1*Q2)/(2*Q1)) , ((nT-1)/nT)*(R1^2/(2*R2)) , ((nT-1)/nT)*(R1*(Q1-1)/(2*(Q2+1))) )
-                  R0_hat
-
-                })
-
-                te = (sapply(raw, rowSums)[1:nrow(data[[1]]),]*(sapply(data, rowSums)==0))>0
-                used_length = sapply(1:N, function(i) {
-
-                  if (sum(te[,i])==0) return(0) else {
-
-                    phyBranchAL_Inc(phylo = phy_tree, data = raw[[i]][1:nrow(data[[1]]),], datatype = "incidence_raw", rootExtend = T, refT = reft)$treeNabu %>%
-                      subset(label %in% names(which(te[,i]==TRUE))) %>% select(branch.length) %>% sum
-
-                  }
-
-                })
-
-                R0_hat = R0_hat-used_length
-                R0_hat[R0_hat<0] = 0
-
-                unseen_sample = sapply(raw, rowSums)[-(1:nrow(data[[1]])),]
-                if (is.vector(unseen_sample)) unseen_sample = matrix(unseen_sample, ncol=N, byrow=T)
-
-                L0_hat = sapply(1:length(R0_hat), function(i) if(sum(unseen_sample[,i]>0)>0) (R0_hat[i] / nrow(unseen)) else 0 )
-
-                L0_hat = rowSums((matrix(L0_hat, nrow(unseen_sample), ncol(unseen_sample), byrow=T) * unseen_sample)) / rowSums(unseen_sample)
-                L0_hat[which(rowSums(unseen_sample)==0)] = 0
-
-                for (i in 1:length(L0_hat)){
-
-                  tip = list(edge=matrix(c(2,1),1,2),
-                             tip.label=unseen_name[i],
-                             edge.length=L0_hat[i],
-                             Nnode=1)
-                  class(tip) = "phylo"
-
-                  tree_bt = tree_bt + tip
-
-                }
-
-              } else raw = lapply(raw, function(i) i[1:nrow(data[[1]]),])
-
-            } else {
-
-              p_bt = p_bt[1:nrow(data),]
-              raw = lapply(1:ncol(p_bt), function(j){
-
-                lapply(1:nrow(p_bt), function(i) rbinom(n=nT, size=1, prob=p_bt[i,j])) %>% do.call(rbind,.)
-
-              })
-
-              for (i in 1:length(raw)) rownames(raw[[i]]) = rownames(p_bt)
-
-            }
-            gamma = Reduce('+', raw)
-            gamma[gamma>1] = 1
-            bootstrap_data_gamma_raw = gamma
-            bootstrap_data_gamma_freq = c(n, rowSums(gamma))
-
-            bootstrap_data_alpha_freq = sapply(raw, rowSums) %>% c(n, .)
-
-            bootstrap_data_gamma_freq = bootstrap_data_gamma_freq[bootstrap_data_gamma_freq>0]
-            bootstrap_data_alpha_freq = bootstrap_data_alpha_freq[bootstrap_data_alpha_freq>0]
-
-            m_gamma = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(bootstrap_data_gamma_freq, i, data_type='incidence'))
-            m_alpha = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(bootstrap_data_alpha_freq, i, data_type='incidence'))
-
-            aL = phyBranchAL_Inc(phylo = tree_bt, data = bootstrap_data_gamma_raw, datatype = "incidence_raw", rootExtend = T, refT = reft)
-            aL$treeNabu$branch.length = aL$BLbyT[,1]
-            aL_table_gamma = aL$treeNabu %>% select(branch.abun, branch.length, tgroup)
-
-            gamma = as.vector(PhD:::PhD.m.est(aL=aL_table_gamma, m=m_gamma, Q=c(0,1,2), datatype='incidence_raw', nt=n) %>% t)
-
-            aL_table_alpha = c()
-
-            for (i in 1:N){
-              x = raw[[i]]
-              aL = phyBranchAL_Inc(phylo = tree_bt, data = x, datatype = "incidence_raw", rootExtend = T, refT = reft)
-              aL$treeNabu$branch.length = aL$BLbyT[,1]
-              aL_table = aL$treeNabu %>% select(branch.abun, branch.length, tgroup)
-              aL_table_alpha = rbind(aL_table_alpha, aL_table)
-            }
-            alpha = as.vector((PhD:::PhD.m.est(aL=aL_table_alpha, m=m_alpha, Q=c(0,1,2), datatype='abundance', nt=n)/N) %>% t)
-            alpha = as.vector((PhD:::PhD.m.est(aL=aL_table_alpha, m=m_alpha, Q=c(0,1,2), datatype='incidence_raw', nt=n)/N) %>% t)
-
-          }
-
-          alpha$Order = alpha$Order%>%as.numeric()
-          beta = alpha
-          beta$Estimate = gamma$Estimate/alpha$Estimate
-
-          C = beta %>% mutate(Estimate = ifelse(Order==1, log(Estimate)/log(N), (Estimate^(1-Order) - 1)/(N^(1-Order)-1)))
-          U = beta %>% mutate(Estimate = ifelse(Order==1, log(Estimate)/log(N), (Estimate^(Order-1) - 1)/(N^(Order-1)-1)))
-          V = beta %>% mutate(Estimate = (Estimate-1)/(N-1))
-          S = beta %>% mutate(Estimate = (1/Estimate-1)/(1/N-1))
-
-
-          cbind(gamma, alpha, beta, C, U, V, S) %>% as.matrix
-
-          # }, simplify = "array") %>% apply(., 1:2, sd) %>% data.frame
-        }) %>% abind(along=3) %>% apply(1:2, sd)
-        # end = Sys.time()
-        # end - start
-
-        # stopCluster(cl)
-        # plan(sequential)
-
-      } else {
-
-        se = matrix(0, ncol = 7, nrow = nrow(gamma))
-        colnames(se) = c("gamma", "alpha", "beta", "C", "U", 'V', 'S')
-        se = as.data.frame(se)
-
-      }
-
+      PD_results = get_phylogenetic_alpha_gamma(aL_table_gamma, aL_table_alpha,
+                                                n = sum(data_gamma), m_gamma, m_alpha)
+      gamma = PD_results$gamma
+      alpha = PD_results$alpha
     }
 
-    if (level=='functional') {
+    gamma = (gamma %>%
+               mutate(Method = ifelse(Coverage_expected>=ref_gamma,
+                                      ifelse(Coverage_expected==ref_gamma, 'Observed', 'Extrapolated'), 'Interpolated')))[,c(2,1,6,3,4,5)] %>%
+      set_colnames(c('Estimate', 'Order', 'Method', 'Coverage_expected', 'Coverage_real', 'Size'))
 
-      FD_by_tau = function(data, distance_matrix, tau, coverage_expected, data_type, by) {
-
-        if (data_type=='abundance') {
-
-          zik = data
-          zik = zik[rowSums(data)>0,]
-
-          dij = distance_matrix
-          dij = dij[rowSums(data)>0, rowSums(data)>0]
-
-          dij[which(dij>tau, arr.ind = T)] = tau
-          aik = (1 - dij/tau) %*% as.matrix(zik)
-          positive_id = rowSums(aik)>0
+    if (max_alpha_coverage==T) under_max_alpha = !((gamma$Order==0) & (gamma$Coverage_expected>ref_alpha_max)) else under_max_alpha = gamma$Coverage_expected>0
+    gamma = gamma[under_max_alpha,]
+    gamma$Order = as.numeric(gamma$Order)
 
 
+    alpha = (alpha %>%
+               mutate(Method = ifelse(Coverage_expected>=ref_alpha, ifelse(Coverage_expected==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated')))[,c(2,1,6,3,4,5)] %>%
+      set_colnames(c('Estimate', 'Order', 'Method', 'Coverage_expected', 'Coverage_real', 'Size'))
 
-          gamma_x = rowSums(zik)[positive_id]
-          gamma_a = rowSums(aik)[positive_id]
-          gamma_v = gamma_x/gamma_a
-          # gamma_a = ifelse(gamma_a<1, 1, round(gamma_a))
+    alpha = alpha[under_max_alpha,]
+    alpha$Order = as.numeric(alpha$Order)
 
-          ai_vi_gamma = list(ai = data.frame(gamma_a), vi = data.frame(gamma_v))
+    beta = alpha
+    beta$Estimate = gamma$Estimate/alpha$Estimate
+    beta[beta == "Observed"] = "Observed_alpha"
+    beta = beta %>% rbind(., cbind(gamma %>% filter(Method == "Observed") %>% select(Estimate) / alpha %>% filter(Method == "Observed") %>% select(Estimate),
+                                   Order = q, Method = "Observed", Coverage_expected = NA, Coverage_real = NA, Size = beta[beta$Method == "Observed_alpha", 'Size']))
 
-          gamma = FD.m.est_0(ai_vi_gamma, m_gamma, c(0,1,2), n) %>% as.vector
+    C = beta %>% mutate(Estimate = ifelse(Order==1, log(Estimate)/log(N), (Estimate^(1-Order) - 1)/(N^(1-Order)-1)))
+    U = beta %>% mutate(Estimate = ifelse(Order==1, log(Estimate)/log(N), (Estimate^(Order-1) - 1)/(N^(Order-1)-1)))
+    V = beta %>% mutate(Estimate = (Estimate-1)/(N-1))
+    S = beta %>% mutate(Estimate = (1/Estimate-1)/(1/N-1))
 
-
-          alpha_x = as.vector(as.matrix(zik))
-          alpha_a = as.vector(aik)
-          # alpha_a = ifelse(alpha_a<1, 1, round(alpha_a))
-
-          alpha_v = rep(gamma_v, N)
-          alpha_v = alpha_v[alpha_a>0]
-          alpha_a = alpha_a[alpha_a>0]
-
-          ai_vi_alpha = list(ai = data.frame(alpha_a), vi = data.frame(alpha_v))
-
-          if (by=='size') alpha = (FD.m.est_0(ai_vi_alpha, m_gamma, c(0,1,2), n)/N) %>% as.vector
-          if (by=='coverage') alpha = (FD.m.est_0(ai_vi_alpha, m_alpha, c(0,1,2), n)/N) %>% as.vector
-
-        }
-
-        if (data_type=='incidence_raw') {
-
-          data_gamma_freq = data$data_gamma_freq
-          data_2D = data$data_2D
-
-          gamma_Y = data_gamma_freq[-1]
-
-          dij = distance_matrix
-          dij = dij[gamma_Y>0, gamma_Y>0]
-          gamma_Y = gamma_Y[gamma_Y>0]
-
-          dij[which(dij>tau, arr.ind = T)] = tau
-          gamma_a = (1 - dij/tau) %*% as.matrix(gamma_Y)
-          gamma_a[gamma_a>n] = n
-
-          gamma_v = gamma_Y/gamma_a
-
-          # gamma_a = ifelse(gamma_a<1, 1, round(gamma_a))
-          # gamma_a[gamma_a>n] = n
-
-          ai_vi_gamma = list(ai = data.frame(gamma_a), vi = data.frame(gamma_v))
-
-          gamma = FD.m.est_0(ai_vi_gamma, m_gamma, c(0,1,2), n) %>% as.vector
-
-
-          alpha_Y = data_2D[-1,]
-
-          dij = distance_matrix
-          dij = dij[rowSums(data_2D[-1,])>0, rowSums(data_2D[-1,])>0]
-          alpha_Y = alpha_Y[rowSums(data_2D[-1,])>0,]
-
-          dij[which(dij>tau, arr.ind = T)] = tau
-          alpha_a = (1 - dij/tau) %*% as.matrix(alpha_Y)
-
-          # alpha_a = ifelse(alpha_a<1, 1, round(alpha_a))
-          alpha_a[alpha_a>n] = n
-          alpha_a = as.vector(alpha_a)
-
-          # alpha_v = rep(gamma_v, N)
-          # alpha_v = alpha_v[alpha_a>0]
-          alpha_v = as.vector(as.matrix(alpha_Y))/alpha_a
-          alpha_v = alpha_v[alpha_a>0]
-          alpha_a = alpha_a[alpha_a>0]
-
-          ai_vi_alpha = list(ai = data.frame(alpha_a), vi = data.frame(alpha_v))
-
-          if (by=='size') alpha = (FD.m.est_0(ai_vi_alpha, m_gamma, c(0,1,2), n)/N) %>% as.vector
-          if (by=='coverage') alpha = (FD.m.est_0(ai_vi_alpha, m_alpha, c(0,1,2), n)/N) %>% as.vector
-
-        }
-
-        return(data.frame(gamma,alpha))
-
+    if(nboot>1){
+      ### step0. get information from data (across samples)
+      get_f0_hat = function(dat){
+        dat <- as.matrix(dat)
+        n <- sum(dat)
+        f1 <- sum(dat == 1)
+        f2 <- sum(dat == 2)
+        f0 <- ceiling(ifelse(f2 > 0 ,(n-1)/n*f1^2/2/f2,(n-1)/n*f1*(f1-1)/2))
+        return(f0)
+      }
+      data_to_pi <- function(data) {
+        f1 <- sum(data == 1)
+        f2 <- sum(data == 2)
+        n <- sum(sapply(unique(data), function(x){x*sum(data == x)}))
+        C.hat <- 1-f1/n*ifelse(f2 ==0,ifelse(f1 == 0,0,2/((n-1)*(f1-1)+2)),2*f2/((n-1)*f1+2*f2))
+        lambda <- ifelse(C.hat != 1,(1-C.hat)/sum(data/n*(1-data/n)^n),0)
+        f0 <- ceiling(ifelse(f2 > 0 ,(n-1)/n*f1^2/2/f2,(n-1)/n*f1*(f1-1)/2))
+        p.seen <- data/n*(1-lambda*(1-data/n)^n)
+        # p.seen <- p.seen[p.seen>0]
+        p.unseen <- (1-C.hat)/f0
+        list(seen = p.seen,unseen = p.unseen)
       }
 
-      if (tau_type=='single'){
+      f0_pool = get_f0_hat(data_gamma)
+      pi <- lapply(data, function(x){data_to_pi(x)})
 
-        if (data_type=='abundance') {
+      g0_hat = sapply(1:ncol(data), function(k){
+        k_net = data[,k]
+        names(k_net) = rownames(data)
+        n = sum(k_net)
+        f1 = sum(k_net==1)
+        f2 = sum(k_net==2)
 
-          if (by=='size') {
+        # aL = phyBranchAL_Abu(phylo = phy_tree, data = x, rootExtend = T, refT = reft)
+        # aL$treeNabu$branch.length = aL$BLbyT[,1]
+        aL = create.aili(k_net%>%long_to_wide(), row.tree, col.tree)%>%
+          select(branch.abun,branch.length)
+        g1 = aL$branch.length[aL$branch.abun==1] %>% sum
+        g2 = aL$branch.length[aL$branch.abun==2] %>% sum
+        g0_hat = ifelse( g2>((g1*f2)/(2*f1)) , ((n-1)/n)*(g1^2/(2*g2)) ,
+                         ((n-1)/n)*(g1*(f1-1)/(2*(f2+1))))
+        return(g0_hat)
 
-            output = FD_by_tau(data, distance_matrix, tau, coverage_expected, data_type='abundance', by='size')
-            gamma = output$gamma
-            alpha = output$alpha
+      })
 
+      plan(multisession)
+      se = future_lapply(1:nboot, function(b){
+        ## for each bootstrap samples
+        ### 1. get population (random assign position from candidates)
+        piLi_k = lapply(1:ncol(data), function(k){
+          kth_net = data[,k]
+          names(kth_net) = rownames(data)
+
+          f1 <- sum(kth_net == 1)
+          f2 <- sum(kth_net == 2)
+          f0_k <- ceiling(ifelse(f2 > 0 ,(n-1)/n*f1^2/2/f2,(n-1)/n*f1*(f1-1)/2))
+          C.hat <- 1-f1/n*ifelse(f2 ==0,ifelse(f1 == 0,0,2/((n-1)*(f1-1)+2)),2*f2/((n-1)*f1+2*f2))
+          ## phy
+          phy <- create.aili(kth_net%>%long_to_wide(),row.tree,col.tree)
+          g1 <- sum(phy$branch.length[phy$branch.abun==1])
+          g2 <- sum(phy$branch.length[phy$branch.abun==2])
+          g0_k <- ifelse(g2>g1*f2/2/f1,(n-1)/n*g1^2/2/g2,(n-1)/n*g1*(f1-1)/2/(f2+1))/f0_k
+          ##
+          pi = data_to_pi(kth_net)
+          ## pi_matrix: S1*S2 (42*98)
+          pi_matrix = pi$seen%>%long_to_wide()
+          ## S1*S2 -> B1*B2 (8736)
+          seen_interaction_aili = create.aili(pi_matrix,row.tree,col.tree)
+          # unseen_interaction_aili = data.frame(branch.abun = rep(pi$unseen,f0_k), branch.length = g0 / f0_k,
+          #                                      tgroup = "Tip",interaction = "unseen")
+          unseen_interaction_aili = data.frame(branch.abun = rep(0,f0_pool), branch.length = rep(0,f0_pool),
+                                               tgroup = "Tip",interaction = "unseen")%>%
+            mutate(interaction = paste0(interaction, row_number()))
+          seen_unseen = rbind(seen_interaction_aili, unseen_interaction_aili)
+          ## 8268 candidates out of 8977
+          candidates = which(seen_unseen$branch.abun == 0)
+          assigned_position = sample(candidates, size = f0_k )
+          seen_unseen$branch.abun[assigned_position] = (1-C.hat) / f0_k
+          # seen_unseen <- seen_unseen%>%filter(branch.abun != 0)
+
+          return(seen_unseen)
+        })
+
+        length_bt = lapply(piLi_k, function(pili){
+          pili[, c("branch.length", "interaction")]%>%column_to_rownames("interaction")
+        })%>%do.call("cbind",.)
+        colnames(length_bt) = paste0("net_", 1:ncol(length_bt))
+
+
+        p_bt = lapply(piLi_k, function(pili){
+          pili[, c("branch.abun", "interaction")]%>%column_to_rownames("interaction")
+        })%>%do.call("cbind",.)
+        colnames(p_bt) = paste0("net_", 1:ncol(p_bt))
+
+
+        p_bt = p_bt%>%cbind(tgroup = piLi_k[[1]]$tgroup)
+        p_bt = p_bt%>%filter_all(any_vars(. != 0))
+        # %>%
+        #   cbind(interaction = piLi_k[[1]]$interaction)
+        ### 2. get samples(x_bt)
+        x_bt = sapply(1:(ncol(p_bt)-1), function(k){
+          n = sum(data[,k])
+          sapply(p_bt[,k], function(p){rbinom(1,size=n, prob = p)})
+
+        })
+        rownames(x_bt) = rownames(p_bt)
+
+        L0_hat = sapply(1:ncol(data), function(k){
+
+          compare = data.frame(interaction = rownames(data), raw = data_gamma)%>%
+            inner_join(x_bt[,k]%>%as.data.frame()%>%rownames_to_column('interaction'),
+                       by = 'interaction')%>%rename('sample'=".")
+          know_unseen_interaction = which(and((compare$raw==0) ,(compare$sample!=0)))
+
+          if(length(know_unseen_interaction) == 0){ used_length = 0}else{
+            used_length = compare%>%filter(raw == 0, sample != 0 )%>%
+              left_join(cbind(length_bt[,c('net_1')], interaction = rownames(length_bt))%>%
+                          as.data.frame()%>%rename("length"="V1"),
+                        by = 'interaction')%>%pull(length)%>%sum()
           }
+          L0_hat_k = g0_hat[k] - used_length
+          return(L0_hat_k)
+        })
 
-          if (by=='coverage') {
-
-            output = FD_by_tau(data, distance_matrix, tau, coverage_expected, data_type='abundance', by='coverage')
-            gamma = output$gamma
-            alpha = output$alpha
-
-          }
-
-          gamma = data.frame(coverage_expected, gamma) %>%
-            mutate(Method = ifelse(coverage_expected>=ref_gamma, ifelse(coverage_expected==ref_gamma, 'Observed', 'Extrapolated'), 'Interpolated'),
-                   Order = rep(c(0,1,2), each=length(coverage_expected)/3), Coverage_real=rep(iNEXT:::Chat.Ind(data_gamma, m_gamma), 3), Size=rep(m_gamma, 3))
-
-          alpha = data.frame(coverage_expected, alpha) %>%
-            mutate(Method = ifelse(coverage_expected>=ref_alpha, ifelse(coverage_expected==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated'),
-                   Order = rep(c(0,1,2), each=length(coverage_expected)/3), Coverage_real=rep(iNEXT:::Chat.Ind(data_alpha, m_alpha), 3), Size=rep(m_alpha, 3))
-
-          beta = alpha
-          beta$alpha = gamma$gamma/alpha$alpha
+        for(k in 1:ncol(data)){
+          length_bt[,k] = c(length_bt[,k]%>%.[1:(length(.)-f0_pool)],
+                            rep(L0_hat[k]/ f0_pool, f0_pool))
 
         }
+        length_bt_average = length_bt%>%rowMeans()%>%as.data.frame()%>%rownames_to_column("interaction")
+        ###############
+        ### 1. aL_table_gamma
+        bootstrap_data_gamma = rowSums(x_bt)
+        bootstrap_data_gamma = bootstrap_data_gamma[bootstrap_data_gamma>0]
 
-        if (data_type=='incidence_raw') {
+        bt_table_data_gamma = bootstrap_data_gamma%>%
+          as.data.frame()%>%rownames_to_column("interaction")
 
-          if (by=='size') {
+        bt_aL_table_gamma = bt_table_data_gamma%>%
+          left_join(length_bt_average , by = 'interaction')%>%
+          set_colnames(c("interaction", 'branch.abun', 'branch.length'))
 
-            output = FD_by_tau(list(data_gamma_freq = data_gamma_freq, data_2D = data_2D), distance_matrix, tau, coverage_expected, data_type='incidence_raw', by='size')
-            gamma = output$gamma
-            alpha = output$alpha
+        ### 2. aL_table_alpha
+        plan(multisession)
 
-          }
+        bt_aL_table_alpha =  future_lapply(1:N, function(k){
+          bootstrap_data_alpha = cbind(interaction = rownames(x_bt)[x_bt[,k]>0],
+                                       branch.abun =  x_bt[x_bt[,k]>0,k])%>%as.data.frame()%>%
+            mutate(branch.abun = as.integer(branch.abun))
 
-          if (by=='coverage') {
+          aL_table = bootstrap_data_alpha%>%
+            left_join(length_bt_average , by = 'interaction')%>%
+            set_colnames(c("interaction", 'branch.abun', 'branch.length'))
 
-            output = FD_by_tau(list(data_gamma_freq = data_gamma_freq, data_2D = data_2D), distance_matrix, tau, coverage_expected, data_type='incidence_raw', by='coverage')
-            gamma = output$gamma
-            alpha = output$alpha
+          return(aL_table)
+        }, future.seed = TRUE)%>%do.call("rbind",.)
 
-          }
 
-          gamma = data.frame(coverage_expected, gamma) %>%
-            mutate(Method = ifelse(coverage_expected>=ref_gamma, ifelse(coverage_expected==ref_gamma, 'Observed', 'Extrapolated'), 'Interpolated'),
-                   Order = rep(c(0,1,2), each=length(coverage_expected)/3), Coverage_real=rep(iNEXT:::Chat.Sam(data_gamma_freq, m_gamma), 3), Size=rep(m_gamma, 3))
+        bootstrap_data_alpha = as.matrix(x_bt) %>% as.vector
+        bootstrap_data_alpha = bootstrap_data_alpha[bootstrap_data_alpha>0]
 
-          alpha = data.frame(coverage_expected, alpha) %>%
-            mutate(Method = ifelse(coverage_expected>=ref_alpha, ifelse(coverage_expected==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated'),
-                   Order = rep(c(0,1,2), each=length(coverage_expected)/3), Coverage_real=rep(iNEXT:::Chat.Sam(data_alpha_freq, m_alpha), 3), Size=rep(m_alpha, 3))
 
-          beta = alpha
-          beta$alpha = gamma$gamma/alpha$alpha
+        m_gamma_bt = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(bootstrap_data_gamma, i, data_type='abundance'))
+        m_alpha_bt = sapply(coverage_expected, function(i) miNEXT.beta:::coverage_to_size(bootstrap_data_alpha, i, data_type='abundance'))
 
+
+        get_phylogenetic_alpha_gamma_bootstrap <- function(aL_table_gamma, aL_table_alpha,
+                                                 n, m_gamma, m_alpha){
+          ## 1. gamma
+          gamma <- iNEXTPD2:::PhD.m.est(ai = aL_table_gamma$branch.abun,
+                                       Lis = aL_table_gamma$branch.length%>%as.matrix(),m = m_gamma,
+                                       q = c(0,1,2),nt = n,cal = 'PD')%>%
+            t%>% as.vector()
+          ## 2. alpha
+          alpha =(PhD:::PhD.m.est(ai = aL_table_alpha$branch.abun, Lis = aL_table_alpha$branch.length%>%as.matrix(),
+                                 m = m_alpha,q = c(0,1,2),nt = n,cal = 'PD')/N)%>%
+                t%>% as.vector()
+          beta_obs = (iNEXT.3D:::PD.Tprofile(ai=aL_table_gamma$branch.abun,
+                                             Lis=as.matrix(aL_table_gamma$branch.length),
+                                             q=q, nt=n, cal="PD") /
+                        (iNEXT.3D:::PD.Tprofile(ai=aL_table_alpha$branch.abun,
+                                                Lis=as.matrix(aL_table_alpha$branch.length),
+                                                q=q, nt=n, cal="PD") / N)) %>% unlist()%>%as.vector()
+
+          res = list()
+          res[['gamma']] = gamma
+          res[['alpha']] = alpha
+          res[['beta_obs']] = beta_obs
+          return(res)
         }
 
-      }
+        PD_bootstrap_results = get_phylogenetic_alpha_gamma_bootstrap(aL_table_gamma = bt_aL_table_gamma, aL_table_alpha = bt_aL_table_alpha,
+                                                  n = sum(bootstrap_data_gamma), m_gamma_bt, m_alpha_bt)
+        gamma = PD_bootstrap_results$gamma
+        alpha = PD_bootstrap_results$alpha
+        beta_obs = PD_bootstrap_results$beta_obs
 
-      if (tau_type=='AUC'){
+        ##
+        gamma = gamma[under_max_alpha]
+        alpha = alpha[under_max_alpha]
+        beta = gamma/alpha
 
-        cut = seq(0.00000001, 1, length.out = cut_number)
-        width = diff(cut)
+        gamma = c(gamma, rep(0, length(q)))
+        alpha = c(alpha, rep(0, length(q)))
+        beta = c(beta, beta_obs)
 
-        if (data_type=='abundance') {
+        order = rep(q, each=length(coverage_expected) + 1)[under_max_alpha]
 
-          if (by=='size') {
+        beta = data.frame(Estimate=beta, order)
 
-            gamma_alpha_over_tau = lapply(cut, function(tau) {
+        C = (beta %>% mutate(Estimate = ifelse(order==1,log(Estimate)/log(N),(Estimate^(1-order) - 1)/(N^(1-order)-1))))$Estimate
+        U = (beta %>% mutate(Estimate = ifelse(order==1,log(Estimate)/log(N),(Estimate^(order-1) - 1)/(N^(order-1)-1))))$Estimate
+        V = (beta %>% mutate(Estimate = (Estimate-1)/(N-1)))$Estimate
+        S = (beta %>% mutate(Estimate = (1/Estimate-1)/(1/N-1)))$Estimate
 
-              FD_by_tau(data, distance_matrix, tau, coverage_expected, data_type='abundance', by='size')
+        beta = beta$Estimate
 
-            })
+        diversity = cbind(gamma, alpha, beta, C, U, V, S) %>% as.matrix
+        return(diversity)
 
-          }
+      }, future.seed = T)%>%
+        abind(along=3) %>% apply(1:2, sd)
 
-          if (by=='coverage') {
 
-            gamma_alpha_over_tau = lapply(cut, function(tau) {
+    } else {
 
-              FD_by_tau(data, distance_matrix, tau, coverage_expected, data_type='abundance', by='coverage')
-
-            })
-
-          }
-          gamma_over_tau = sapply(gamma_alpha_over_tau, function(x) x$gamma)
-
-          left_limit  = apply(gamma_over_tau, 1, function(x) x[-cut_number]*width)
-          right_limit = apply(gamma_over_tau, 1, function(x) x[-1]*width)
-
-          gamma = colSums((left_limit + right_limit)/2)
-
-          alpha_over_tau = sapply(gamma_alpha_over_tau, function(x) x$alpha)
-
-          left_limit  = apply(alpha_over_tau, 1, function(x) x[-cut_number]*width)
-          right_limit = apply(alpha_over_tau, 1, function(x) x[-1]*width)
-
-          alpha = colSums((left_limit + right_limit)/2)
-
-          beta_over_tau = gamma_over_tau/alpha_over_tau
-
-          left_limit  = apply(beta_over_tau, 1, function(x) x[-cut_number]*width)
-          right_limit = apply(beta_over_tau, 1, function(x) x[-1]*width)
-
-          beta = colSums((left_limit + right_limit)/2)
-
-          gamma = data.frame(coverage_expected, gamma) %>%
-            mutate(Method = ifelse(coverage_expected>=ref_gamma, ifelse(coverage_expected==ref_gamma, 'Observed', 'Extrapolated'), 'Interpolated'),
-                   Order = rep(c(0,1,2), each=length(coverage_expected)/3), Coverage_real=rep(iNEXT:::Chat.Ind(data_gamma, m_gamma), 3), Size=rep(m_gamma, 3))
-
-          alpha = data.frame(coverage_expected, alpha) %>%
-            mutate(Method = ifelse(coverage_expected>=ref_alpha, ifelse(coverage_expected==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated'),
-                   Order = rep(c(0,1,2), each=length(coverage_expected)/3), Coverage_real=rep(iNEXT:::Chat.Ind(data_alpha, m_alpha), 3), Size=rep(m_alpha, 3))
-
-          beta = data.frame(coverage_expected, beta) %>%
-            mutate(Method = ifelse(coverage_expected>=ref_alpha, ifelse(coverage_expected==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated'),
-                   Order = rep(c(0,1,2), each=length(coverage_expected)/3), Coverage_real=rep(iNEXT:::Chat.Ind(data_alpha, m_alpha), 3), Size=rep(m_alpha, 3))
-
-
-        }
-
-        if (data_type=='incidence_raw') {
-
-          if (by=='size') {
-
-            gamma_alpha_over_tau = lapply(cut, function(tau) {
-
-              FD_by_tau(list(data_gamma_freq = data_gamma_freq, data_2D = data_2D), distance_matrix, tau, coverage_expected, data_type='incidence_raw', by='size')
-
-            })
-
-          }
-
-          if (by=='coverage') {
-
-            gamma_alpha_over_tau = lapply(cut, function(tau) {
-
-              FD_by_tau(list(data_gamma_freq = data_gamma_freq, data_2D = data_2D), distance_matrix, tau, coverage_expected, data_type='incidence_raw', by='coverage')
-
-            })
-
-          }
-          gamma_over_tau = sapply(gamma_alpha_over_tau, function(x) x$gamma)
-
-          left_limit  = apply(gamma_over_tau, 1, function(x) x[-cut_number]*width)
-          right_limit = apply(gamma_over_tau, 1, function(x) x[-1]*width)
-
-          gamma = colSums((left_limit + right_limit)/2)
-
-          alpha_over_tau = sapply(gamma_alpha_over_tau, function(x) x$alpha)
-
-          left_limit  = apply(alpha_over_tau, 1, function(x) x[-cut_number]*width)
-          right_limit = apply(alpha_over_tau, 1, function(x) x[-1]*width)
-
-          alpha = colSums((left_limit + right_limit)/2)
-
-          beta_over_tau = gamma_over_tau/alpha_over_tau
-
-          left_limit  = apply(beta_over_tau, 1, function(x) x[-cut_number]*width)
-          right_limit = apply(beta_over_tau, 1, function(x) x[-1]*width)
-
-          beta = colSums((left_limit + right_limit)/2)
-
-          gamma = data.frame(coverage_expected, gamma) %>%
-            mutate(Method = ifelse(coverage_expected>=ref_gamma, ifelse(coverage_expected==ref_gamma, 'Observed', 'Extrapolated'), 'Interpolated'),
-                   Order = rep(c(0,1,2), each=length(coverage_expected)/3), Coverage_real=rep(iNEXT:::Chat.Sam(data_gamma_freq, m_gamma), 3), Size=rep(m_gamma, 3))
-
-          alpha = data.frame(coverage_expected, alpha) %>%
-            mutate(Method = ifelse(coverage_expected>=ref_alpha, ifelse(coverage_expected==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated'),
-                   Order = rep(c(0,1,2), each=length(coverage_expected)/3), Coverage_real=rep(iNEXT:::Chat.Sam(data_alpha_freq, m_alpha), 3), Size=rep(m_alpha, 3))
-
-          beta = data.frame(coverage_expected, beta) %>%
-            mutate(Method = ifelse(coverage_expected>=ref_alpha, ifelse(coverage_expected==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated'),
-                   Order = rep(c(0,1,2), each=length(coverage_expected)/3), Coverage_real=rep(iNEXT:::Chat.Sam(data_alpha_freq, m_alpha), 3), Size=rep(m_alpha, 3))
-
-        }
-
-      }
-
-      gamma = gamma[,c(2,4,3,1,5,6)] %>% set_colnames(c('Estimate', 'Order', 'Method', 'Coverage_expected', 'Coverage_real', 'Size'))
-
-      if (max_alpha_coverage==T) under_max_alpha = !((gamma$Order==0) & (gamma$Coverage_expected>ref_alpha_max)) else under_max_alpha = gamma$Coverage_expected>0
-      gamma = gamma[under_max_alpha,]
-
-
-
-      alpha = alpha[,c(2,4,3,1,5,6)] %>% set_colnames(c('Estimate', 'Order', 'Method', 'Coverage_expected', 'Coverage_real', 'Size'))
-
-      alpha = alpha[under_max_alpha,]
-
-      beta = beta[,c(2,4,3,1,5,6)] %>% set_colnames(c('Estimate', 'Order', 'Method', 'Coverage_expected', 'Coverage_real', 'Size'))
-
-      beta = beta[under_max_alpha,]
-
-      C = beta %>% mutate(Estimate = ifelse(Order==1, log(Estimate)/log(N), (Estimate^(1-Order) - 1)/(N^(1-Order)-1)))
-      U = beta %>% mutate(Estimate = ifelse(Order==1, log(Estimate)/log(N), (Estimate^(Order-1) - 1)/(N^(Order-1)-1)))
-      V = beta %>% mutate(Estimate = (Estimate-1)/(N-1))
-      S = beta %>% mutate(Estimate = (1/Estimate-1)/(1/N-1))
-
-      if(nboot>1){
-
-        # cl = makeCluster(cluster_numbers)
-        # clusterExport(cl, c("bootstrap_population_multiple_assemblage","data","data_gamma", 'data_gamma_freq',"coverage_expected","N",'under_max_alpha',
-        #                     'data_type', 'data_2D'))
-        # clusterEvalQ(cl, library(tidyverse, magrittr))
-
-        # plan(sequential)
-        # plan(multiprocess, workers=7)
-
-        # se = parSapply(cl, 1:nboot, function(i){
-
-        # start = Sys.time()
-        se = future_lapply(1:nboot, function(i){
-
-          if (data_type=='abundance') {
-
-            p_bt = bootstrap_population_multiple_assemblage(data, data_gamma, 'abundance')
-            f0_hat = nrow(p_bt) - nrow(data)
-
-            distance_matrix_bt = Bootstrap_distance_matrix(rowSums(data), distance_matrix, f0_hat, 'abundance')
-
-            data_bt = sapply(1:ncol(data), function(k) rmultinom(n = 1, size = sum(data[,k]), prob = p_bt[,k]))
-
-            data_gamma = rowSums(data_bt)
-            data_gamma = data_gamma[data_gamma>0]
-            data_alpha = as.matrix(data_bt) %>% as.vector
-
-            if (tau_type=='single'){
-
-              if (by=='size') {
-
-                output = FD_by_tau(data_bt, distance_matrix_bt, tau, coverage_expected, data_type='abundance', by='size')
-                gamma = output$gamma
-                alpha = output$alpha
-
-              }
-
-              if (by=='coverage') {
-
-                output = FD_by_tau(data_bt, distance_matrix_bt, tau, coverage_expected, data_type='abundance', by='coverage')
-                gamma = output$gamma
-                alpha = output$alpha
-
-              }
-
-              beta=gamma/alpha
-
-            }
-
-            if (tau_type=='AUC'){
-
-
-              if (by=='size') {
-
-                gamma_alpha_over_tau = lapply(cut, function(tau) {
-
-                  FD_by_tau(data_bt, distance_matrix_bt, tau, coverage_expected, data_type='abundance', by='size')
-
-                })
-
-              }
-
-              if (by=='coverage') {
-
-                gamma_alpha_over_tau = lapply(cut, function(tau) {
-
-                  FD_by_tau(data_bt, distance_matrix_bt, tau, coverage_expected, data_type='abundance', by='coverage')
-
-                })
-
-              }
-              gamma_over_tau = sapply(gamma_alpha_over_tau, function(x) x$gamma)
-
-              left_limit  = apply(gamma_over_tau, 1, function(x) x[-cut_number]*width)
-              right_limit = apply(gamma_over_tau, 1, function(x) x[-1]*width)
-
-              gamma = colSums((left_limit + right_limit)/2)
-
-              alpha_over_tau = sapply(gamma_alpha_over_tau, function(x) x$alpha)
-
-              left_limit  = apply(alpha_over_tau, 1, function(x) x[-cut_number]*width)
-              right_limit = apply(alpha_over_tau, 1, function(x) x[-1]*width)
-
-              alpha = colSums((left_limit + right_limit)/2)
-
-              beta_over_tau = gamma_over_tau/alpha_over_tau
-
-              left_limit  = apply(beta_over_tau, 1, function(x) x[-cut_number]*width)
-              right_limit = apply(beta_over_tau, 1, function(x) x[-1]*width)
-
-              beta = colSums((left_limit + right_limit)/2)
-
-            }
-
-          }
-
-          if (data_type=='incidence_raw') {
-
-            p_bt = bootstrap_population_multiple_assemblage(data_2D, data_gamma_freq, 'incidence')
-            f0_hat = nrow(p_bt) - nrow(data_2D[-1,])
-
-            distance_matrix_bt = Bootstrap_distance_matrix(c(n,rowSums(data_gamma_raw)), distance_matrix, f0_hat, 'incidence_freq')
-
-            # p_bt = p_bt[rowSums(p_bt)>0,]
-
-            raw = lapply(1:ncol(p_bt), function(j){
-
-              lapply(1:nrow(p_bt), function(i) rbinom(n=n, size=1, prob=p_bt[i,j])) %>% do.call(rbind,.)
-
-            })
-
-            gamma = Reduce('+', raw)
-            gamma[gamma>1] = 1
-            data_gamma_raw_bt = gamma
-            data_gamma_freq_bt = c(n, rowSums(gamma))
-
-            data_alpha_freq_bt = sapply(raw, rowSums) %>% c(n, .)
-
-            # data_gamma_freq_bt = data_gamma_freq_bt[data_gamma_freq_bt>0]
-            # data_alpha_freq_bt = data_alpha_freq_bt[data_alpha_freq_bt>0]
-
-            data_2D_bt = apply(sapply(raw, rowSums), 2, function(x) c(n, x)) %>% as.data.frame
-
-            if (tau_type=='single'){
-
-              if (by=='size') {
-
-                output = FD_by_tau(list(data_gamma_freq = data_gamma_freq_bt, data_2D = data_2D_bt), distance_matrix_bt, tau, coverage_expected, data_type='incidence_raw', by='size')
-                gamma = output$gamma
-                alpha = output$alpha
-
-              }
-
-              if (by=='coverage') {
-
-                output = FD_by_tau(list(data_gamma_freq = data_gamma_freq_bt, data_2D = data_2D_bt), distance_matrix_bt, tau, coverage_expected, data_type='incidence_raw', by='coverage')
-                gamma = output$gamma
-                alpha = output$alpha
-
-              }
-
-              beta = gamma/alpha
-            }
-
-            if (tau_type=='AUC'){
-
-
-              if (by=='size') {
-
-                gamma_alpha_over_tau = lapply(cut, function(tau) {
-
-                  FD_by_tau(list(data_gamma_freq = data_gamma_freq_bt, data_2D = data_2D_bt), distance_matrix_bt, tau, coverage_expected, data_type='incidence_raw', by='size')
-
-                })
-
-              }
-
-              if (by=='coverage') {
-
-                gamma_alpha_over_tau = lapply(cut, function(tau) {
-
-                  FD_by_tau(list(data_gamma_freq = data_gamma_freq_bt, data_2D = data_2D_bt), distance_matrix_bt, tau, coverage_expected, data_type='incidence_raw', by='coverage')
-
-                })
-
-              }
-              gamma_over_tau = sapply(gamma_alpha_over_tau, function(x) x$gamma)
-
-              left_limit  = apply(gamma_over_tau, 1, function(x) x[-cut_number]*width)
-              right_limit = apply(gamma_over_tau, 1, function(x) x[-1]*width)
-
-              gamma = colSums((left_limit + right_limit)/2)
-
-              alpha_over_tau = sapply(gamma_alpha_over_tau, function(x) x$alpha)
-
-              left_limit  = apply(alpha_over_tau, 1, function(x) x[-cut_number]*width)
-              right_limit = apply(alpha_over_tau, 1, function(x) x[-1]*width)
-
-              alpha = colSums((left_limit + right_limit)/2)
-
-              beta_over_tau = gamma_over_tau/alpha_over_tau
-
-              left_limit  = apply(beta_over_tau, 1, function(x) x[-cut_number]*width)
-              right_limit = apply(beta_over_tau, 1, function(x) x[-1]*width)
-
-              beta = colSums((left_limit + right_limit)/2)
-
-            }
-
-          }
-
-          gamma = gamma[under_max_alpha]
-          alpha = alpha[under_max_alpha]
-          beta = beta[under_max_alpha]
-
-          order = rep(c(0,1,2), each=length(coverage_expected))[under_max_alpha]
-
-          beta = data.frame(Estimate=beta, order)
-
-          C = (beta %>% mutate(Estimate = ifelse(order==1,log(Estimate)/log(N),(Estimate^(1-order) - 1)/(N^(1-order)-1))))$Estimate
-          U = (beta %>% mutate(Estimate = ifelse(order==1,log(Estimate)/log(N),(Estimate^(order-1) - 1)/(N^(order-1)-1))))$Estimate
-          V = (beta %>% mutate(Estimate = (Estimate-1)/(N-1)))$Estimate
-          S = (beta %>% mutate(Estimate = (1/Estimate-1)/(1/N-1)))$Estimate
-
-          beta = beta$Estimate
-
-          cbind(gamma, alpha, beta, C, U, V, S) %>% as.matrix
-
-          # }, simplify = "array") %>% apply(., 1:2, sd) %>% data.frame
-        }) %>% abind(along=3) %>% apply(1:2, sd)
-        # end = Sys.time()
-        # end - start
-
-        # stopCluster(cl)
-        # plan(sequential)
-
-      } else {
-
-        se = matrix(0, ncol = 7, nrow = nrow(gamma))
-        colnames(se) = c("gamma", "alpha", "beta", "C", "U", 'V', 'S')
-        se = as.data.frame(se)
-
-      }
+      se = matrix(0, ncol = 7, nrow = nrow(gamma))
+      colnames(se) = c("gamma", "alpha", "beta", "C", "U", 'V', 'S')
+      se = as.data.frame(se)
 
     }
-
-
     se = as.data.frame(se)
-    # gamma <- gamma%>%rename("LCL"="qD.LCL", "UCL"="qD.UCL")
-    # alpha <- alpha%>%rename("LCL"="qD.LCL", "UCL"="qD.UCL")
-    # beta <- beta%>%rename("LCL"="qD.LCL", "UCL"="qD.UCL")
 
-    gamma = gamma %>% mutate(LCL = Estimate - 1.96 * se$gamma,
-                             UCL = Estimate + 1.96 * se$gamma,
+    gamma = gamma %>% mutate(LCL = Estimate - tmp * se$gamma[1:(nrow(se)-length(q))],
+                             UCL = Estimate + tmp * se$gamma[1:(nrow(se)-length(q))],
                              Region = region_name)
 
-    alpha = alpha %>% mutate(LCL = Estimate - 1.96 * se$alpha,
-                             UCL = Estimate + 1.96 * se$alpha,
+    alpha = alpha %>% mutate(LCL = Estimate - tmp * se$alpha[1:(nrow(se)-length(q))],
+                             UCL = Estimate + tmp * se$alpha[1:(nrow(se)-length(q))],
                              Region = region_name)
 
-    beta = beta %>% mutate(  LCL = Estimate - 1.96 * se$beta,
-                             UCL = Estimate + 1.96 * se$beta,
+    beta = beta %>% mutate(  LCL = Estimate - tmp * se$beta,
+                             UCL = Estimate + tmp * se$beta,
                              Region = region_name)
 
-    C = C %>% mutate(        LCL = Estimate - 1.96 * se$C,
-                             UCL = Estimate + 1.96 * se$C,
+    C = C %>% mutate(        LCL = Estimate - tmp * se$C,
+                             UCL = Estimate + tmp * se$C,
                              Region = region_name)
 
 
-    U = U %>% mutate(        LCL = Estimate - 1.96 * se$U,
-                             UCL = Estimate + 1.96 * se$U,
+    U = U %>% mutate(        LCL = Estimate - tmp * se$U,
+                             UCL = Estimate + tmp * se$U,
                              Region = region_name)
 
-    V = V %>% mutate(        LCL = Estimate - 1.96 * se$V,
-                             UCL = Estimate + 1.96 * se$V,
+    V = V %>% mutate(        LCL = Estimate - tmp * se$V,
+                             UCL = Estimate + tmp * se$V,
                              Region = region_name)
 
-    S = S %>% mutate(        LCL = Estimate - 1.96 * se$S,
-                             UCL = Estimate + 1.96 * se$S,
+    S = S %>% mutate(        LCL = Estimate - tmp * se$S,
+                             UCL = Estimate + tmp * se$S,
                              Region = region_name)
 
     list(gamma = gamma, alpha = alpha, beta = beta, C = C, U = U, V = V, S = S)
-
   }
 
   output = lapply(1:length(x), function(i) for_each_region(data = data_list[[i]],
@@ -1431,7 +714,7 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
   names(output) = region_names
   return(output)
 }
-# ggiNEXT -------------------------------------------------------------------
+# ggiNEXT.link -------------------------------------------------------------------
 #' ggplot2 extension for an iNEXT object
 #'
 #' \code{ggiNEXT.link}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXT}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
@@ -1471,18 +754,57 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
 
 #' @export
 ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var = "Assemblage",
-                         color.var = "Order.q", text.size = 18, stript.size = 16){
+                         color.var = "Order.q", text.size = 12, stript.size = 12){
   if(diversity == 'TD'){
-    iNEXT3D::ggiNEXT3D(outcome, type = type, facet.var = facet.var,color.var = color.var, se = se)[[1]] +
-      ylab("Network diversity")
-    # theme_bw() +
-    # theme(legend.position = "bottom",
-    #       legend.title=element_blank(),
-    #       legend.box.spacing = unit(0.4, "cm"),
-    #       text=element_text(size= text.size),
-    #       legend.key.width = unit(1,"cm")) +
+    # iNEXT3D::ggiNEXT3D(outcome, type = type, facet.var = facet.var,color.var = color.var, se = se)[[1]] +
+    #   ylab("Network diversity")
+
+    iNE <- outcome$iNextEst$coverage_based
+    iNE.sub <- iNE[iNE$Method == "Observed",]
+    iNE[iNE$Method == "Observed",]$Method <-  "Rarefaction"
+    # ex <- iNE.sub
+    # ex$method <- "extrapolated"
+    # iNE <- rbind(iNE,ex)
+    iNE$Method <- factor(iNE$Method,levels = c("Rarefaction","Extrapolation"))
+    iNE$Order.q = paste0("q = ", iNE$Order.q)
+    iNE.sub$Order.q = paste0("q = ", iNE.sub$Order.q)
+
+    if(type == 1){
+      # size-based
+      plot <- ggplot(iNE, aes(x = m,y = qD)) +
+        geom_line(aes(color = Assemblage,linetype = Method),size = 1.2) +
+        facet_wrap(~Order.q, scales = "free") +
+        # facet_grid()
+        geom_ribbon(aes(x = m,ymax = qD.UCL ,ymin = qD.LCL,fill = Assemblage),alpha = 0.25) + theme_bw()+
+        geom_point(aes(x = m,y = qD ,color = Assemblage,shape = Assemblage),size = 5,data = iNE.sub) +
+        xlab("Number of individuals")
+    }else if(type == 3){
+      # coverage-based
+      # plot <- ggplot(iNE) + geom_line(aes(x = SC,y = PD,color = Region,linetype = method),size = 1.2) +
+      #   facet_wrap(~Order.q, scales = "free") +
+      #   geom_ribbon(aes(x = SC,ymax = PD.UCL ,ymin = PD.LCL,fill = Region),alpha = 0.25) +
+      #   geom_point(aes(x = SC,y = PD ,color = Region,shape = Region),size = 5,data = iNE.sub) + theme_bw() +
+      #   xlab("Sample coverage")
+
+      plot <- ggplot(iNE, aes(x = SC,y = qD)) +
+        geom_line(aes(color = Assemblage,linetype = Method),size = 1.2) +
+        facet_wrap(~Order.q, scales = "free") +
+        # facet_grid()
+        geom_ribbon(aes(x = goalSC,ymax = qD.UCL ,ymin = qD.LCL,fill = Assemblage),alpha = 0.25) + theme_bw()+
+        geom_point(aes(x = goalSC,y = qD ,color = Assemblage,shape = Assemblage),size = 5,data = iNE.sub) +
+        xlab("Sample coverage")
+    }
+
+    plot +
+      theme(legend.position = "bottom",
+            legend.title=element_blank(), strip.text = element_text(size = stript.size),
+            text=element_text(size=text.size),
+            legend.key.width = unit(0.8,"cm"))  +
+      labs(y = "Network diversity", lty = "Method")
+
+
   }else if(diversity == 'PD'){
-    iNE <- outcome$PDiNextEst
+    iNE <- outcome$iNextEst
     iNE.sub <- iNE[iNE$method == "observed",]
     iNE[iNE$method == "observed",]$method <-  "interpolated"
     ex <- iNE.sub
@@ -1494,25 +816,27 @@ ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var
 
     if(type == 1){
       # size-based
-      ggplot(iNE, aes(x = m,y = PD)) + geom_line(aes(color = Region,linetype = method),size = 1.2) + facet_wrap(~Order.q) +
-        geom_ribbon(aes(x = m,ymax = PD.UCL ,ymin = PD.LCL,fill = Region),alpha = 0.25) +
+      plot <- ggplot(iNE, aes(x = m,y = PD)) + geom_line(aes(color = Region,linetype = method),size = 1.2) +
+        facet_wrap(~Order.q, scales = "free") +
+        # facet_grid()
+        geom_ribbon(aes(x = m,ymax = PD.UCL ,ymin = PD.LCL,fill = Region),alpha = 0.25) + theme_bw()+
         geom_point(aes(x = m,y = PD ,color = Region,shape = Region),size = 5,data = iNE.sub) +
-        theme(legend.position = "bottom",
-              legend.title=element_blank(), strip.text = element_text(size = stript.size),
-              text=element_text(size=text.size),
-              legend.key.width = unit(0.8,"cm"))  +
-        labs(x = "Number of individuals", y = "Network phylogenetic diversity", lty = "Method")+ theme_bw()
+        xlab("Number of individuals")
     }else if(type == 3){
       # coverage-based
-      ggplot(iNE) + geom_line(aes(x = SC,y = PD,color = Region,linetype = method),size = 1.2) + facet_wrap(~Order.q) +
+      plot <- ggplot(iNE) + geom_line(aes(x = SC,y = PD,color = Region,linetype = method),size = 1.2) +
+        facet_wrap(~Order.q, scales = "free") +
         geom_ribbon(aes(x = SC,ymax = PD.UCL ,ymin = PD.LCL,fill = Region),alpha = 0.25) +
         geom_point(aes(x = SC,y = PD ,color = Region,shape = Region),size = 5,data = iNE.sub) + theme_bw() +
-        theme(legend.position = "bottom",
-              legend.title=element_blank(), strip.text = element_text(size = stript.size),
-              text=element_text(size=text.size),
-              legend.key.width = unit(0.8,"cm"))  +
-        labs(x = "Sample coverage", y = "Phylogenetic network diversity", lty = "Method")
+        xlab("Sample coverage")
     }
+
+    plot +
+      theme(legend.position = "bottom",
+            legend.title=element_blank(), strip.text = element_text(size = stript.size),
+            text=element_text(size=text.size),
+            legend.key.width = unit(0.8,"cm"))  +
+      labs(y = "Phylogenetic network diversity", lty = "Method")
     # if(grey){
     #   g <- g +
     #     scale_fill_grey(start = 0, end = .4) +
@@ -1555,108 +879,214 @@ ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var
 #' }
 
 
-#' @export
+#' @export.
+
 ggiNEXT_beta.link <- function(output, type = c('B', 'D'),
                               diversity = 'TD',
                               scale='free', main=NULL, transp=0.4, stript.size = 11, text.size = 13){
-  # if(length(outcome) == 1){ outcome = outcome}
   if (type == 'B'){
 
-      gamma = lapply(output, function(y) y[["gamma"]]) %>% do.call(rbind,.) %>% mutate(div_type = "Gamma") %>% as_tibble()
-      alpha = lapply(output, function(y) y[["alpha"]]) %>% do.call(rbind,.) %>% mutate(div_type = "Alpha") %>% as_tibble()
-      beta =  lapply(output, function(y) y[["beta"]])  %>% do.call(rbind,.) %>% mutate(div_type = "Beta")  %>% as_tibble()
-      beta = beta %>% filter(Method != 'Observed')
-      beta[beta == 'Observed_alpha'] = 'Observed'
+    gamma = lapply(output, function(y) y[["gamma"]]) %>% do.call(rbind,.) %>% mutate(div_type = "Gamma") %>% as_tibble()
+    alpha = lapply(output, function(y) y[["alpha"]]) %>% do.call(rbind,.) %>% mutate(div_type = "Alpha") %>% as_tibble()
+    beta =  lapply(output, function(y) y[["beta"]])  %>% do.call(rbind,.) %>% mutate(div_type = "Beta")  %>% as_tibble()
+    beta = beta %>% filter(Method != 'Observed')
+    beta[beta == 'Observed_alpha'] = 'Observed'
 
-      df = rbind(gamma, alpha, beta)
-      for (i in unique(gamma$Order)) df$Order[df$Order==i] = paste0('q = ', i)
-      df$div_type <- factor(df$div_type, levels = c("Gamma","Alpha","Beta"))
+    df = rbind(gamma, alpha, beta)
+    for (i in unique(gamma$Order)) df$Order[df$Order==i] = paste0('q = ', i)
+    df$div_type <- factor(df$div_type, levels = c("Gamma","Alpha","Beta"))
 
-      id_obs = which(df$Method == 'Observed')
+    id_obs = which(df$Method == 'Observed')
 
-      for (i in 1:length(id_obs)) {
+    for (i in 1:length(id_obs)) {
 
-        new = df[id_obs[i],]
-        new$Coverage_expected = new$Coverage_expected - 0.0001
-        new$Method = 'Interpolated'
+      new = df[id_obs[i],]
+      new$Coverage_expected = new$Coverage_expected - 0.0001
+      new$Method = 'Interpolated'
 
-        newe = df[id_obs[i],]
-        newe$Coverage_expected = newe$Coverage_expected + 0.0001
-        newe$Method = 'Extrapolated'
+      newe = df[id_obs[i],]
+      newe$Coverage_expected = newe$Coverage_expected + 0.0001
+      newe$Method = 'Extrapolated'
 
-        df = rbind(df, new, newe)
-
-      }
-
-      if (diversity=='TD') { ylab = "Taxonomic diversity" }
-      if (diversity=='PD') { ylab = "Phylogenetic Hill number" }
+      df = rbind(df, new, newe)
 
     }
 
-    if (type=='D'){
+    if (diversity=='TD') { ylab = "Taxonomic diversity" }
+    if (diversity=='PD') { ylab = "Phylogenetic diversity" }
 
-      C = lapply(output, function(y) y[["C"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-CqN") %>% as_tibble()
-      U = lapply(output, function(y) y[["U"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-UqN") %>% as_tibble()
-      V = lapply(output, function(y) y[["V"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-VqN") %>% as_tibble()
-      S = lapply(output, function(y) y[["S"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-SqN") %>% as_tibble()
-      C = C %>% filter(Method != 'Observed')
-      U = U %>% filter(Method != 'Observed')
-      V = V %>% filter(Method != 'Observed')
-      S = S %>% filter(Method != 'Observed')
-      C[C == 'Observed_alpha'] = U[U == 'Observed_alpha'] = V[V == 'Observed_alpha'] = S[S == 'Observed_alpha'] = 'Observed'
+  }
+  if (type=='D'){
 
-      df = rbind(C, U, V, S)
-      for (i in unique(C$Order)) df$Order[df$Order==i] = paste0('q = ', i)
-      df$div_type <- factor(df$div_type, levels = c("1-CqN","1-UqN","1-VqN","1-SqN"))
+    C = lapply(output, function(y) y[["C"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-CqN") %>% as_tibble()
+    U = lapply(output, function(y) y[["U"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-UqN") %>% as_tibble()
+    V = lapply(output, function(y) y[["V"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-VqN") %>% as_tibble()
+    S = lapply(output, function(y) y[["S"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-SqN") %>% as_tibble()
+    C = C %>% filter(Method != 'Observed')
+    U = U %>% filter(Method != 'Observed')
+    V = V %>% filter(Method != 'Observed')
+    S = S %>% filter(Method != 'Observed')
+    C[C == 'Observed_alpha'] = U[U == 'Observed_alpha'] = V[V == 'Observed_alpha'] = S[S == 'Observed_alpha'] = 'Observed'
 
-      id_obs = which(df$Method == 'Observed')
+    df = rbind(C, U, V, S)
+    for (i in unique(C$Order)) df$Order[df$Order==i] = paste0('q = ', i)
+    df$div_type <- factor(df$div_type, levels = c("1-CqN","1-UqN","1-VqN","1-SqN"))
 
-      for (i in 1:length(id_obs)) {
+    id_obs = which(df$Method == 'Observed')
 
-        new = df[id_obs[i],]
-        new$Coverage_expected = new$Coverage_expected - 0.0001
-        new$Method = 'Interpolated'
+    for (i in 1:length(id_obs)) {
 
-        newe = df[id_obs[i],]
-        newe$Coverage_expected = newe$Coverage_expected + 0.0001
-        newe$Method = 'Extrapolated'
+      new = df[id_obs[i],]
+      new$Coverage_expected = new$Coverage_expected - 0.0001
+      new$Method = 'Interpolated'
 
-        df = rbind(df, new, newe)
+      newe = df[id_obs[i],]
+      newe$Coverage_expected = newe$Coverage_expected + 0.0001
+      newe$Method = 'Extrapolated'
 
-      }
-
-      if (diversity=='TD') { ylab = "Taxonomic dissimilarity" }
-      if (diversity=='PD') { ylab = "Phylogenetic dissimilarity" }
+      df = rbind(df, new, newe)
 
     }
+    if (diversity=='TD') { ylab = "Taxonomic dissimilarity" }
+    if (diversity=='PD') { ylab = "Phylogenetic dissimilarity" }
 
-    lty = c(Interpolated = "solid", Extrapolated = "dotted")
-    df$Method = factor(df$Method, levels = c('Interpolated', 'Extrapolated', 'Observed'))
+  }
+  lty = c(Interpolated = "solid", Extrapolated = "dashed")
+  # lty = c(Interpolated = "solid", Extrapolated = "twodash")
+  df$Method = factor(df$Method, levels = c('Interpolated', 'Extrapolated', 'Observed'))
 
-    double_size = unique(df[df$Method=="Observed",]$Size)*2
-    double_extrepolation = df %>% filter(Method=="Extrapolated" & round(Size) %in% double_size)
+  double_size = unique(df[df$Method=="Observed",]$Size)*2
+  double_extrapolation = df %>% filter(Method=="Extrapolated" & round(Size) %in% double_size)
 
-    # ggplot(data = df, aes(x = Coverage_expected, y = Estimate)) +
-    plot = ggplot(data = df, aes(x = Coverage_expected, y = Estimate, col = Region)) +
-      # geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Region, col = NULL), alpha=transp) +
-      geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Region), alpha=transp) +
-      geom_line(data = subset(df, Method!='Observed'), aes(linetype=Method), size=1.1) + scale_linetype_manual(values = lty) +
-      # geom_line(lty=2) +
-      geom_point(data = subset(df, Method=='Observed' & div_type=="Gamma"),shape=19, size=3) +
-      geom_point(data = subset(df, Method=='Observed' & div_type!="Gamma"),shape=1, size=3,stroke=1.5)+
-      geom_point(data = subset(double_extrepolation, div_type == "Gamma"),shape=17, size=3) +
-      geom_point(data = subset(double_extrepolation, div_type!="Gamma"),shape=2, size=3,stroke=1.5) +
-      facet_grid(div_type~Order, scales = scale) +
-      theme_bw() +
-      theme(legend.position = "bottom", legend.title = element_blank(),
-            strip.text = element_text(size = stript.size), text = element_text(size = text.size),
-            legend.key.width = unit(1,"cm")) +
-      labs(x='Sample coverage', y=ylab, title=main)
-    if(length(output) == 1){
-      plot = plot + guides(col=FALSE, fill = FALSE)
-    }
-    return(plot)
+  point_size = 2
+  ggplot(data = df, aes(x = Coverage_expected, y = Estimate, col = Region)) +
+    geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Region, col = NULL), alpha=transp) +
+    geom_line(data = subset(df, Method!='Observed'), aes(linetype=Method), size=1.1) +
+    scale_linetype_manual(values = lty) +
+    # geom_line(lty=2) +
+    geom_point(data = subset(df, Method=='Observed' & div_type=="Gamma"),shape=19, size=point_size) +
+    geom_point(data = subset(df, Method=='Observed' & div_type!="Gamma"),shape=1, size=point_size,stroke=1.5)+
+    # geom_point(data = subset(double_extrapolation, div_type == "Gamma"),shape=17, size=point_size) +
+    # geom_point(data = subset(double_extrapolation, div_type!="Gamma"),shape=2, size=point_size,stroke=1.5) +
+    facet_grid(div_type~Order, scales = scale) +
+    theme_bw() +
+    theme(legend.position = "bottom", legend.title = element_blank()) +
+    labs(x='Sample coverage', y=ylab, title=main)
+  # ggplot(data = df, aes(x = Coverage_expected, y = Estimate, col = Region)) +
+  #   geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Region, col = NULL), alpha=transp) +
+  #   geom_line(data = subset(df, Method!='Observed'), aes(linetype=Method), size=1.1) +
+  #   scale_linetype_manual(values = lty) +
+  #   geom_point(data = subset(df, Method=='Observed'), aes(shape = Region), size=3) +
+  #   facet_grid(div_type~Order, scales = scale) +
+  #   theme_bw() +
+  #   theme(legend.position = "bottom", legend.title = element_blank(),
+  #         ## my edit 0517
+  #         strip.text = element_text(size = stript.size), text = element_text(size = text.size),
+  #         legend.key.width = unit(1,"cm")
+  #         ) +
+  #   labs(x='Sample coverage', y=ylab, title=main)
 }
+
+# ggiNEXT_beta.link <- function(output, type = c('B', 'D'),
+#                               diversity = 'TD',
+#                               scale='free', main=NULL, transp=0.4, stript.size = 11, text.size = 13){
+#   if (type == 'B'){
+#
+#       gamma = lapply(output, function(y) y[["gamma"]]) %>% do.call(rbind,.) %>% mutate(div_type = "Gamma") %>% as_tibble()
+#       alpha = lapply(output, function(y) y[["alpha"]]) %>% do.call(rbind,.) %>% mutate(div_type = "Alpha") %>% as_tibble()
+#       beta =  lapply(output, function(y) y[["beta"]])  %>% do.call(rbind,.) %>% mutate(div_type = "Beta")  %>% as_tibble()
+#       beta = beta %>% filter(Method != 'Observed')
+#       beta[beta == 'Observed_alpha'] = 'Observed'
+#
+#       df = rbind(gamma, alpha, beta)
+#       for (i in unique(gamma$Order)) df$Order[df$Order==i] = paste0('q = ', i)
+#       df$div_type <- factor(df$div_type, levels = c("Gamma","Alpha","Beta"))
+#
+#       id_obs = which(df$Method == 'Observed')
+#
+#       for (i in 1:length(id_obs)) {
+#
+#         new = df[id_obs[i],]
+#         new$Coverage_expected = new$Coverage_expected - 0.0001
+#         new$Method = 'Interpolated'
+#
+#         newe = df[id_obs[i],]
+#         newe$Coverage_expected = newe$Coverage_expected + 0.0001
+#         newe$Method = 'Extrapolated'
+#
+#         df = rbind(df, new, newe)
+#
+#       }
+#
+#       if (diversity=='TD') { ylab = "Taxonomic diversity" }
+#       if (diversity=='PD') { ylab = "Phylogenetic diversity" }
+#
+#     }
+#
+#     if (type=='D'){
+#
+#       C = lapply(output, function(y) y[["C"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-CqN") %>% as_tibble()
+#       U = lapply(output, function(y) y[["U"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-UqN") %>% as_tibble()
+#       V = lapply(output, function(y) y[["V"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-VqN") %>% as_tibble()
+#       S = lapply(output, function(y) y[["S"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-SqN") %>% as_tibble()
+#       C = C %>% filter(Method != 'Observed')
+#       U = U %>% filter(Method != 'Observed')
+#       V = V %>% filter(Method != 'Observed')
+#       S = S %>% filter(Method != 'Observed')
+#       C[C == 'Observed_alpha'] = U[U == 'Observed_alpha'] = V[V == 'Observed_alpha'] = S[S == 'Observed_alpha'] = 'Observed'
+#
+#       df = rbind(C, U, V, S)
+#       for (i in unique(C$Order)) df$Order[df$Order==i] = paste0('q = ', i)
+#       df$div_type <- factor(df$div_type, levels = c("1-CqN","1-UqN","1-VqN","1-SqN"))
+#
+#       id_obs = which(df$Method == 'Observed')
+#
+#       for (i in 1:length(id_obs)) {
+#
+#         new = df[id_obs[i],]
+#         new$Coverage_expected = new$Coverage_expected - 0.0001
+#         new$Method = 'Interpolated'
+#
+#         newe = df[id_obs[i],]
+#         newe$Coverage_expected = newe$Coverage_expected + 0.0001
+#         newe$Method = 'Extrapolated'
+#
+#         df = rbind(df, new, newe)
+#
+#       }
+#
+#       if (diversity=='TD') { ylab = "Taxonomic dissimilarity" }
+#       if (diversity=='PD') { ylab = "Phylogenetic dissimilarity" }
+#
+#     }
+#
+#     lty = c(Interpolated = "solid", Extrapolated = "dotted")
+#     df$Method = factor(df$Method, levels = c('Interpolated', 'Extrapolated', 'Observed'))
+#
+#     double_size = unique(df[df$Method=="Observed",]$Size)*2
+#     double_extrepolation = df %>% filter(Method=="Extrapolated" & round(Size) %in% double_size)
+#
+#     # ggplot(data = df, aes(x = Coverage_expected, y = Estimate)) +
+#     plot = ggplot(data = df, aes(x = Coverage_expected, y = Estimate, col = Region)) +
+#       # geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Region, col = NULL), alpha=transp) +
+#       geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Region), alpha=transp) +
+#       geom_line(data = subset(df, Method!='Observed'), aes(linetype=Method), size=1.1) + scale_linetype_manual(values = lty) +
+#       # geom_line(lty=2) +
+#       geom_point(data = subset(df, Method=='Observed' & div_type=="Gamma"),shape=19, size=3) +
+#       geom_point(data = subset(df, Method=='Observed' & div_type!="Gamma"),shape=1, size=3,stroke=1.5)+
+#       geom_point(data = subset(double_extrepolation, div_type == "Gamma"),shape=17, size=3) +
+#       geom_point(data = subset(double_extrepolation, div_type!="Gamma"),shape=2, size=3,stroke=1.5) +
+#       facet_grid(div_type~Order, scales = scale) +
+#       theme_bw() +
+#       theme(legend.position = "bottom", legend.title = element_blank(),
+#             strip.text = element_text(size = stript.size), text = element_text(size = text.size),
+#             legend.key.width = unit(1,"cm")) +
+#       labs(x='Sample coverage', y=ylab, title=main)
+#     if(length(output) == 1){
+#       plot = plot + guides(col=FALSE, fill = FALSE)
+#     }
+#     return(plot)
+# }
 
 # Asy.link -------------------------------------------------------------------
 #' Asymptotic diversity q profile
@@ -1681,15 +1111,14 @@ ggiNEXT_beta.link <- function(output, type = c('B', 'D'),
 #'
 #' @export
 Asy.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30, conf = 0.95,
-                       row.tree = NULL, col.tree = NULL){
+                     row.tree = NULL, col.tree = NULL){
   if(diversity == 'TD'){
     NetDiv <- lapply(1:length(data), function(i) {
       x = data[[i]]
       assemblage = names(data)[[i]]
-      # tmp <- c(as.matrix(x))
-      # tmp = x
+      # please note that nboot has to larger than 0
       res = MakeTable_Proposeprofile(data = x, B = nboot, q, conf = conf)%>%
-        mutate(Network = assemblage, method = "Estimate")%>%
+        mutate(Network = assemblage, method = "Estimated")%>%
         filter(Target == "Diversity")%>%select(-Target, -`s.e.`)%>%
         rename("qD"="Estimate", "qD.LCL"="LCL", "qD.UCL"="UCL", 'Method' = 'method')
 
@@ -1731,7 +1160,7 @@ Asy.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abu
 #' }
 #' @export
 Obs.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abundance", nboot = 50, conf = 0.95,
-                       col.tree = NULL, row.tree = NULL){
+                     col.tree = NULL, row.tree = NULL){
   if(diversity == 'TD'){
     NetDiv <- lapply(1:length(data), function(i){
       x = data[[i]]
@@ -1748,10 +1177,12 @@ Obs.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abu
   }
 
   else if(diversity == 'PD'){
-    NetDiv <- get.netphydiv(data = data,q = q,B = nboot,row.tree = row.tree,col.tree = col.tree,conf = conf)%>%
+    NetDiv <- get.netphydiv(data = data,q = q,B = nboot,row.tree = row.tree,
+                            col.tree = col.tree,conf = conf)%>%
       filter(method == "Empirical")%>%
       dplyr::select(Order.q, Estimate, LCL, UCL, Region, method )%>%
       set_colnames(c('Order.q', 'qD', 'qD.LCL','qD.UCL', 'Network', 'Method'))
+
     return(NetDiv)
   }
 }
@@ -1883,7 +1314,8 @@ estimateD.link = function(dat, diversity = 'TD', q = c(0, 1, 2),datatype = "abun
       x = dat[[i]]
       assemblage = names(dat)[[i]]
       long = as.matrix(x)%>%c()
-      estimateD(long, q=q,datatype=datatype, base=base,level=level, nboot = nboot,conf=conf)%>%
+      iNEXT3D::estimate3D(long, q=q,datatype=datatype, base=base,
+                          diversity = 'TD', nboot = nboot,conf=conf)%>%
         mutate(Assemblage = assemblage)
     })%>%do.call("rbind",.)
 

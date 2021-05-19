@@ -31,7 +31,7 @@ my_PhD.q.est <- function (ai, Lis, q, nt, cal)
     deltas_pt2 <- sapply(0:(nt - 1), function(k) {
       ai_delt_I <- ai <= (nt - k)
       deltas_pt2 <- rep(0, S)
-      deltas_pt2[ai_delt_I] <- delta_part2(ai = ai[ai_delt_I],
+      deltas_pt2[ai_delt_I] <- iNEXTPD2:::delta_part2(ai = ai[ai_delt_I],
                                            k = k, n = nt)
       deltas_pt2
     }) %>% t()
