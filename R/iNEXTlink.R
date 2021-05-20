@@ -341,10 +341,10 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
       data_gamma = data_gamma[data_gamma>0]
       data_alpha = as.matrix(data) %>% as.vector
 
-      ref_gamma = iNEXT:::Chat.Ind(data_gamma, n)
+      ref_gamma = iNEXT.3D:::Chat.Ind(data_gamma, n)
       if (by=='size') ref_alpha = ref_gamma
-      if (by=='coverage') ref_alpha = iNEXT:::Chat.Ind(data_alpha, n)
-      ref_alpha_max = iNEXT:::Chat.Ind(data_alpha, n*2)
+      if (by=='coverage') ref_alpha = iNEXT.3D:::Chat.Ind(data_alpha, n)
+      ref_alpha_max = iNEXT.3D:::Chat.Ind(data_alpha, n*2)
 
       coverage_expected = c(coverage_expected, ref_gamma, ref_alpha, ref_alpha_max) %>% sort %>% unique
       # coverage_expected = coverage_expected[coverage_expected<1]
@@ -383,7 +383,7 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
                                      q = c(0,1,2),nt = n,cal = 'PD')
         gamma = qPDm %>% t %>%as.data.frame %>%
           set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
-          mutate(Coverage_expected=rep(coverage_expected, 3), Coverage_real=rep(iNEXT:::Chat.Ind(data_gamma, m_gamma), 3),
+          mutate(Coverage_expected=rep(coverage_expected, 3), Coverage_real=rep(iNEXT.3D:::Chat.Ind(data_gamma, m_gamma), 3),
                  Size=rep(m_gamma, 3))%>%
           mutate(Method = ifelse(Coverage_expected>=ref_gamma, ifelse(Coverage_expected==ref_gamma, 'Observed', 'Extrapolated'), 'Interpolated'))
 
@@ -394,7 +394,7 @@ iNEXT_link_phybeta <- function(x, coverage_expected, data_type=c('abundance', 'i
         qPDm = qPDm/N
         alpha = qPDm %>% t %>% as.data.frame %>%
           set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
-          mutate(Coverage_expected=rep(coverage_expected, 3), Coverage_real=rep(iNEXT:::Chat.Ind(data_alpha, m_alpha), 3), Size=rep(m_alpha, 3))%>%
+          mutate(Coverage_expected=rep(coverage_expected, 3), Coverage_real=rep(iNEXT.3D:::Chat.Ind(data_alpha, m_alpha), 3), Size=rep(m_alpha, 3))%>%
           mutate(Method = ifelse(Coverage_expected>=ref_gamma, ifelse(Coverage_expected==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated'))
         res = list()
         res[['gamma']] = gamma
