@@ -285,7 +285,7 @@ long_to_wide = function(data_long = data_gamma){
   })%>%t()%>%as.data.frame()%>% remove_rownames()%>%set_colnames(c('row_sp', 'col_sp'))
 
   mat = splitted%>%cbind(abundance = temp$.)%>%
-    spread(key = "col_sp", value = "abundance")%>%column_to_rownames("row_sp")
+    tidyr::spread(key = "col_sp", value = "abundance")%>%column_to_rownames("row_sp")
   mat[is.na(mat)] = 0
 
   return(mat)
