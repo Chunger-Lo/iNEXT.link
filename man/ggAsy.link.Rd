@@ -7,7 +7,7 @@
 ggAsy.link(outcome, text.size = 14)
 }
 \arguments{
-\item{outcome}{the outcome of the functions \code{AsyND} .\cr}
+\item{outcome}{the outcome of the functions \code{Asy.link} .\cr}
 }
 \value{
 a figure of estimated sample completeness with order q\cr\cr

@@ -204,45 +204,132 @@ my_PhD.m.est <- function (ai, Lis, m, q, nt, cal)
 #   mm[mm < 1] <- 1
 #   return(mm)
 # # }
-Coverage_to_size <- function(x, C){
-  x <- x[x > 0]
-  m <- NULL
-  n <- sum(x)
-  refC <- iNEXT:::Chat.Ind(x, n)
-  f <- function(m, C) abs(iNEXT:::Chat.Ind(x, m) - C)
-  mm <- sapply(C, function(cvrg) {
-    if (refC == cvrg) {
-      mm <- n
+
+coverage_to_size <- function (x, C, datatype = "abundance")
+{
+  if (datatype == "abundance") {
+    n <- sum(x)
+    refC <- iNEXT.3D:::Chat.Ind(x, n)
+    f <- function(m, C) abs(iNEXT.3D:::Chat.Ind(x, m) -
+                              C)
+    if (refC == C) {
+      mm = n
     }
-    else if (refC > cvrg) {
-      opt <- optimize(f, C = cvrg, lower = 0, upper = sum(x))
+    else if (refC > C) {
+      opt <- optimize(f, C = C, lower = 0, upper = sum(x))
       mm <- opt$minimum
+      mm <- round(mm)
     }
-    else if (refC < cvrg) {
+    else if (refC < C) {
       f1 <- sum(x == 1)
       f2 <- sum(x == 2)
       if (f1 > 0 & f2 > 0) {
         A <- (n - 1) * f1/((n - 1) * f1 + 2 * f2)
       }
-      else if (f1 > 1 & f2 == 0) {
+      if (f1 > 1 & f2 == 0) {
         A <- (n - 1) * (f1 - 1)/((n - 1) * (f1 - 1) +
                                    2)
       }
-      else if (f1 == 0 & f2 > 0) {
-        A <- 0
+      if (f1 == 1 & f2 == 0) {
+        A <- 1
       }
-      else if (f1 == 1 & f2 == 0) {
-        A <- 0
+      if (f1 == 0 & f2 == 0) {
+        A <- 1
       }
-      else if (f1 == 0 & f2 == 0) {
-        A <- 0
+      if (f1 == 0 & f2 > 0) {
+        A <- 1
       }
-      mm <- ifelse(A == 0, 0, (log(n/f1) + log(1 - cvrg))/log(A) -
-                     1)
+      mm <- (log(n/f1) + log(1 - C))/log(A) - 1
+      if (is.nan(mm) == TRUE)
+        mm = Inf
       mm <- n + mm
+      mm <- round(mm)
     }
-    mm
-  })
-  mm[mm < 1] <- 1
+  }
+  else {
+    m <- NULL
+    n <- max(x)
+    refC <- iNEXT.3D:::Chat.Sam(x, n)
+    f <- function(m, C) abs(iNEXT.3D:::Chat.Sam(x, m) -
+                              C)
+    if (refC == C) {
+      mm = n
+    }
+    else if (refC > C) {
+      opt <- optimize(f, C = C, lower = 0, upper = max(x))
+      mm <- opt$minimum
+      mm <- round(mm)
+    }
+    else if (refC < C) {
+      f1 <- sum(x == 1)
+      f2 <- sum(x == 2)
+      U <- sum(x) - max(x)
+      if (f1 > 0 & f2 > 0) {
+        A <- (n - 1) * f1/((n - 1) * f1 + 2 * f2)
+      }
+      if (f1 > 1 & f2 == 0) {
+        A <- (n - 1) * (f1 - 1)/((n - 1) * (f1 - 1) +
+                                   2)
+      }
+      if (f1 == 1 & f2 == 0) {
+        A <- 1
+      }
+      if (f1 == 0 & f2 == 0) {
+        A <- 1
+      }
+      if (f1 == 0 & f2 > 0) {
+        A <- 1
+      }
+      mm <- (log(U/f1) + log(1 - C))/log(A) - 1
+      if (is.nan(mm) == TRUE)
+        mm = Inf
+      mm <- n + mm
+      mm <- round(mm)
+    }
+  }
   return(mm)
 }
+
+
+# Coverage_to_size <- function(x, C){
+#   x <- x[x > 0]
+#   m <- NULL
+#   n <- sum(x)
+#   refC <- iNEXT:::Chat.Ind(x, n)
+#   f <- function(m, C) abs(iNEXT:::Chat.Ind(x, m) - C)
+#   mm <- sapply(C, function(cvrg) {
+#     if (refC == cvrg) {
+#       mm <- n
+#     }
+#     else if (refC > cvrg) {
+#       opt <- optimize(f, C = cvrg, lower = 0, upper = sum(x))
+#       mm <- opt$minimum
+#     }
+#     else if (refC < cvrg) {
+#       f1 <- sum(x == 1)
+#       f2 <- sum(x == 2)
+#       if (f1 > 0 & f2 > 0) {
+#         A <- (n - 1) * f1/((n - 1) * f1 + 2 * f2)
+#       }
+#       else if (f1 > 1 & f2 == 0) {
+#         A <- (n - 1) * (f1 - 1)/((n - 1) * (f1 - 1) +
+#                                    2)
+#       }
+#       else if (f1 == 0 & f2 > 0) {
+#         A <- 0
+#       }
+#       else if (f1 == 1 & f2 == 0) {
+#         A <- 0
+#       }
+#       else if (f1 == 0 & f2 == 0) {
+#         A <- 0
+#       }
+#       mm <- ifelse(A == 0, 0, (log(n/f1) + log(1 - cvrg))/log(A) -
+#                      1)
+#       mm <- n + mm
+#     }
+#     mm
+#   })
+#   mm[mm < 1] <- 1
+#   return(mm)
+# }

@@ -18,7 +18,6 @@ library(kableExtra)
 library(knitr)
 library(tibble)
 library(iNEXT)
-library(sets)
 library(tidyr)
 library(ade4)
 library(tidyverse)
@@ -29,21 +28,6 @@ library(magrittr)
 library(miNEXT.beta)
 library(future.apply)
 library(chaoUtility)
-
-Caguana <- read.table("F://Chao//Network diversity//shinyapp//heir.entropy//data/Caguana.txt")
-Cialitos <- read.table("F://Chao//Network diversity//shinyapp//heir.entropy//data/Cialitos.txt")
-Cordillera <- read.table("F://Chao//Network diversity//shinyapp//heir.entropy//data/Cordillera.txt")
-Fronton <- read.table("F://Chao//Network diversity//shinyapp//heir.entropy//data/Fronton.txt")
-data <- list(Cordillera = Cordillera,Caguana = Caguana,Fronton = Fronton,Cialitos = Cialitos)
-
-rowtree <- read.newick("F://Chao//Network diversity//shinyapp//heir.entropy//tree/rowtree.txt")
-coltree <- read.newick("F://Chao//Network diversity//shinyapp//heir.entropy//tree/coltree.txt")
-
-puerto.rico = list()
-puerto.rico[["data"]] = data
-puerto.rico[["col.tree"]] = coltree
-puerto.rico[["row.tree"]] = rowtree
-# usethis::use_data(puerto.rico, overwrite = T)
 ```
 
 ```{r}
@@ -65,7 +49,8 @@ beetles_tree = tr
 # network_list = beetles
 # coltree = beetles_tree
 # rowtree = NULL
-
+list.files('..//data')
+load('..//data//puerto.rico.rda')
 network_list = puerto.rico$data
 coltree = puerto.rico$col.tree
 rowtree = puerto.rico$row.tree
@@ -110,10 +95,10 @@ spec1 = Spec.link(network_list, q = seq(0,2,1), datatype = "abundance", nboot =1
 
 
 
-dissimilarity1 = iNEXT_beta.link(x = network_list, coverage_expected = seq(0.5,1,0.05),
-                                 data_type='abundance',
+dissimilarity1 = iNEXTbeta.link(x = network_list, level = seq(0.5,1,0.05),
+                                 datatype='abundance',
                                  q = c(0, 1, 2),diversity='TD',
-                                 nboot = 0, conf = 0.95, max_alpha_coverage=F, by='coverage')
+                                 nboot = 0, conf = 0.95)
 ```
 
 ### 1.Sample completeness

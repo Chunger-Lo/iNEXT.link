@@ -8,7 +8,7 @@ along with confidence intervals and related coverage estimates based on Chao et 
 diversity (ND)}
 \usage{
 iNEXT.link(
-  x,
+  data,
   diversity = "TD",
   q = c(0, 1, 2),
   datatype = "abundance",
@@ -23,6 +23,16 @@ iNEXT.link(
 )
 }
 \arguments{
+\item{data}{a matrix/data.frame of species
+abundances (for abundance data) or species-by-site incidence raw matrix/data.frame (for incidence data).\cr
+Abundance data: a species-by-site matrix/data.frame of species abundances. The row (species) names of
+data must match the species names in the phylogenetic tree and thus cannot be missing.\cr
+Incidence raw data: species-by-site raw incidence matrix/data.frame. When there are N assemblages
+and thus N matrices, users must first merge the N matrices by species identity to obtain a large
+merged incidence matrix, where the rows of the matrix refer to all species presented in the merged
+data. The row (species) names of data must match the species names in the phylogenetic tree and
+thus cannot be missing.}
+
 \item{diversity}{a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.}
 
 \item{q}{a nonnegative value or sequence specifying the diversity order. Default is \code{c(0,1,2)}.}
@@ -51,16 +61,6 @@ Enter 0 to skip the bootstrap procedures. Default is 50.}
 
 \item{col.tree}{phylogenetic tree of column assemblage in interaction matrix}
 
-\item{data}{a matrix/data.frame of species
-abundances (for abundance data) or species-by-site incidence raw matrix/data.frame (for incidence data).\cr
-Abundance data: a species-by-site matrix/data.frame of species abundances. The row (species) names of
-data must match the species names in the phylogenetic tree and thus cannot be missing.\cr
-Incidence raw data: species-by-site raw incidence matrix/data.frame. When there are N assemblages
-and thus N matrices, users must first merge the N matrices by species identity to obtain a large
-merged incidence matrix, where the rows of the matrix refer to all species presented in the merged
-data. The row (species) names of data must match the species names in the phylogenetic tree and
-thus cannot be missing.}
-
 \item{type}{desired diversity type: \code{type = "PD"} for Chao et al. (2010) phylogenetic diversity
 and \code{type = "meanPD"} for mean phylogenetic diversity (phylogenetic Hill number). Default is \code{"PD"}.}
 }
@@ -83,7 +83,8 @@ diversity (ND)
 \dontrun{
 data(puerto.rico)
 iNEXT.link(puerto.rico$data, diversity = 'TD', datatype="abundance")
-iNEXT.link(puerto.rico$data, diversity = 'PD', datatype="abundance", row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
+iNEXT.link(puerto.rico$data, diversity = 'PD', datatype="abundance",
+           row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 }
 }
 \references{

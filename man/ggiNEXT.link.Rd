@@ -2,7 +2,7 @@
 % Please edit documentation in R/iNEXTlink.R
 \name{ggiNEXT.link}
 \alias{ggiNEXT.link}
-\title{ggplot2 extension for an iNEXT object}
+\title{ggplot2 extension for an iNEXT.3D object}
 \usage{
 ggiNEXT.link(
   outcome,
@@ -16,6 +16,8 @@ ggiNEXT.link(
 )
 }
 \arguments{
+\item{outcome}{an \code{iNEXT.3D} object computed by \code{\link{iNEXT.3D}}.}
+
 \item{type}{three types of plots: sample-size-based rarefaction/extrapolation curve (\code{type = 1});
 sample completeness curve (\code{type = 2}); coverage-based rarefaction/extrapolation curve (\code{type = 3}).}
 
@@ -33,8 +35,6 @@ use different colors for diversity orders (\code{color.var="Order.q"});
 use different colors for sites (\code{color.var="Assemblage"});
 use different colors for combinations of order x assemblage (\code{color.var="Both"}).}
 
-\item{x}{an \code{iNEXT.3D} object computed by \code{\link{iNEXT.3D}}.}
-
 \item{grey}{a logical variable to display grey and white ggplot2 theme.}
 
 \item{...}{other arguments passed on to methods. Not currently used.}
@@ -43,7 +43,7 @@ use different colors for combinations of order x assemblage (\code{color.var="Bo
 a ggplot2 object
 }
 \description{
-\code{ggiNEXT.link}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXT}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
+\code{ggiNEXT.link}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXT.3D}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
 }
 \examples{
 \dontrun{

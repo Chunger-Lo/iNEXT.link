@@ -16,10 +16,32 @@ Asy.link(
 )
 }
 \arguments{
-\item{outcome}{the outcome of the functions \code{AsyD} .\cr}
+\item{data}{a matrix/data.frame of species
+abundances (for abundance data) or species-by-site incidence raw matrix/data.frame (for incidence data).\cr
+Abundance data: a species-by-site matrix/data.frame of species abundances. The row (species) names of
+data must match the species names in the phylogenetic tree and thus cannot be missing.\cr
+Incidence raw data: species-by-site raw incidence matrix/data.frame. When there are N assemblages
+and thus N matrices, users must first merge the N matrices by species identity to obtain a large
+merged incidence matrix, where the rows of the matrix refer to all species presented in the merged
+data. The row (species) names of data must match the species names in the phylogenetic tree and
+thus cannot be missing.}
+
+\item{diversity}{a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.}
+
+\item{q}{a nonnegative value or sequence specifying the diversity order. Default is \code{c(0,1,2)}.
+Enter 0 to skip the bootstrap procedures. Default is 50.}
+
+\item{datatype}{data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
+or species-by-site raw incidence matrix (\code{datatype = "incidence_raw"}). Default is \code{"abundance"}.}
+
+\item{conf}{a positive number < 1 specifying the level of confidence interval. Default is 0.95.}
+
+\item{row.tree}{phylogenetic tree of row assemblage in interaction matrix.}
+
+\item{col.tree}{phylogenetic tree of column assemblage in interaction matrix}
 }
 \value{
-a table of Asymptoti network diversity q profile
+a table of Asymptotic network diversity q profile
 }
 \description{
 \code{Asy.link} The estimated and empirical diversity of order q
@@ -32,7 +54,8 @@ out1 <- Asy.link(Norfolk, diversity = 'TD', datatype = "abundance", nboot = 10)
 ggAsy.link(out1)
 ## Ex.2
 data(puerto.rico)
-out2 <- Asy.link(puerto.rico$data, diversity = 'PD', datatype = "abundance", nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
+out2 <- Asy.link(puerto.rico$data, diversity = 'PD', datatype = "abundance", nboot = 10,
+row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 ggAsy.link(out2)
 }
 }

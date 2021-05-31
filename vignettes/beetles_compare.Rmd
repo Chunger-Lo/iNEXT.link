@@ -35,7 +35,7 @@ library(future.apply)
 ```
 
 ```{r}
-# library(miNEXT.beta)
+library(miNEXT.beta)
 source('..//R//iNEXTlink.R')
 source('..//R//myfunc.R')
 source('..//R//subfunction.R')
@@ -79,6 +79,8 @@ datainf_pool = DataInfo.link(data = network_list,
                         diversity = 'TD', datatype = "abundance")
 datainf_pool%>%
   flextable()
+
+
 ```
 
 <!-- ### Visualization -->
@@ -92,27 +94,26 @@ datainf_pool%>%
 ### Calculation
 
 ```{r, message = F, warning=F}
-bef = Sys.time()
-b = 10
+# bef = Sys.time()
+# b = 50
 sample1 <- iNEXT.link(data = network_list, diversity = 'TD', datatype = "abundance", nboot = b)
-asy1 = Asy.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
-obs1 = Obs.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
-sc1 <- SC.link(x = network_list, datatype = "abundance", nboot = b)
-spec1 = Spec.link(network_list, q = seq(0,2,1), datatype = "abundance", nboot = b)
-# Beta
-dissimilarity_pool = iNEXTbeta.link(x = beetles_pool$data, level = seq(0.5,0.95,0.05),
-                                    datatype='abundance',q = c(0, 1, 2), diversity='TD',
-                                    nboot = b, conf = 0.95, max_alpha_coverage=F)
-
-dissimilarity_byplot = iNEXTbeta.link(x = beetles_plot_treat$data, level = seq(0.5,0.95,0.05),datatype='abundance',q = c(0, 1, 2),diversity='TD',
-                                 nboot = b, conf = 0.95, max_alpha_coverage=F)
-
-dissimilarity_bytreat = iNEXTbeta.link(x = beetles_treat_plot$data, level = seq(0.5,0.95,0.05),datatype='abundance',q = c(0, 1, 2),diversity='TD',
-                                 nboot = b, conf = 0.95, max_alpha_coverage=F)
-
+# asy1 = Asy.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
+# obs1 = Obs.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
+# sc1 <- SC.link(x = network_list, datatype = "abundance", nboot = b)
+# spec1 = Spec.link(network_list, q = seq(0,2,1), datatype = "abundance", nboot = b)
+# # Beta
+# dissimilarity_pool = iNEXT_beta.link(x = beetles_pool$data, coverage_expected = seq(0.5,0.95,0.05),data_type='abundance',q = c(0, 1, 2),diversity='TD',
+#                                  nboot = b, conf = 0.95, max_alpha_coverage=F, by='coverage')
+# 
+# dissimilarity_byplot = iNEXT_beta.link(x = beetles_plot_treat$data, coverage_expected = seq(0.5,0.95,0.05),data_type='abundance',q = c(0, 1, 2),diversity='TD',
+#                                  nboot = b, conf = 0.95, max_alpha_coverage=F, by='coverage')
+# 
+# dissimilarity_bytreat = iNEXT_beta.link(x = beetles_treat_plot$data, coverage_expected = seq(0.5,0.95,0.05),data_type='abundance',q = c(0, 1, 2),diversity='TD',
+#                                  nboot = b, conf = 0.95, max_alpha_coverage=F, by='coverage')
+# 
 # save(sample1, asy1, obs1, sc1, spec1, dissimilarity_pool, dissimilarity_byplot,dissimilarity_bytreat,
 #      file = "output//taxonomic.RData")
-# load("output//taxonomic.RData")
+load("output//taxonomic.RData")
 ```
 
 
@@ -231,30 +232,30 @@ ggiNEXT_beta.link(dissimilarity_bytreat, diversity = 'TD', type = 'B')+
 ### Calculation
 
 ```{r, message = F, warning=F}
-b =50
-sample2 <- iNEXT.link(x = network_list, diversity = 'PD', datatype = "abundance",
-                      nboot = b,col.tree = coltree, row.tree = rowtree)
-
-
-asy2 = Asy.link(network_list, diversity = 'PD', q = seq(0,2,0.25),nboot = b,
-                col.tree = coltree, row.tree = rowtree)
-obs2 = Obs.link(network_list, diversity = 'PD', q = seq(0,2,0.25),nboot = b,
-                col.tree = coltree, row.tree = rowtree)
-phy_dissimilarity_pool = iNEXT_beta.link(x = beetles_pool$data,
-                                     level = seq(0.5,0.95,0.05),
-                                     datatype='abundance',q = c(0, 1, 2),diversity='PD',
-                                     nboot = b, conf = 0.95, max_alpha_coverage=F,
-                                     col.tree = coltree, row.tree = rowtree)
-phy_dissimilarity_byplot = iNEXT_beta.link(x = beetles_plot_treat$data,
-                                     level = seq(0.5,0.95,0.05),
-                                     datatype='abundance',q = c(0, 1, 2),diversity='PD',
-                                     nboot = b, conf = 0.95, max_alpha_coverage=F,
-                                     col.tree = coltree, row.tree = rowtree)
-phy_dissimilarity_by_treat = iNEXT_beta.link(x = beetles_treat_plot$data,
-                                     level = seq(0.5,0.95,0.05),
-                                     datatype='abundance',q = c(0, 1, 2),diversity='PD',
-                                     nboot = b, conf = 0.95, max_alpha_coverage=F,
-                                     col.tree = coltree, row.tree = rowtree)
+# b =50
+# sample2 <- iNEXT.link(x = network_list, diversity = 'PD', datatype = "abundance",
+#                       nboot = b,col.tree = coltree, row.tree = rowtree)
+# 
+# 
+# asy2 = Asy.link(network_list, diversity = 'PD', q = seq(0,2,0.25),nboot = b,
+#                 col.tree = coltree, row.tree = rowtree)
+# obs2 = Obs.link(network_list, diversity = 'PD', q = seq(0,2,0.25),nboot = b,
+#                 col.tree = coltree, row.tree = rowtree)
+# phy_dissimilarity_pool = iNEXT_beta.link(x = beetles_pool$data,
+#                                      coverage_expected = seq(0.5,0.95,0.05),
+#                                      data_type='abundance',q = c(0, 1, 2),diversity='PD',
+#                                      nboot = b, conf = 0.95, max_alpha_coverage=F,
+#                                      by='coverage',col.tree = coltree, row.tree = rowtree)
+# phy_dissimilarity_byplot = iNEXT_beta.link(x = beetles_plot_treat$data,
+#                                      coverage_expected = seq(0.5,0.95,0.05),
+#                                      data_type='abundance',q = c(0, 1, 2),diversity='PD',
+#                                      nboot = b, conf = 0.95, max_alpha_coverage=F,
+#                                      by='coverage',col.tree = coltree, row.tree = rowtree)
+# phy_dissimilarity_by_treat = iNEXT_beta.link(x = beetles_treat_plot$data,
+#                                      coverage_expected = seq(0.5,0.95,0.05),
+#                                      data_type='abundance',q = c(0, 1, 2),diversity='PD',
+#                                      nboot = b, conf = 0.95, max_alpha_coverage=F,
+#                                      by='coverage',col.tree = coltree, row.tree = rowtree)
 # save(sample2, asy2, obs2,
 #      phy_dissimilarity_pool, phy_dissimilarity_byplot,phy_dissimilarity_by_treat,
 #      file = "output//phylogenetic.RData")

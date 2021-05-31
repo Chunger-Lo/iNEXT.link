@@ -8,7 +8,7 @@
 ggSpec.link(output)
 }
 \arguments{
-\item{output}{a table generated from Evenness function\cr}
+\item{output}{a table generated from \code{Spec.link} function\cr}
 }
 \value{
 a figure of estimated sample completeness with order q\cr
@@ -22,10 +22,8 @@ ggplot for Evenness
 data(Norfolk)
 Est <- Spec.link(x = Norfolk, diversity = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
 Emp <- Spec.link(x = Norfolk, diversity = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
-Est
-Emp
-ggSpec(Est)
-ggSpec(Est)
+ggSpec(output = Est)
+ggSpec(output = Emp)
 }
 }
 \references{

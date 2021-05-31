@@ -32,10 +32,11 @@ library(phytools)
 library(magrittr)
 library(chaoUtility)
 library(future.apply)
+library(abind)
 ```
 
 ```{r}
-# library(miNEXT.beta)
+library(miNEXT.beta)
 source('..//R//iNEXTlink.R')
 source('..//R//myfunc.R')
 source('..//R//subfunction.R')
@@ -92,27 +93,27 @@ datainf_pool%>%
 ### Calculation
 
 ```{r, message = F, warning=F}
-bef = Sys.time()
-b = 10
-sample1 <- iNEXT.link(data = network_list, diversity = 'TD', datatype = "abundance", nboot = b)
-asy1 = Asy.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
-obs1 = Obs.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
-sc1 <- SC.link(x = network_list, datatype = "abundance", nboot = b)
-spec1 = Spec.link(network_list, q = seq(0,2,1), datatype = "abundance", nboot = b)
-# Beta
-dissimilarity_pool = iNEXTbeta.link(x = beetles_pool$data, level = seq(0.5,0.95,0.05),
-                                    datatype='abundance',q = c(0, 1, 2), diversity='TD',
-                                    nboot = b, conf = 0.95, max_alpha_coverage=F)
-
-dissimilarity_byplot = iNEXTbeta.link(x = beetles_plot_treat$data, level = seq(0.5,0.95,0.05),datatype='abundance',q = c(0, 1, 2),diversity='TD',
-                                 nboot = b, conf = 0.95, max_alpha_coverage=F)
-
-dissimilarity_bytreat = iNEXTbeta.link(x = beetles_treat_plot$data, level = seq(0.5,0.95,0.05),datatype='abundance',q = c(0, 1, 2),diversity='TD',
-                                 nboot = b, conf = 0.95, max_alpha_coverage=F)
-
+# bef = Sys.time()
+# b = 30
+# sample1 <- iNEXT.link(data = network_list, diversity = 'TD', datatype = "abundance", nboot = b)
+# asy1 = Asy.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
+# obs1 = Obs.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
+# sc1 <- SC.link(x = network_list, datatype = "abundance", nboot = b)
+# spec1 = Spec.link(network_list, q = seq(0,2,1), datatype = "abundance", nboot = b)
+# # Beta
+# dissimilarity_pool = iNEXT_beta.link(x = beetles_pool$data, coverage_expected = seq(0.5,0.95,0.05),data_type='abundance',q = c(0, 1, 2),diversity='TD',
+#                                  nboot = b, conf = 0.95, max_alpha_coverage=F, by='coverage')
+# 
+# dissimilarity_byplot = iNEXT_beta.link(x = beetles_plot_treat$data, coverage_expected = seq(0.5,0.95,0.05),data_type='abundance',q = c(0, 1, 2),diversity='TD',
+#                                  nboot = b, conf = 0.95, max_alpha_coverage=F, by='coverage')
+# 
+# dissimilarity_bytreat = iNEXT_beta.link(x = beetles_treat_plot$data, coverage_expected = seq(0.5,0.95,0.05),data_type='abundance',q = c(0, 1, 2),diversity='TD',
+#                                  nboot = b, conf = 0.95, max_alpha_coverage=F, by='coverage')
+# 
 # save(sample1, asy1, obs1, sc1, spec1, dissimilarity_pool, dissimilarity_byplot,dissimilarity_bytreat,
-#      file = "output//taxonomic.RData")
+#      file = "output//taxonomic_remove_dominance.RData")
 # load("output//taxonomic.RData")
+load("output//taxonomic_remove_dominance.RData")
 ```
 
 
@@ -139,11 +140,6 @@ rbind(obs1, asy1)%>%
   # facet_grid(Order.q~Method, scale = "free")+
   facet_grid(Order.q~., scale = "free")+
   theme_bw()+ylab('qD')
-```
-
-
-```{r}
-asy1%>%filter(Order.q%in%c(0,1,2))%>%arrange(Method, Order.q)%>%flextable()
 ```
 
 ### 3.Rarefaction / Extrapolation
@@ -182,6 +178,7 @@ ggarrange(size_view,coverage_view, nrow=1 )
 
 
 ```{r,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
+# ggSpec.link(spec1%>%lapply(function(x){x%>%rename('method'='Method')}))
 ggSpec.link(spec1)
 ```
 
@@ -195,18 +192,18 @@ c. Treatment-wise: 給定不同的Treatment(G,0)下, plot A,B,C間的相異程�
 #### Compare treatment G and O with pooled abundance
 
 ```{r,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta.link(dissimilarity_pool, type = 'B')
+ggiNEXTbeta.link(dissimilarity_pool, type = 'B')
 ```
 
 #### Plot-wise comparison
 ```{r,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta.link(dissimilarity_byplot, type = 'B')
+ggiNEXTbeta.link(dissimilarity_byplot, type = 'B')
 ```
 
 
 ### Take a closer look (indivisually scaling)
 ```{r,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta.link(dissimilarity_byplot, diversity = 'TD', type = 'B')+
+ggiNEXTbeta.link(dissimilarity_byplot, diversity = 'TD', type = 'B')+
   facet_wrap(div_type~Order, scale = 'free') +
   theme(legend.position = "bottom", legend.title = element_blank(),
         strip.text.x = element_blank())
@@ -215,12 +212,12 @@ ggiNEXT_beta.link(dissimilarity_byplot, diversity = 'TD', type = 'B')+
 #### Treatment-wise comparison
 
 ```{r,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta.link(dissimilarity_bytreat, type = 'B')
+ggiNEXTbeta.link(dissimilarity_bytreat, type = 'B')
 ```
 
 ### Take a closer look (indivisually scaling)
 ```{r,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta.link(dissimilarity_bytreat, diversity = 'TD', type = 'B')+
+ggiNEXTbeta.link(dissimilarity_bytreat, diversity = 'TD', type = 'B')+
   facet_wrap(div_type~Order, scale = 'free') +
   theme(legend.position = "bottom", legend.title = element_blank(),
         strip.text.x = element_blank())
@@ -231,37 +228,41 @@ ggiNEXT_beta.link(dissimilarity_bytreat, diversity = 'TD', type = 'B')+
 ### Calculation
 
 ```{r, message = F, warning=F}
-b =50
-sample2 <- iNEXT.link(x = network_list, diversity = 'PD', datatype = "abundance",
-                      nboot = b,col.tree = coltree, row.tree = rowtree)
-
-
-asy2 = Asy.link(network_list, diversity = 'PD', q = seq(0,2,0.25),nboot = b,
-                col.tree = coltree, row.tree = rowtree)
-obs2 = Obs.link(network_list, diversity = 'PD', q = seq(0,2,0.25),nboot = b,
-                col.tree = coltree, row.tree = rowtree)
-phy_dissimilarity_pool = iNEXT_beta.link(x = beetles_pool$data,
-                                     level = seq(0.5,0.95,0.05),
-                                     datatype='abundance',q = c(0, 1, 2),diversity='PD',
-                                     nboot = b, conf = 0.95, max_alpha_coverage=F,
-                                     col.tree = coltree, row.tree = rowtree)
-phy_dissimilarity_byplot = iNEXT_beta.link(x = beetles_plot_treat$data,
-                                     level = seq(0.5,0.95,0.05),
-                                     datatype='abundance',q = c(0, 1, 2),diversity='PD',
-                                     nboot = b, conf = 0.95, max_alpha_coverage=F,
-                                     col.tree = coltree, row.tree = rowtree)
-phy_dissimilarity_by_treat = iNEXT_beta.link(x = beetles_treat_plot$data,
-                                     level = seq(0.5,0.95,0.05),
-                                     datatype='abundance',q = c(0, 1, 2),diversity='PD',
-                                     nboot = b, conf = 0.95, max_alpha_coverage=F,
-                                     col.tree = coltree, row.tree = rowtree)
+# b =15
+# sample2 <- iNEXT.link(data = network_list, diversity = 'PD', datatype = "abundance",
+#                       nboot = b,col.tree = coltree, row.tree = rowtree)
+# 
+# 
+# asy2 = Asy.link(network_list, diversity = 'PD', q = seq(0,2,0.25),nboot = b,
+#                 col.tree = coltree, row.tree = rowtree)
+# obs2 = Obs.link(network_list, diversity = 'PD', q = seq(0,2,0.25),nboot = b,
+#                 col.tree = coltree, row.tree = rowtree)
+# phy_dissimilarity_pool = iNEXT_beta.link(x = beetles_pool$data,
+    #                                      level = seq(0.5,0.95,0.05),
+#                                          datatype='abundance',q = c(0, 1, 2),diversity='PD',
+#                                      nboot = b, conf = 0.95, max_alpha_coverage=F,
+#                                      col.tree = coltree, row.tree = rowtree)
+# phy_dissimilarity_byplot = iNEXT_beta.link(x = beetles_plot_treat$data,
+#                                      coverage_expected = seq(0.5,0.95,0.05),
+#                                      data_type='abundance',q = c(0, 1, 2),diversity='PD',
+#                                      nboot = b, conf = 0.95, max_alpha_coverage=F,
+#                                      by='coverage',col.tree = coltree, row.tree = rowtree)
+# phy_dissimilarity_by_treat = iNEXT_beta.link(x = beetles_treat_plot$data,
+#                                      coverage_expected = seq(0.5,0.95,0.05),
+#                                      data_type='abundance',q = c(0, 1, 2),diversity='PD',
+#                                      nboot = b, conf = 0.95, max_alpha_coverage=F,
+#                                      by='coverage',col.tree = coltree, row.tree = rowtree)
 # save(sample2, asy2, obs2,
 #      phy_dissimilarity_pool, phy_dissimilarity_byplot,phy_dissimilarity_by_treat,
 #      file = "output//phylogenetic.RData")
+# save(sample2, asy2, obs2,
+#      phy_dissimilarity_pool, phy_dissimilarity_byplot,phy_dissimilarity_by_treat,
+#      file = "output//phylogenetic_remove_dominance.RData")
 
 # aft = Sys.time()
 # print(aft - bef)
-load("output//phylogenetic.RData")
+# load("output//phylogenetic.RData")
+load("output//phylogenetic_remove_dominance.RData")
 ```
 
 
@@ -280,11 +281,6 @@ rbind(obs2, asy2)%>%
   # facet_grid(Order.q~Method, scale = "free")+
   facet_grid(Order.q~., scale = "free")+
   theme_bw()+ylab('qPD')
-```
-
-
-```{r}
-asy1%>%filter(Order.q%in%c(0,1,2))%>%arrange(Method, Order.q)%>%flextable()
 ```
 
 
@@ -322,18 +318,18 @@ ggarrange(size_view,coverage_view, nrow=1 )
 
 #### Compare treatment G and O with pooled abundance
 ```{r,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta.link(phy_dissimilarity_pool, diversity = 'PD', type = 'B')
+ggiNEXTbeta.link(phy_dissimilarity_pool, diversity = 'PD', type = 'B')
 ```
 
 
 #### Plot-wise comparison
 ```{r,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta.link(phy_dissimilarity_byplot, diversity = 'PD', type = 'B')
+ggiNEXTbeta.link(phy_dissimilarity_byplot, diversity = 'PD', type = 'B')
 ```
 
 ### Take a closer look (indivisually scaling)
 ```{r,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta.link(phy_dissimilarity_byplot, diversity = 'PD', type = 'B')+
+ggiNEXTbeta.link(phy_dissimilarity_byplot, diversity = 'PD', type = 'B')+
   facet_wrap(div_type~Order, scale = 'free') +
   theme(legend.position = "bottom", legend.title = element_blank(),
         strip.text.x = element_blank())
@@ -343,13 +339,13 @@ ggiNEXT_beta.link(phy_dissimilarity_byplot, diversity = 'PD', type = 'B')+
 #### Treatment-wise comparison
 
 ```{r,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta.link(phy_dissimilarity_by_treat, diversity = 'PD', type = 'B')
+ggiNEXTbeta.link(phy_dissimilarity_by_treat, diversity = 'PD', type = 'B')
 ```
 
 
 ### Take a closer look (indivisually scaling)
 ```{r,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta.link(phy_dissimilarity_by_treat, diversity = 'PD', type = 'B')+
+ggiNEXTbeta.link(phy_dissimilarity_by_treat, diversity = 'PD', type = 'B')+
   facet_wrap(div_type~Order, scale = 'free') +
   theme(legend.position = "bottom", legend.title = element_blank(),
         strip.text.x = element_blank())
