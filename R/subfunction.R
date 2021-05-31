@@ -40,23 +40,10 @@ ready4beta <- function(x){
 
 long_to_wide = function(data_long = data_gamma){
 
-  # reg <- paste0('((?:[^_]*_){',n,'})(.*)')
-  #
-  # temp = data_long%>%as.data.frame()%>%rownames_to_column("sp")
-  #
-  # n <- 2
-  # splitted  = sapply(temp$sp, function(str){
-  #   gsubfn::strapply(str, reg, c, simplify =~ sub('_$', '', x))
-  # })%>%t()%>%as.data.frame()%>% remove_rownames()%>%set_colnames(c('row_sp', 'col_sp'))
-  #
-  # mat = splitted%>%cbind(abundance = temp$.)%>%
-  #   tidyr::spread(key = "col_sp", value = "abundance")%>%column_to_rownames("row_sp")
-  # mat[is.na(mat)] = 0
-
   temp = data_long%>%as.data.frame()%>%rownames_to_column("sp")%>%
     tidyr::separate("sp", into = c("row_sp", "col_sp"), sep = "\\*")%>%
     rename("abundance"=".")
-  mat = temp%>%spread(key = "col_sp", value = "abundance")%>%column_to_rownames("row_sp")
+  mat = temp%>%tidyr::spread(key = "col_sp", value = "abundance")%>%column_to_rownames("row_sp")
   mat[is.na(mat)] = 0
   return(mat)
 }
