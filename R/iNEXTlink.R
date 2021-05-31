@@ -488,11 +488,11 @@ ggiNEXTbeta.link <- function(output, type = c('B', 'D'),
     for (i in 1:length(id_obs)) {
 
       new = df[id_obs[i],]
-      new$Coverage_expected = new$Coverage_expected - 0.0001
+      new$level = new$level - 0.0001
       new$Method = 'Interpolated'
 
       newe = df[id_obs[i],]
-      newe$Coverage_expected = newe$Coverage_expected + 0.0001
+      newe$level = newe$level + 0.0001
       newe$Method = 'Extrapolated'
 
       df = rbind(df, new, newe)
@@ -524,11 +524,11 @@ ggiNEXTbeta.link <- function(output, type = c('B', 'D'),
     for (i in 1:length(id_obs)) {
 
       new = df[id_obs[i],]
-      new$Coverage_expected = new$Coverage_expected - 0.0001
+      new$level = new$level - 0.0001
       new$Method = 'Interpolated'
 
       newe = df[id_obs[i],]
-      newe$Coverage_expected = newe$Coverage_expected + 0.0001
+      newe$level = newe$level + 0.0001
       newe$Method = 'Extrapolated'
 
       df = rbind(df, new, newe)
@@ -546,7 +546,7 @@ ggiNEXTbeta.link <- function(output, type = c('B', 'D'),
   double_extrapolation = df %>% filter(Method=="Extrapolated" & round(Size) %in% double_size)
 
   point_size = 2
-  ggplot(data = df, aes(x = Coverage_expected, y = Estimate, col = Region)) +
+  ggplot(data = df, aes(x = level, y = Estimate, col = Region)) +
     geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Region, col = NULL), alpha=transp) +
     geom_line(data = subset(df, Method!='Observed'), aes(linetype=Method), size=1.1) +
     scale_linetype_manual(values = lty) +
@@ -560,7 +560,7 @@ ggiNEXTbeta.link <- function(output, type = c('B', 'D'),
     theme_bw() +
     theme(legend.position = "bottom", legend.title = element_blank()) +
     labs(x='Sample coverage', y=ylab, title=main)
-  # ggplot(data = df, aes(x = Coverage_expected, y = Estimate, col = Region)) +
+  # ggplot(data = df, aes(x = level, y = Estimate, col = Region)) +
   #   geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Region, col = NULL), alpha=transp) +
   #   geom_line(data = subset(df, Method!='Observed'), aes(linetype=Method), size=1.1) +
   #   scale_linetype_manual(values = lty) +
@@ -595,11 +595,11 @@ ggiNEXTbeta.link <- function(output, type = c('B', 'D'),
 #       for (i in 1:length(id_obs)) {
 #
 #         new = df[id_obs[i],]
-#         new$Coverage_expected = new$Coverage_expected - 0.0001
+#         new$level = new$level - 0.0001
 #         new$Method = 'Interpolated'
 #
 #         newe = df[id_obs[i],]
-#         newe$Coverage_expected = newe$Coverage_expected + 0.0001
+#         newe$level = newe$level + 0.0001
 #         newe$Method = 'Extrapolated'
 #
 #         df = rbind(df, new, newe)
@@ -632,11 +632,11 @@ ggiNEXTbeta.link <- function(output, type = c('B', 'D'),
 #       for (i in 1:length(id_obs)) {
 #
 #         new = df[id_obs[i],]
-#         new$Coverage_expected = new$Coverage_expected - 0.0001
+#         new$level = new$level - 0.0001
 #         new$Method = 'Interpolated'
 #
 #         newe = df[id_obs[i],]
-#         newe$Coverage_expected = newe$Coverage_expected + 0.0001
+#         newe$level = newe$level + 0.0001
 #         newe$Method = 'Extrapolated'
 #
 #         df = rbind(df, new, newe)
@@ -654,8 +654,8 @@ ggiNEXTbeta.link <- function(output, type = c('B', 'D'),
 #     double_size = unique(df[df$Method=="Observed",]$Size)*2
 #     double_extrepolation = df %>% filter(Method=="Extrapolated" & round(Size) %in% double_size)
 #
-#     # ggplot(data = df, aes(x = Coverage_expected, y = Estimate)) +
-#     plot = ggplot(data = df, aes(x = Coverage_expected, y = Estimate, col = Region)) +
+#     # ggplot(data = df, aes(x = level, y = Estimate)) +
+#     plot = ggplot(data = df, aes(x = level, y = Estimate, col = Region)) +
 #       # geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Region, col = NULL), alpha=transp) +
 #       geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Region), alpha=transp) +
 #       geom_line(data = subset(df, Method!='Observed'), aes(linetype=Method), size=1.1) + scale_linetype_manual(values = lty) +
@@ -1257,19 +1257,19 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
                                      q = c(0,1,2),nt = n,cal = 'PD')
         gamma = qPDm %>% t %>%as.data.frame %>%
           set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
-          mutate(Coverage_expected=rep(level, 3), Coverage_real=rep(iNEXT.3D:::Chat.Ind(data_gamma, m_gamma), 3),
+          mutate(level=rep(level, 3), Coverage_real=rep(iNEXT.3D:::Chat.Ind(data_gamma, m_gamma), 3),
                  Size=rep(m_gamma, 3))%>%
-          mutate(Method = ifelse(Coverage_expected>=ref_gamma, ifelse(Coverage_expected==ref_gamma, 'Observed', 'Extrapolated'), 'Interpolated'))
+          mutate(Method = ifelse(level>=ref_gamma, ifelse(level==ref_gamma, 'Observed', 'Extrapolated'), 'Interpolated'))
 
         ## 2. alpha
-        qPDm = PhD:::PhD.m.est(ai = aL_table_alpha$branch.abun, Lis = aL_table_alpha$branch.length%>%as.matrix(),
+        qPDm = iNEXTPD2:::PhD.m.est(ai = aL_table_alpha$branch.abun, Lis = aL_table_alpha$branch.length%>%as.matrix(),
                                m = m_alpha,q = c(0,1,2),nt = n,cal = 'PD')
 
         qPDm = qPDm/N
         alpha = qPDm %>% t %>% as.data.frame %>%
           set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
-          mutate(Coverage_expected=rep(level, 3), Coverage_real=rep(iNEXT.3D:::Chat.Ind(data_alpha, m_alpha), 3), Size=rep(m_alpha, 3))%>%
-          mutate(Method = ifelse(Coverage_expected>=ref_gamma, ifelse(Coverage_expected==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated'))
+          mutate(level=rep(level, 3), Coverage_real=rep(iNEXT.3D:::Chat.Ind(data_alpha, m_alpha), 3), Size=rep(m_alpha, 3))%>%
+          mutate(Method = ifelse(level>=ref_gamma, ifelse(level==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated'))
         res = list()
         res[['gamma']] = gamma
         res[['alpha']] = alpha
@@ -1283,22 +1283,22 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
     }
 
     gamma = (gamma %>%
-               mutate(Method = ifelse(Coverage_expected>=ref_gamma,
-                                      ifelse(Coverage_expected==ref_gamma, 'Observed', 'Extrapolated'), 'Interpolated')))[,c(2,1,6,3,4,5)] %>%
-      set_colnames(c('Estimate', 'Order', 'Method', 'Coverage_expected', 'Coverage_real', 'Size'))
+               mutate(Method = ifelse(level>=ref_gamma,
+                                      ifelse(level==ref_gamma, 'Observed', 'Extrapolated'), 'Interpolated')))[,c(2,1,6,3,4,5)] %>%
+      set_colnames(c('Estimate', 'Order', 'Method', 'level', 'Coverage_real', 'Size'))
 
     if (max_alpha_coverage==T) {
-      under_max_alpha = !((gamma$Order==0) & (gamma$Coverage_expected>ref_alpha_max))
+      under_max_alpha = !((gamma$Order==0) & (gamma$level>ref_alpha_max))
     }else{
-      under_max_alpha = gamma$Coverage_expected>0
+      under_max_alpha = gamma$level>0
     }
     gamma = gamma[under_max_alpha,]
     gamma$Order = as.numeric(gamma$Order)
 
 
     alpha = (alpha %>%
-               mutate(Method = ifelse(Coverage_expected>=ref_alpha, ifelse(Coverage_expected==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated')))[,c(2,1,6,3,4,5)] %>%
-      set_colnames(c('Estimate', 'Order', 'Method', 'Coverage_expected', 'Coverage_real', 'Size'))
+               mutate(Method = ifelse(level>=ref_alpha, ifelse(level==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated')))[,c(2,1,6,3,4,5)] %>%
+      set_colnames(c('Estimate', 'Order', 'Method', 'level', 'Coverage_real', 'Size'))
 
     alpha = alpha[under_max_alpha,]
     alpha$Order = as.numeric(alpha$Order)
@@ -1307,7 +1307,7 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
     beta$Estimate = gamma$Estimate/alpha$Estimate
     beta[beta == "Observed"] = "Observed_alpha"
     beta = beta %>% rbind(., cbind(gamma %>% filter(Method == "Observed") %>% select(Estimate) / alpha %>% filter(Method == "Observed") %>% select(Estimate),
-                                   Order = q, Method = "Observed", Coverage_expected = NA, Coverage_real = NA, Size = beta[beta$Method == "Observed_alpha", 'Size']))
+                                   Order = q, Method = "Observed", level = NA, Coverage_real = NA, Size = beta[beta$Method == "Observed_alpha", 'Size']))
 
     C = beta %>% mutate(Estimate = ifelse(Order==1, log(Estimate)/log(N), (Estimate^(1-Order) - 1)/(N^(1-Order)-1)))
     U = beta %>% mutate(Estimate = ifelse(Order==1, log(Estimate)/log(N), (Estimate^(Order-1) - 1)/(N^(Order-1)-1)))

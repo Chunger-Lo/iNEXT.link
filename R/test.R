@@ -3,7 +3,7 @@
 # library(tibble)
 # library(iNEXT.3D)
 # library(iNEXT.beta)
-# library(iNEXT.link)
+# # library(iNEXT.link)
 # library(ade4)
 # library(sets)
 # library(tidyr)
@@ -15,12 +15,12 @@
 # library(chaoUtility)
 # library(future.apply)
 # library(abind)
-#
-# # source('R//iNEXTlink.R')
-# # source('R//myfunc.R')
-# # source('R//subfunction.R')
-# # source('R//crazy_min.R')
-#
+
+# source('R//iNEXTlink.R')
+# source('R//myfunc.R')
+# source('R//subfunction.R')
+# source('R//crazy_min.R')
+
 # data("puerto.rico")
 # network_list = puerto.rico$data
 # coltree = puerto.rico$col.tree
@@ -30,8 +30,8 @@
 # network_list = beetles_pool$data
 # coltree = beetles_pool$col.tree
 # rowtree = NULL
-# #
-# #
+#
+#
 # datainf1 = DataInfo.link(data = network_list,
 #                          diversity = 'TD', datatype = "abundance")
 # ## taxonomic ----
@@ -44,8 +44,11 @@
 #                                 datatype='abundance',
 #                                 q = c(0, 1, 2),diversity='TD',
 #                                 nboot = 10, conf = 0.95)
-# # ## phylogenetic ----
+# ggiNEXTbeta(output = dissimilarity1, type = 'B', measurement = 'TD')
+# ## phylogenetic ----
 # b = 5
+# sum(network_list[[1]])
+# sum(network_list[[2]])
 # sample2 <- iNEXT.link::iNEXT.link(data = network_list, diversity = 'PD', datatype = "abundance",
 #                       nboot = b,col.tree = coltree, row.tree = rowtree)
 #
@@ -54,10 +57,12 @@
 #                 col.tree = coltree, row.tree = rowtree)
 # obs2 = iNEXT.link::Obs.link(data = network_list, diversity = 'PD', q = seq(0,2,0.25),nboot = b,
 #                 col.tree = coltree, row.tree = rowtree)
-# dissimilarity2 = iNEXT.link::iNEXTbeta.link(networks = network_list, level = seq(0.5,1,0.2),
+#
+# dissimilarity2 = iNEXTbeta.link(networks = network_list, level = seq(0.5,1,0.2),
 #                                  datatype='abundance',
 #                                  q = c(0, 1, 2),diversity='PD',
 #                                  nboot = 5, conf = 0.95,
 #                                  col.tree = coltree, row.tree = rowtree)
-#
-# ggiNEXTbeta(dissimilarity2, diversity = 'PD')
+
+# ggiNEXTbeta(output = dissimilarity2, type = 'B', measurement = 'PD')
+

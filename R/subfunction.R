@@ -69,7 +69,7 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
     out <- data.frame(branch.abun = tmp$branch.abun, branch.length = tmp$branch.length,
                       tgroup = tmp$tgroup,interaction = tmp$interaction)
   }
-  ## beetles (only coltree)
+
   if ((is.null(row.tree) == 1) & (is.null(col.tree) == 0)){
     ind = is.na(match(colnames(data),col.tree$tip.label))
     tip_notin_data <- col.tree$tip.label[ind]
