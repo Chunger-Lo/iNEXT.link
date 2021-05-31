@@ -59,3 +59,5 @@
 #                                  q = c(0, 1, 2),diversity='PD',
 #                                  nboot = 5, conf = 0.95,
 #                                  col.tree = coltree, row.tree = rowtree)
+#
+# ggiNEXTbeta(dissimilarity2, diversity = 'PD')
