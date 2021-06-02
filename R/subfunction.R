@@ -19,7 +19,7 @@ ready4beta <- function(x){
     sets::as.set(data_long[[i]]$int_name)
   })
 
-  res_set = set()
+  res_set = sets::set()
   for(i in 1:length(names_tab)){
     res_set = sets::set_union(names_tab[[i]], res_set)
   }

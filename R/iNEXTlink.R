@@ -1183,8 +1183,6 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
                              row.tree = NULL,col.tree = NULL){
   max_alpha_coverage = F
 
-
-
   if(datatype=='abundance'){
 
     if(class(data)=="data.frame" | class(data)=="matrix" ) data = list(Region_1 = data)
@@ -1220,10 +1218,12 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
 
       ref_gamma = iNEXT.3D:::Chat.Ind(data_gamma, n)
       ref_alpha = iNEXT.3D:::Chat.Ind(data_alpha, n)
-      ref_alpha_max = iNEXT.3D:::Chat.Ind(data_alpha, n*2)
 
-      level = c(level, ref_gamma, ref_alpha, ref_alpha_max) %>% sort %>% unique
+      ref_alpha_max = iNEXT.3D:::Chat.Ind(data_alpha, n * 2)
+      ref_gamma_max = iNEXT.3D:::Chat.Ind(data_gamma, n * 2)
+
       level = level[level<1]
+      level = c(level, ref_gamma, ref_alpha, ref_alpha_max, ref_gamma_max) %>% sort %>% unique
 
       m_gamma = sapply(level, function(i) coverage_to_size(data_gamma, i, datatype='abundance'))
       m_alpha = sapply(level, function(i) coverage_to_size(data_alpha, i, datatype='abundance'))
@@ -1254,20 +1254,20 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
         ## 1. gamma
         qPDm <- iNEXTPD2:::PhD.m.est(ai = aL_table_gamma$branch.abun,
                                      Lis = aL_table_gamma$branch.length%>%as.matrix(),m = m_gamma,
-                                     q = c(0,1,2),nt = n,cal = 'PD')
+                                     q = q,nt = n,cal = 'PD')
         gamma = qPDm %>% t %>%as.data.frame %>%
-          set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
+          set_colnames(q) %>% gather(Order, Estimate) %>%
           mutate(level=rep(level, 3), Coverage_real=rep(iNEXT.3D:::Chat.Ind(data_gamma, m_gamma), 3),
                  Size=rep(m_gamma, 3))%>%
           mutate(Method = ifelse(level>=ref_gamma, ifelse(level==ref_gamma, 'Observed', 'Extrapolated'), 'Interpolated'))
 
         ## 2. alpha
         qPDm = iNEXTPD2:::PhD.m.est(ai = aL_table_alpha$branch.abun, Lis = aL_table_alpha$branch.length%>%as.matrix(),
-                               m = m_alpha,q = c(0,1,2),nt = n,cal = 'PD')
+                               m = m_alpha,q = q,nt = n,cal = 'PD')
 
         qPDm = qPDm/N
         alpha = qPDm %>% t %>% as.data.frame %>%
-          set_colnames(c(0,1,2)) %>% gather(Order, Estimate) %>%
+          set_colnames(q) %>% gather(Order, Estimate) %>%
           mutate(level=rep(level, 3), Coverage_real=rep(iNEXT.3D:::Chat.Ind(data_alpha, m_alpha), 3), Size=rep(m_alpha, 3))%>%
           mutate(Method = ifelse(level>=ref_gamma, ifelse(level==ref_alpha, 'Observed', 'Extrapolated'), 'Interpolated'))
         res = list()
@@ -1390,7 +1390,7 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
           seen_unseen = rbind(seen_interaction_aili, unseen_interaction_aili)
           ## 8268 candidates out of 8977
           candidates = which(seen_unseen$branch.abun == 0)
-          assigned_position = sample(candidates, size = f0_k )
+          assigned_position = sample(candidates, size = min(f0_k, length(candidates)) , replace = F)
           seen_unseen$branch.abun[assigned_position] = (1-C.hat) / f0_k
           # seen_unseen <- seen_unseen%>%filter(branch.abun != 0)
 
