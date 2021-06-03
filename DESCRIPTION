@@ -7,6 +7,8 @@ Maintainer: Anne Chao <chao@stat.nthu.edu.tw>
 Description: Provides functions for network diversity analysis. 
     (1) The iNEXT standardization for network diversity: computes and plots rarefaction and extrapolation of network diversity based on two types of standardization methods (sample size and sample coverage). 
     (2) The phylogenetic diversity estimation: computes and plots asymptotic phylogenetic network diversity profile as a function of diversity order (q-profile) or time (time-profile).
+    Provides simple functions to compute and plot two types (sample-size- and coverage-based) rarefaction and 
+    extrapolation of species diversity (Hill numbers) for individual-based (abundance) data
 License: GPL (>= 3)
 Depends:
     R (>= 3.6)
@@ -17,13 +19,10 @@ Suggests: knitr,
 Imports: 
     chaoUtility,
     phytools,
-    bipartite,
     Rcpp,
     dplyr,
     ggplot2,
-    iNEXT,
     tidyr,
-    iNEXTPD2,
     tidytree,
     tibble,
     stats,
@@ -31,11 +30,13 @@ Imports:
     sets,
     phyclust,
     utils,
+    PhD,
     iNEXT.3D,
+    iNEXTPD2,
     iNEXT.4steps,
-    miNEXT.beta
+    iNEXT.beta
 LinkingTo: Rcpp
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
-Remotes: AnneChao/iNEXT.3D, KaiHsiangHu/iNEXTPD2, KaiHsiangHu/iNEXT.4steps, Chunger-Lo/miNEXT.beta
+Remotes: YanHanChen/PhD , chaolab2019/chaoUtility, KaiHsiangHu/iNEXT.3D, KaiHsiangHu/iNEXTPD2, KaiHsiangHu/iNEXT.4steps, crazymin2266/iNEXT.beta

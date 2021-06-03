@@ -4,23 +4,19 @@
 \alias{ggSC.link}
 \title{ggplot for Sample Completeness}
 \usage{
-ggSC.link(output)
+ggSC.link(outcome)
 }
 \arguments{
-\item{output}{a table generated from SC function}
+\item{outcome}{a table generated from SC function}
 }
 \value{
 a figure of estimated sample completeness with order q
 }
 \description{
-\code{ggNetSC} The figure for estimation of Sample Completeness with order q
+\code{ggSC.link} The figure for estimation of Sample Completeness with order q
 }
 \examples{
 data(Norfolk)
 output = SC.link(Norfolk)
 ggSC.link(output)
-}
-\references{
-Chao,A.,Y.Kubota,D.Zelený,C.-H.Chiu.
-Quantifying sample completeness and comparing diversities among assemblages.
 }

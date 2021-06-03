@@ -19,7 +19,8 @@ iNEXT.link(
   conf = 0.95,
   nboot = 30,
   row.tree = NULL,
-  col.tree = NULL
+  col.tree = NULL,
+  PDtype = "meanPD"
 )
 }
 \arguments{
@@ -37,15 +38,11 @@ thus cannot be missing.}
 
 \item{q}{a nonnegative value or sequence specifying the diversity order. Default is \code{c(0,1,2)}.}
 
-\item{datatype}{data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
-or species-by-site raw incidence matrix (\code{datatype = "incidence_raw"}). Default is \code{"abundance"}.}
+\item{datatype}{data type of input data: individual-based abundance data (\code{datatype = "abundance"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).}
 
 \item{size}{a sequence of positive integers specifying the sample sizes for which PD or meanPD estimates will be calculated.
 If \code{NULL}, then estimates will be calculated for those sample sizes determined by the specified/default \code{endpoint}
 and \code{knots}.}
-
-\item{nT}{needed only when \code{datatype = "incidence_raw"}, a sequence of named nonnegative integers specifying the number of sampling units in each assemblage.
-If \code{names(nT) = NULL}, then assemblage are automatically named as "assemblage1", "assemblage2",..., etc. Ignored if \code{datatype = "abundance"}.}
 
 \item{endpoint}{a positive integer specifying the endpoint for the rarefaction and extrapolation range.
 If \code{NULL}, then \code{endpoint} = double of the reference sample size in each assemblage. It is ignored if \code{size} is given.}
@@ -60,6 +57,10 @@ Enter 0 to skip the bootstrap procedures. Default is 50.}
 \item{row.tree}{phylogenetic tree of row assemblage in interaction matrix.}
 
 \item{col.tree}{phylogenetic tree of column assemblage in interaction matrix}
+
+\item{PDtype}{Select phylogenetic diversity type: \code{PDtype = "PD"} for Chao et al. (2010) phylogenetic diversity and
+\code{PDtype = "meanPD"} for mean phylogenetic diversity (phylogenetic Hill number).
+It will be used when \code{diversity = 'PD'}. Default is \code{"PD"}.}
 
 \item{type}{desired diversity type: \code{type = "PD"} for Chao et al. (2010) phylogenetic diversity
 and \code{type = "meanPD"} for mean phylogenetic diversity (phylogenetic Hill number). Default is \code{"PD"}.}

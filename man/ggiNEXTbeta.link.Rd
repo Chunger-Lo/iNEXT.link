@@ -43,16 +43,21 @@ use different colors for combinations of order x assemblage (\code{color.var="Bo
 a ggplot2 object
 }
 \description{
-\code{ggiNEXT_beta.link}: the \code{\link[ggplot2]{ggplot}} extension for
-\code{\link{iNEXT.link}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
+\code{ggiNEXTbeta.link}: the \code{\link[ggplot2]{ggplot}} extension for
+\code{\link{iNEXTbeta.link}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
 }
 \examples{
 \dontrun{
 data(Norfolk)
-out = iNEXT_beta_link(Norfolk, level, datatype='abundance', q = c(0, 1, 2),
-level='taxonomic', nboot = 20, conf = 0.95, max_alpha_coverage=F,
- by='coverage', row.tree = NULL,col.tree = NULL)
+beta1 = iNEXTbeta.link(networks = puerto.rico$data, level = seq(0.5, 1, 0.5), datatype='abundance',q = c(0, 1, 2),
+                       diversity = 'TD', nboot = 10, conf = 0.95)
+beta2 = iNEXTbeta.link(networks = puerto.rico$data\%>\%lapply(function(x) round(x/10)), level = seq(0.5, 1, 0.5), datatype='abundance',q = c(0, 1, 2),
+                       diversity = 'PD', nboot = 10, conf = 0.95,
+                       row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 
-ggiNEXT_beta_link(out, type = 1,se = TRUE,facet = "None",color = "Assemblage",grey = FALSE, text_size = 10)
+ggiNEXTbeta.link(beta2,diversity = 'TD', type = 'B')
+ggiNEXTbeta.link(beta2,diversity = 'TD', type = 'D')
+ggiNEXTbeta.link(beta2,diversity = 'PD', type = 'B')
+ggiNEXTbeta.link(beta2,diversity = 'PD', type = 'D')
 }
 }

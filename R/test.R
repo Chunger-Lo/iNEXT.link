@@ -1,3 +1,13 @@
+# devtools::install_github('crazymin2266/iNEXT.beta')
+# devtools::install_github('KaiHsiangHu/iNEXT.3D')
+# devtools::install_github('KaiHsiangHu/iNEXTPD2')
+# devtools::install_github('KaiHsiangHu/iNEXT.4steps')
+# devtools::install_github('Chunger-Lo/iNEXT.link')
+
+
+# iNEXTPD2:::PhD.m.est()
+# iNEXTPD2:::PhD.q.est()
+#
 # library(ggplot2)
 # library(knitr)
 # library(tibble)
@@ -5,7 +15,7 @@
 # library(iNEXT.beta)
 # # library(iNEXT.link)
 # library(ade4)
-# library(sets)
+# # library(sets)
 # library(tidyr)
 # library(tidyverse)
 # library(ape)
@@ -19,7 +29,6 @@
 # source('R//iNEXTlink.R')
 # source('R//myfunc.R')
 # source('R//subfunction.R')
-# source('R//crazy_min.R')
 
 # data("puerto.rico")
 # network_list = puerto.rico$data

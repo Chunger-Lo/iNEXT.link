@@ -8,13 +8,14 @@ ggAsy.link(outcome, text.size = 14)
 }
 \arguments{
 \item{outcome}{the outcome of the functions \code{Asy.link} .\cr}
+
+\item{text.size}{control the text size of the output plot.}
 }
 \value{
 a figure of estimated sample completeness with order q\cr\cr
 }
 \description{
 \code{ggAsy.link} Plots q-profile based on the outcome of \code{Asy.link} using the ggplot2 package.\cr
-It will only show the confidence interval of 'Estimated'.
 }
 \examples{
 \dontrun{
@@ -25,7 +26,7 @@ ggAsy.link(out1)
 ## Ex.2
 data(puerto.rico)
 out2 <- Asy.link(puerto.rico$data, diversity = 'PD', datatype = "abundance",
-nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
+                 nboot = 10, row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 ggAsy.link(out2)
 }
 }

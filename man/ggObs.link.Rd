@@ -2,19 +2,20 @@
 % Please edit documentation in R/iNEXTlink.R
 \name{ggObs.link}
 \alias{ggObs.link}
-\title{ggplot for Asymptotic Network diversity}
+\title{ggplot for Empirical Network diversity}
 \usage{
 ggObs.link(outcome, text.size = 14)
 }
 \arguments{
 \item{outcome}{the outcome of the functions \code{Obs.link} .\cr}
+
+\item{text.size}{control the text size of the output plot.}
 }
 \value{
 a figure of estimated sample completeness with order q\cr\cr
 }
 \description{
 \code{ggObs.link} Plots q-profile based on the outcome of \code{Obs.link} using the ggplot2 package.\cr
-It will only show the confidence interval of 'Estimated'.
 }
 \examples{
 \dontrun{

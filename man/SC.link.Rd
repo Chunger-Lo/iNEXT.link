@@ -11,10 +11,7 @@ SC.link(x, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30, conf = 0.95)
 
 \item{q}{a integer vector for the order of Hill number\cr}
 
-\item{datatype}{data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
-sampling-unit-based incidence frequencies data (\code{datatype = "incidence_freq"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).\cr}
-
-\item{nboot}{an integer specifying the number of bootstrap replications, default is 30.\cr}
+\item{datatype}{data type of input data: individual-based abundance data (\code{datatype = "abundance"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).#' @param nboot an integer specifying the number of bootstrap replications, default is 30.\cr}
 
 \item{conf}{positive number < 1 specifying the level of confidence interval, default is 0.95.\cr\cr}
 }

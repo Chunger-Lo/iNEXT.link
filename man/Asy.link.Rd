@@ -28,11 +28,11 @@ thus cannot be missing.}
 
 \item{diversity}{a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.}
 
-\item{q}{a nonnegative value or sequence specifying the diversity order. Default is \code{c(0,1,2)}.
-Enter 0 to skip the bootstrap procedures. Default is 50.}
+\item{q}{a nonnegative value or sequence specifying the diversity order. Default is \code{c(0,1,2)}.}
 
-\item{datatype}{data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
-or species-by-site raw incidence matrix (\code{datatype = "incidence_raw"}). Default is \code{"abundance"}.}
+\item{datatype}{data type of input data: individual-based abundance data (\code{datatype = "abundance"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).}
+
+\item{nboot}{Enter 0 to skip the bootstrap procedures. Default is 30.}
 
 \item{conf}{a positive number < 1 specifying the level of confidence interval. Default is 0.95.}
 

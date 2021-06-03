@@ -5,7 +5,7 @@
 \title{Specialization Estimation of Evenness with order q}
 \usage{
 Spec.link(
-  x,
+  data,
   q = seq(0, 2, 0.2),
   diversity = "TD",
   datatype = "abundance",

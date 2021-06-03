@@ -1,10 +1,6 @@
-##
-
-
 ready4beta <- function(x){
-  ### 拉長所有interaction, 視為不同subplot, 取聯集補0
   ## transform 2d matrix to vector
-  ## expand to the union of all networks
+  ## expand each assemblage to the union of all networks
   ## replace na to zero
   data_long <- lapply(x, function(tab){
     tab = rownames_to_column(tab, "row.name")
@@ -129,11 +125,7 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
       return(tab)
     })%>%do.call("rbind",.)
     tmp1[is.na(tmp1)] <- 0
-    # for (i in 1:length(tmp1)) {
-    #   tmp1[[i]]$Species <- names(tmp1)[i]
-    # }
-    # tmp1 <- do.call(rbind,tmp1)
-    # t2 <- as.data.frame(tmp1[,c(3,4,5,7,8)])
+
     t2 <- as.data.frame(tmp1[, c("branch.length", 'label','tgroup','node.age','branch.abun','Species')])
     t2$r.length <- 0
     t2$r.group <- 0
@@ -147,10 +139,6 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
     })
     t2 = t2_list_bylabel%>%do.call('rbind',.)
 
-    # for (i in seq_len(length(label))) {
-    #   t2[t2$Species == label[i],]$r.length <-  tmp[tmp$label == label[i],]$branch.length[1]
-    #   t2[t2$Species == label[i],]$r.group <-  tmp[tmp$label == label[i],]$tgroup[1]
-    # }
     t2$group <- ifelse(t2$tgroup == t2$r.group,t2$tgroup,"Inode")
     t2$interaction <- paste(t2$label,t2$Species,sep = "_")
 
@@ -163,6 +151,92 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
   rownames(out) <- NULL
   return(out)
 }
+
+coverage_to_size <- function (x, C, datatype = "abundance")
+{
+  if (datatype == "abundance") {
+    n <- sum(x)
+    refC <- iNEXT.3D:::Coverage(data = x, datatype = 'abundance', n)
+    # f <- function(m, C) abs(iNEXT.3D:::Chat.Ind(x, m) - C)
+    f <- function(m, C) abs(iNEXT.3D:::Coverage(data = x, datatype = 'abundance', m) - C)
+    if (refC == C) {
+      mm = n
+    }
+    else if (refC > C) {
+      opt <- optimize(f, C = C, lower = 0, upper = sum(x))
+      mm <- opt$minimum
+      mm <- round(mm)
+    }
+    else if (refC < C) {
+      f1 <- sum(x == 1)
+      f2 <- sum(x == 2)
+      if (f1 > 0 & f2 > 0) {
+        A <- (n - 1) * f1/((n - 1) * f1 + 2 * f2)
+      }
+      if (f1 > 1 & f2 == 0) {
+        A <- (n - 1) * (f1 - 1)/((n - 1) * (f1 - 1) +
+                                   2)
+      }
+      if (f1 == 1 & f2 == 0) {
+        A <- 1
+      }
+      if (f1 == 0 & f2 == 0) {
+        A <- 1
+      }
+      if (f1 == 0 & f2 > 0) {
+        A <- 1
+      }
+      mm <- (log(n/f1) + log(1 - C))/log(A) - 1
+      if (is.nan(mm) == TRUE)
+        mm = Inf
+      mm <- n + mm
+      mm <- round(mm)
+    }
+  }
+  else {
+    m <- NULL
+    n <- max(x)
+    refC <- iNEXT.3D:::Coverage(data = x, datatype = 'incidence_raw', n)
+    # f <- function(m, C) abs(iNEXT.3D:::Chat.Sam(x, m) - C)
+    f <- function(m, C) abs(iNEXT.3D:::Coverage(data = x, datatype = 'incidence_raw', m)  - C)
+    if (refC == C) {
+      mm = n
+    }
+    else if (refC > C) {
+      opt <- optimize(f, C = C, lower = 0, upper = max(x))
+      mm <- opt$minimum
+      mm <- round(mm)
+    }
+    else if (refC < C) {
+      f1 <- sum(x == 1)
+      f2 <- sum(x == 2)
+      U <- sum(x) - max(x)
+      if (f1 > 0 & f2 > 0) {
+        A <- (n - 1) * f1/((n - 1) * f1 + 2 * f2)
+      }
+      if (f1 > 1 & f2 == 0) {
+        A <- (n - 1) * (f1 - 1)/((n - 1) * (f1 - 1) +
+                                   2)
+      }
+      if (f1 == 1 & f2 == 0) {
+        A <- 1
+      }
+      if (f1 == 0 & f2 == 0) {
+        A <- 1
+      }
+      if (f1 == 0 & f2 > 0) {
+        A <- 1
+      }
+      mm <- (log(U/f1) + log(1 - C))/log(A) - 1
+      if (is.nan(mm) == TRUE)
+        mm = Inf
+      mm <- n + mm
+      mm <- round(mm)
+    }
+  }
+  return(mm)
+}
+
 
 Evenness.profile <- function(x, q, datatype = c("abundance","incidence_freq"), method, E.class, C = NULL) {
 
@@ -445,7 +519,7 @@ sample.boot.phy <- function(data,B,row.tree = NULL,col.tree = NULL) {
   })
 }
 
-get.netphydiv <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf) {
+get.netphydiv <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf, PDtype = 'PD') {
   plan(multisession)
   phydata <- future_lapply(data,function(x){
     create.aili(x,row.tree = row.tree,col.tree = col.tree)%>%
@@ -453,8 +527,11 @@ get.netphydiv <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf) {
   }, future.seed=NULL)
 
   mle <- lapply(phydata, function(x){
-      PhD:::PD.qprofile(aL = x, q = q, cal = "PD", nt = sum(x[x$tgroup == "Tip","branch.abun"]))/
+      PD = PhD:::PD.qprofile(aL = x, q = q, cal = "PD", nt = sum(x[x$tgroup == "Tip","branch.abun"]))/
       sum(x$branch.abun*x$branch.length)*sum(x[x$tgroup == "Tip",]$branch.abun)
+
+      if(PDtype == 'meanPD'){PD = PD/tbar}
+      return(PD)
   })
   est <- lapply(phydata,function(x){
     # (ai, Lis, q, nt, cal)
@@ -463,8 +540,10 @@ get.netphydiv <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf) {
     # q = c(0,1,2)
     # nt = nt = sum(x[x$tgroup == "Tip",]$branch.abun)
     # cal = 'PD'
-      my_PhD.q.est(ai = x$branch.abun,Lis = x$branch.length,q,nt = sum(x[x$tgroup == "Tip","branch.abun"]), cal = 'PD')/
+    PD = my_PhD.q.est(ai = x$branch.abun,Lis = x$branch.length,q,nt = sum(x[x$tgroup == "Tip","branch.abun"]), cal = 'PD')/
         sum(x$branch.abun*x$branch.length)*sum(x[x$tgroup == "Tip",]$branch.abun)
+    if(PDtype == 'meanPD'){PD = PD/tbar}
+    return(PD)
   })
   boot.sam <- lapply(data, function(x){
     sample.boot.phy(x,B =B,row.tree = row.tree,col.tree = col.tree)
@@ -472,7 +551,10 @@ get.netphydiv <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf) {
   plan(multisession)
   mle.boot <- future_lapply(boot.sam, function(x){
     lapply(x, function(y){
-          PhD:::PD.qprofile(y,q,cal = "PD",nt = sum(y[y$tgroup == "Tip",]$branch.abun))/sum(y$branch.abun*y$branch.length)*sum(y[y$tgroup == "Tip",]$branch.abun)
+          PD = PhD:::PD.qprofile(y,q,cal = "PD",nt = sum(y[y$tgroup == "Tip",]$branch.abun))/sum(y$branch.abun*y$branch.length)*sum(y[y$tgroup == "Tip",]$branch.abun)
+          if(PDtype == 'meanPD'){PD = PD/tbar}
+          return(PD)
+
     })
   }, future.seed=NULL)
   mle.sd <- lapply(mle.boot, function(x){
@@ -484,8 +566,10 @@ get.netphydiv <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf) {
   est.boot <- lapply(boot.sam, function(x){
     lapply(x, function(y){
       ## NEW
-      my_PhD.q.est(ai = y$branch.abun,Lis = y$branch.length,q,nt = sum(y[y$tgroup == "Tip","branch.abun"]), cal = 'PD')/
+      PD = my_PhD.q.est(ai = y$branch.abun,Lis = y$branch.length,q,nt = sum(y[y$tgroup == "Tip","branch.abun"]), cal = 'PD')/
         sum(y$branch.abun*y$branch.length)*sum(y[y$tgroup == "Tip",]$branch.abun)
+      if(PDtype == 'meanPD'){PD = PD/tbar}
+      return(PD)
       ## OLD
       # PhD:::PhD.q.est(y,q,datatype = "abundace",nt = sum(y[y$tgroup == "Tip",]$branch.abun))/sum(y$branch.abun*y$branch.length)*sum(y[y$tgroup == "Tip",]$branch.abun)
     })
@@ -511,7 +595,7 @@ get.netphydiv <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf) {
   return(as.data.frame(out))
 }
 
-get.netphydiv_iNE <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf, knots = 40) {
+get.netphydiv_iNE <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf, knots = 40, PDtype = 'PD') {
   q <- unique(ceiling(q))
   ci <- qnorm(conf/2+0.5)
   inex <- function(data,q,B,row.tree = NULL,col.tree = NULL) {
@@ -538,6 +622,9 @@ get.netphydiv_iNE <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf, kno
        my_PhD.m.est(ai = phydata$branch.abun, Lis = phydata$branch.length, m = y, q = x, nt = n, cal = 'PD')/tbar
         # PhD:::PhD.m.est(phydata,y,x,datatype = "abundance",nt = n)/tbar
       })%>%unlist()
+
+      if(PDtype == 'meanPD'){PD = PD/tbar}
+
       PD.sd <- lapply(boot.sam, function(z){
         tmp <- lapply(m,function(y){
           # PhD:::PhD.m.est(z,y,x,datatype = "abundance",nt = n)/tbar
@@ -549,7 +636,8 @@ get.netphydiv_iNE <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf, kno
       PD.sd <- sapply(1:length(m), function(x){
         sd(PD.sd[x,])
       })
-      PD.table <- data.frame(m=m,method = ifelse(m<n,"interpolated",ifelse(n == m,"observed","extrapolated")),Order.q = x,PD = PD, PD.UCL = PD+ci * PD.sd,PD.LCL = PD - ci * PD.sd)
+      PD.table <- data.frame(m=m,method = ifelse(m<n,"interpolated",ifelse(n == m,"observed","extrapolated")),
+                             Order.q = x,PD = PD, PD.UCL = PD+ci * PD.sd,PD.LCL = PD - ci * PD.sd)
       out <- left_join(PD.table,sc.table)
       out
     })

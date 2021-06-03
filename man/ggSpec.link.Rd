@@ -5,10 +5,10 @@
 \title{ggplot for Evenness
 \code{ggSpec.link} The figure for estimation of Evenness with order q\cr}
 \usage{
-ggSpec.link(output)
+ggSpec.link(outcome)
 }
 \arguments{
-\item{output}{a table generated from \code{Spec.link} function\cr}
+\item{outcome}{a table generated from \code{Spec.link} function\cr}
 }
 \value{
 a figure of estimated sample completeness with order q\cr
@@ -20,8 +20,8 @@ ggplot for Evenness
 \examples{
 \dontrun{
 data(Norfolk)
-Est <- Spec.link(x = Norfolk, diversity = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
-Emp <- Spec.link(x = Norfolk, diversity = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
+Est <- Spec.link(data = Norfolk, diversity = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Estimated")
+Emp <- Spec.link(data = Norfolk, diversity = 'TD', datatype = "abundance", q = c(0,1,2), nboot = 30, method = "Empirical")
 ggSpec(output = Est)
 ggSpec(output = Emp)
 }

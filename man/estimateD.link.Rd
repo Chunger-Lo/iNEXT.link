@@ -5,24 +5,27 @@
 \title{Compute species diversity with a particular of sample size/coverage}
 \usage{
 estimateD.link(
-  dat,
+  data,
   diversity = "TD",
   q = c(0, 1, 2),
   datatype = "abundance",
   base = "size",
   level = NULL,
   nboot = 50,
-  conf = 0.95
+  conf = 0.95,
+  row.tree = NULL,
+  col.tree = NULL
 )
 }
 \arguments{
+\item{data}{a \code{matrix}, \code{data.frame} (species by assemblages), or \code{list} of species abundance/incidence raw data.\cr}
+
 \item{diversity}{a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold. Besides,'AUC' is the fourth choice which
 integrates several threshold functional diversity to get diversity.}
 
 \item{q}{a numerical vector of the order of Hill number.}
 
-\item{datatype}{data type of input data: individual-based abundance data (\code{datatype = "abundance"}),
-sampling-unit-based incidence frequencies data (\code{datatype = "incidence_freq"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).}
+\item{datatype}{data type of input data: individual-based abundance data (\code{datatype = "abundance"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).}
 
 \item{base}{comparison base: sample-size-based (\code{base="size"}) or coverage-based \cr (\code{base="coverage"}).}
 
@@ -34,13 +37,9 @@ If \code{base="coverage"} and \code{level=NULL}, then this function computes the
 
 \item{conf}{a positive number < 1 specifying the level of confidence interval, default is 0.95.}
 
-\item{outcome}{the outcome of the functions \code{ObsND} .\cr}
+\item{row.tree}{phylogenetic tree of row assemblage in interaction matrix.}
 
-\item{tree}{a phylo object describing the phylogenetic tree in Newick format for all observed species in the pooled assemblage. It is necessary when \code{diversity = 'PD'}.}
-
-\item{nT}{needed only for the matrix or data.frame which \code{datatype = "incidence_raw"}, a sequence of named nonnegative integers specifying the number of sampling units in each assemblage.
-If \code{names(nT) = NULL}, then assemblage are automatically named as "assemblage1", "assemblage2",..., etc.
-It is necessary when \code{diversity = 'PD'} and \code{datatype = "incidence_raw"}.}
+\item{col.tree}{phylogenetic tree of column assemblage in interaction matrix}
 }
 \value{
 a data.frame of species diversity table including the sample size, sample coverage, method (rarefaction or extrapolation), and diversity estimates with q = 0, 1, and 2 for the user-specified sample size or sample coverage.
@@ -51,7 +50,7 @@ a data.frame of species diversity table including the sample size, sample covera
 \examples{
 \dontrun{
 data(Norfolk)
-out1 <- estimate3D.link(Norfolk, datatype="abundance", base="coverage", level=0.7, nboot = 30)
-out2 <- estimate3D.link(Norfolk, datatype="abundance", base="size", level=0.7, nboot = 30)
+out1 <- estimateD.link(Norfolk, diversity = 'TD',datatype="abundance", base="coverage", level=0.7, nboot = 30)
+out2 <- estimateD.link(Norfolk, diversity = 'TD',datatype="abundance", base="size", level=0.7, nboot = 30)
 }
 }
