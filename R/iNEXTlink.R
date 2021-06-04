@@ -40,9 +40,12 @@ DataInfo.link <- function(data, diversity = 'TD', datatype = "abundance", row.tr
 #'
 #' \code{SC.link} Estimation of Sample Completeness with order q
 #'
-#' @param x a matrix/data.frame/list/vector of abundances-based/incidences-based species data.\cr
+#' @param data a matrix/data.frame/list/vector of abundances-based/incidences-based species data.\cr
 #' @param q a integer vector for the order of Hill number\cr
-#' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).#' @param nboot an integer specifying the number of bootstrap replications, default is 30.\cr
+#' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}) or
+#' species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).#'
+#' @param nboot a positive integer specifying the number of bootstrap replications when assessing
+#' sampling uncertainty and constructing confidence intervals. Enter 0 to skip the bootstrap procedures. Default is 50
 #' @param conf  positive number < 1 specifying the level of confidence interval, default is 0.95.\cr\cr
 #' @return a matrix of estimated sample completeness with order q: \cr\cr
 #'
@@ -55,8 +58,8 @@ DataInfo.link <- function(data, diversity = 'TD', datatype = "abundance", row.tr
 #' Chao,A.,Y.Kubota,D.Zelený,C.-H.Chiu.
 #' Quantifying sample completeness and comparing diversities among assemblages.
 #' @export
-SC.link <- function(x, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30, conf = 0.95){
-  data_long <- lapply(x, function(tab){
+SC.link <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30, conf = 0.95){
+  data_long <- lapply(data, function(tab){
     as.matrix(tab)%>%c()}
   )
   res = iNEXT.4steps::SC(x = data_long, q = q, datatype = datatype, nboot = nboot, conf = conf)
@@ -117,8 +120,8 @@ ggSC.link <- function(outcome){
 #' @param PDtype Select phylogenetic diversity type: \code{PDtype = "PD"} for Chao et al. (2010) phylogenetic diversity and
 #' \code{PDtype = "meanPD"} for mean phylogenetic diversity (phylogenetic Hill number).
 #' It will be used when \code{diversity = 'PD'}. Default is \code{"PD"}.
-#' @param nboot a positive integer specifying the number of bootstrap replications when assessing sampling uncertainty and constructing confidence intervals.
-#' Enter 0 to skip the bootstrap procedures. Default is 50.
+#' @param nboot a positive integer specifying the number of bootstrap replications when assessing
+#' sampling uncertainty and constructing confidence intervals. Enter 0 to skip the bootstrap procedures. Default is 50
 #' @param conf a positive number < 1 specifying the level of confidence interval. Default is 0.95.
 #' @param col.tree phylogenetic tree of column assemblage in interaction matrix
 #' @param row.tree phylogenetic tree of row assemblage in interaction matrix.
@@ -223,8 +226,7 @@ iNEXT.link <- function(data, diversity = 'TD', q = c(0,1,2), datatype = "abundan
 # iNEXTbeta.link ---------------------------
 #' Interpolation (rarefaction) and extrapolation of Chao et al.’s (2021) network diversity and mean network diversity
 
-#' Function \code{iNEXT.beta.link} computes network diversity estimates for rarefied samples and extrapolated samples
-#' along with confidence intervals and related coverage estimates based on Chao et al.’s (2021) beta diversity
+#' Function \code{iNEXTbeta.link} Interpolation and extrapolation of Beta diversity with order q
 #'
 #' @param data a matrix/data.frame of species abundances (for abundance data) or species-by-site incidence raw matrix/data.frame (for incidence data).\cr
 #' Abundance data: a species-by-site matrix/data.frame of species abundances. The row (species) names of
@@ -240,49 +242,49 @@ iNEXT.link <- function(data, diversity = 'TD', q = c(0,1,2), datatype = "abundan
 #' @param q a nonnegative value or sequence specifying the diversity order. Default is \code{c(0,1,2)}.
 #' @param type desired diversity type: \code{type = "PD"} for Chao et al. (2010) phylogenetic diversity
 #' and \code{type = "meanPD"} for mean phylogenetic diversity (phylogenetic Hill number). Default is \code{"PD"}.
-
-#' @param nboot a positive integer specifying the number of bootstrap replications when assessing sampling uncertainty and constructing confidence intervals.
-#' Enter 0 to skip the bootstrap procedures. Default is 50.
+#' @param nboot a positive integer specifying the number of bootstrap replications when assessing
+#' sampling uncertainty and constructing confidence intervals. Enter 0 to skip the bootstrap procedures. Default is 50
 #' @param conf a positive number < 1 specifying the level of confidence interval. Default is 0.95.
-#' @import ape
+#' @import tidyverse
+#' @import magrittr
 #' @import ggplot2
-#' @import dplyr
+#' @import abind
+#' @import ape
+#' @import phytools
+#' @import phyclust
 #' @import tidytree
-#' @importFrom stats rbinom
-#' @importFrom stats sd
-#' @importFrom phyclust get.rooted.tree.height
-#' @return
-#' \itemize{
-#'  \item{\code{$DataInfo}: A dataframe summarizing data information}
-#'  \item{\code{$iNextEst}: coverage-based diversity estimates along with confidence intervals}
-#'  (if \code{nboot > 0}) for showing diversity estimates for rarefied and extrapolated samples along with related statistics;
-#'  \item{\code{$AsyEst}: for
-#' showing asymptotic diversity estimates along with related statistics.}
-#' }
+#' @import colorRamps
+#' @import iNEXT.3D
+#' @import future.apply
+#' @import ade4
+#' @import tidyr
+#' @return A list of seven lists with three-diversity and four-dissimilarity.
 
 
 #' @examples
 #' \dontrun{
 #' # example
 #' data(puerto.rico)
-#' iNEXTbeta.link(x = puerto.rico,level = seq(0.5, 1, 0.5), data_type='abundance',q = c(0, 1, 2),
-#' level=c('taxonomic', 'phylogenetic', 'functional'), nboot = 20, conf = 0.95, max_alpha_coverage=F,by='coverage')
+#' beta1 = iNEXTbeta.link(data = puerto.rico$data, level = seq(0.5, 0.9, 0.4), datatype='abundance',q = c(0, 1, 2),
+#'                        diversity = 'TD', nboot = 10, conf = 0.95)
+#' beta2 = iNEXTbeta.link(networks = puerto.rico$data, level = seq(0.5, 0.9, 0.4), datatype='abundance',q = c(0, 1, 2),
+#'                        data = 'PD', nboot = 10, conf = 0.95,
+#'                        row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #' }
 #' @references
 #' Chao, A., Chazdon, R. L., Colwell, R. K. and Shen, T.-J.(2005). A new statistical approach for assessing similarity of species composition with incidence and abundance data. Ecology Letters 8, 148-159. (pdf file) Spanish translation in pp. 85-96 of Halffter, G. Soberon, J., Koleff, P. and Melic, A. (eds) 2005 Sobre Diversidad Biologica: el Sognificado de las Diversidades Alfa, Beta y Gamma. m3m-Monografias 3ercer Milenio, vol. 4, SEA, CONABIO, Grupo DIVERSITAS & CONACYT, Zaragoza. IV +242 pp.
 #' Chiu, C.-H., Jost, L. and Chao*, A. (2014). Phylogenetic beta diversity, similarity, and differentiation measures based on Hill numbers. Ecological Monographs 84, 21-44.
-#' Chao, A. and Ricotta, C. (2019). Quantifying evenness and linking it to diversity, beta diversity, and similarity. Ecology, 100(12), e02852.
 #' @export
 
-iNEXTbeta.link = function(networks, diversity = 'TD', level = seq(0.5, 1, 0.5), datatype=c('abundance', 'incidence_raw'),
+iNEXTbeta.link = function(data, diversity = 'TD', level = seq(0.5, 1, 0.5), datatype=c('abundance', 'incidence_raw'),
                           q = c(0, 1, 2),nboot = 20, conf = 0.95,
                           row.tree = NULL,col.tree = NULL){
 
-  if(class(networks[[1]]) == 'data.frame' ){networks = list(networks); }
-  combined_list = lapply(networks, function(y){
-    data = ready4beta(y)%>%filter_all(any_vars(. != 0))
-    rownames(data) = rownames(data)%>%gsub('\\.','_',.)
-    return(data)
+  if(class(data[[1]]) == 'data.frame' ){data = list(data); }
+  combined_list = lapply(data, function(y){
+    long = ready4beta(y)%>%filter_all(any_vars(. != 0))
+    rownames(long) = rownames(long)%>%gsub('\\.','_',.)
+    return(long)
   })
   if(diversity == 'TD'){
     dissimilarity <- iNEXTbeta(data = combined_list, diversity = 'TD',level = level, datatype = datatype,
@@ -301,10 +303,10 @@ iNEXTbeta.link = function(networks, diversity = 'TD', level = seq(0.5, 1, 0.5), 
 
 
 # ggiNEXT.link -------------------------------------------------------------------
-#' ggplot2 extension for an iNEXT.3D object
+#' ggplot2 extension for outcome from \code{iNEXT.link}
 #'
-#' \code{ggiNEXT.link}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXT.3D}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
-#' @param outcome an \code{iNEXT.3D} object computed by \code{\link{iNEXT.3D}}.
+#' \code{ggiNEXT.link}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXT.link}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
+#' @param outcome a list object computed by \code{\link{iNEXT.link}}.
 #' @param type three types of plots: sample-size-based rarefaction/extrapolation curve (\code{type = 1});
 #' sample completeness curve (\code{type = 2}); coverage-based rarefaction/extrapolation curve (\code{type = 3}).
 #' @param se a logical variable to display confidence interval around the estimated sampling curve.
@@ -403,24 +405,19 @@ ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var
 # ggiNEXT_beta.link -------------------------------------------------------------------
 #' ggplot2 extension for outcome from \code{iNEXT.beta.link}
 #'
-#' \code{ggiNEXTbeta.link}: the \code{\link[ggplot2]{ggplot}} extension for
-#' \code{\link{iNEXTbeta.link}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
-#' @param output an list object computed by \code{\link{iNEXT.beta.link}}.
-#' @param type three types of plots: sample-size-based rarefaction/extrapolation curve (\code{type = 1});
-#' sample completeness curve (\code{type = 2}); coverage-based rarefaction/extrapolation curve (\code{type = 3}).
-#' @param se a logical variable to display confidence interval around the estimated sampling curve.
-#' @param facet.var create a separate plot for each value of a specified variable:
-#'  no separation \cr (\code{facet.var="None"});
-#'  a separate plot for each diversity order (\code{facet.var="Order.q"});
-#'  a separate plot for each assemblage (\code{facet.var="Assemblage"});
-#'  a separate plot for each combination of order x assemblage (\code{facet.var="Both"}).
-#' @param color.var create curves in different colors for values of a specified variable:
-#'  all curves are in the same color (\code{color.var="None"});
-#'  use different colors for diversity orders (\code{color.var="Order.q"});
-#'  use different colors for sites (\code{color.var="Assemblage"});
-#'  use different colors for combinations of order x assemblage (\code{color.var="Both"}).
-#' @param grey a logical variable to display grey and white ggplot2 theme.
-#' @param ... other arguments passed on to methods. Not currently used.
+#' \code{ggiNEXTbeta.link}: ggplot for Interpolation and extrapolation of Beta diversity with order q
+#'
+#' @param outcome the outcome from \code{"iNEXTbeta.link"}
+#' @param type selection of plot type : \code{type = 'B'} for plotting the gamma, alpha, and beta diversity ;
+#' \code{type = 'D'} for plotting 4 turnover dissimilarities.
+#' @param measurement character indicating the label of y-axis.
+#' @param scale Are scales shared across all facets (\code{"fixed"}), or do they vary across rows (\code{"free_x"}), columns (\code{"free_y"}), or both rows and columns (\code{"free"})? Default is \code{"free"}.
+#' @param main The title of the plot.
+#' @param transp a value between 0 and 1 controlling transparency. \code{transp = 0} is completely transparent, default is 0.4.
+#'
+#' @return a figure for Beta diversity or dissimilarity diversity.
+#'
+#'
 #' @return a ggplot2 object
 #' @examples
 #' \dontrun{
@@ -431,21 +428,21 @@ ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var
 #'                        diversity = 'PD', nboot = 10, conf = 0.95,
 #'                        row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #'
-#' ggiNEXTbeta.link(beta2,diversity = 'TD', type = 'B')
-#' ggiNEXTbeta.link(beta2,diversity = 'TD', type = 'D')
+#' ggiNEXTbeta.link(beta1,diversity = 'TD', type = 'B')
+#' ggiNEXTbeta.link(beta1,diversity = 'TD', type = 'D')
 #' ggiNEXTbeta.link(beta2,diversity = 'PD', type = 'B')
 #' ggiNEXTbeta.link(beta2,diversity = 'PD', type = 'D')
 #' }
 #' @export
 
-ggiNEXTbeta.link <- function(output, type = c('B', 'D'),
+ggiNEXTbeta.link <- function(outcome, type = c('B', 'D'),
                              diversity = 'TD',
                              scale='free', main=NULL, transp=0.4, stript.size = 11, text.size = 13){
   if (type == 'B'){
 
-    gamma = lapply(output, function(y) y[["gamma"]]) %>% do.call(rbind,.) %>% mutate(div_type = "Gamma") %>% as_tibble()
-    alpha = lapply(output, function(y) y[["alpha"]]) %>% do.call(rbind,.) %>% mutate(div_type = "Alpha") %>% as_tibble()
-    beta =  lapply(output, function(y) y[["beta"]])  %>% do.call(rbind,.) %>% mutate(div_type = "Beta")  %>% as_tibble()
+    gamma = lapply(outcome, function(y) y[["gamma"]]) %>% do.call(rbind,.) %>% mutate(div_type = "Gamma") %>% as_tibble()
+    alpha = lapply(outcome, function(y) y[["alpha"]]) %>% do.call(rbind,.) %>% mutate(div_type = "Alpha") %>% as_tibble()
+    beta =  lapply(outcome, function(y) y[["beta"]])  %>% do.call(rbind,.) %>% mutate(div_type = "Beta")  %>% as_tibble()
     beta = beta %>% filter(Method != 'Observed')
     beta[beta == 'Observed_alpha'] = 'Observed'
 
@@ -475,10 +472,10 @@ ggiNEXTbeta.link <- function(output, type = c('B', 'D'),
   }
   if (type=='D'){
 
-    C = lapply(output, function(y) y[["C"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-CqN") %>% as_tibble()
-    U = lapply(output, function(y) y[["U"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-UqN") %>% as_tibble()
-    V = lapply(output, function(y) y[["V"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-VqN") %>% as_tibble()
-    S = lapply(output, function(y) y[["S"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-SqN") %>% as_tibble()
+    C = lapply(outcome, function(y) y[["C"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-CqN") %>% as_tibble()
+    U = lapply(outcome, function(y) y[["U"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-UqN") %>% as_tibble()
+    V = lapply(outcome, function(y) y[["V"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-VqN") %>% as_tibble()
+    S = lapply(outcome, function(y) y[["S"]]) %>% do.call(rbind,.) %>% mutate(div_type = "1-SqN") %>% as_tibble()
     C = C %>% filter(Method != 'Observed')
     U = U %>% filter(Method != 'Observed')
     V = V %>% filter(Method != 'Observed')
@@ -650,7 +647,8 @@ ggiNEXTbeta.link <- function(output, type = c('B', 'D'),
 #' @param diversity a choice of three-level diversity: 'TD' = 'Taxonomic', 'PD' = 'Phylogenetic', and 'FD' = 'Functional' under certain threshold.
 #' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).
 #' @param q a nonnegative value or sequence specifying the diversity order. Default is \code{c(0,1,2)}.
-#' @param nboot Enter 0 to skip the bootstrap procedures. Default is 30.
+#' @param nboot a positive integer specifying the number of bootstrap replications when assessing
+#' sampling uncertainty and constructing confidence intervals. Enter 0 to skip the bootstrap procedures. Default is 50
 #' @param conf a positive number < 1 specifying the level of confidence interval. Default is 0.95.
 #' @param col.tree phylogenetic tree of column assemblage in interaction matrix
 #' @param row.tree phylogenetic tree of row assemblage in interaction matrix.
@@ -860,7 +858,8 @@ ggAsy.link <- function(outcome, text.size = 14){
 #' @param q a numerical vector of the order of Hill number.
 #' @param datatype data type of input data: individual-based abundance data (\code{datatype = "abundance"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).
 #' @param base comparison base: sample-size-based (\code{base="size"}) or coverage-based \cr (\code{base="coverage"}).
-#' @param nboot the number of bootstrap times to obtain confidence interval. If confidence interval is not desired, use 0 to skip this time-consuming step.
+#' @param nboot a positive integer specifying the number of bootstrap replications when assessing
+#' sampling uncertainty and constructing confidence intervals. Enter 0 to skip the bootstrap procedures. Default is 50
 #' @param level a sequence specifying the particular sample sizes or sample coverages(between 0 and 1).
 #' If \code{base="size"} and \code{level=NULL}, then this function computes the diversity estimates for the minimum sample size among all sites extrapolated to double reference sizes.
 #' If \code{base="coverage"} and \code{level=NULL}, then this function computes the diversity estimates for the minimum sample coverage among all sites extrapolated to double reference sizes.

@@ -32,7 +32,8 @@ thus cannot be missing.}
 
 \item{datatype}{data type of input data: individual-based abundance data (\code{datatype = "abundance"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).}
 
-\item{nboot}{Enter 0 to skip the bootstrap procedures. Default is 30.}
+\item{nboot}{a positive integer specifying the number of bootstrap replications when assessing
+sampling uncertainty and constructing confidence intervals. Enter 0 to skip the bootstrap procedures. Default is 50}
 
 \item{conf}{a positive number < 1 specifying the level of confidence interval. Default is 0.95.}
 

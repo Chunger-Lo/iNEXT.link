@@ -4,14 +4,24 @@
 \alias{SC.link}
 \title{Sample Completeness main function}
 \usage{
-SC.link(x, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30, conf = 0.95)
+SC.link(
+  data,
+  q = seq(0, 2, 0.2),
+  datatype = "abundance",
+  nboot = 30,
+  conf = 0.95
+)
 }
 \arguments{
-\item{x}{a matrix/data.frame/list/vector of abundances-based/incidences-based species data.\cr}
+\item{data}{a matrix/data.frame/list/vector of abundances-based/incidences-based species data.\cr}
 
 \item{q}{a integer vector for the order of Hill number\cr}
 
-\item{datatype}{data type of input data: individual-based abundance data (\code{datatype = "abundance"}) or species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).#' @param nboot an integer specifying the number of bootstrap replications, default is 30.\cr}
+\item{datatype}{data type of input data: individual-based abundance data (\code{datatype = "abundance"}) or
+species by sampling-units incidence matrix (\code{datatype = "incidence_raw"}).#'}
+
+\item{nboot}{a positive integer specifying the number of bootstrap replications when assessing
+sampling uncertainty and constructing confidence intervals. Enter 0 to skip the bootstrap procedures. Default is 50}
 
 \item{conf}{positive number < 1 specifying the level of confidence interval, default is 0.95.\cr\cr}
 }

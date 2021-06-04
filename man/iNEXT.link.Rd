@@ -51,8 +51,8 @@ If \code{NULL}, then \code{endpoint} = double of the reference sample size in ea
 
 \item{conf}{a positive number < 1 specifying the level of confidence interval. Default is 0.95.}
 
-\item{nboot}{a positive integer specifying the number of bootstrap replications when assessing sampling uncertainty and constructing confidence intervals.
-Enter 0 to skip the bootstrap procedures. Default is 50.}
+\item{nboot}{a positive integer specifying the number of bootstrap replications when assessing
+sampling uncertainty and constructing confidence intervals. Enter 0 to skip the bootstrap procedures. Default is 50}
 
 \item{row.tree}{phylogenetic tree of row assemblage in interaction matrix.}
 

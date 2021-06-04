@@ -2,7 +2,7 @@
 % Please edit documentation in R/iNEXTlink.R
 \name{ggiNEXT.link}
 \alias{ggiNEXT.link}
-\title{ggplot2 extension for an iNEXT.3D object}
+\title{ggplot2 extension for outcome from \code{iNEXT.link}}
 \usage{
 ggiNEXT.link(
   outcome,
@@ -16,7 +16,7 @@ ggiNEXT.link(
 )
 }
 \arguments{
-\item{outcome}{an \code{iNEXT.3D} object computed by \code{\link{iNEXT.3D}}.}
+\item{outcome}{a list object computed by \code{\link{iNEXT.link}}.}
 
 \item{type}{three types of plots: sample-size-based rarefaction/extrapolation curve (\code{type = 1});
 sample completeness curve (\code{type = 2}); coverage-based rarefaction/extrapolation curve (\code{type = 3}).}
@@ -43,7 +43,7 @@ use different colors for combinations of order x assemblage (\code{color.var="Bo
 a ggplot2 object
 }
 \description{
-\code{ggiNEXT.link}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXT.3D}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
+\code{ggiNEXT.link}: the \code{\link[ggplot2]{ggplot}} extension for \code{\link{iNEXT.link}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
 }
 \examples{
 \dontrun{

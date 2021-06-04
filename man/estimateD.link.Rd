@@ -33,7 +33,8 @@ integrates several threshold functional diversity to get diversity.}
 If \code{base="size"} and \code{level=NULL}, then this function computes the diversity estimates for the minimum sample size among all sites extrapolated to double reference sizes.
 If \code{base="coverage"} and \code{level=NULL}, then this function computes the diversity estimates for the minimum sample coverage among all sites extrapolated to double reference sizes.}
 
-\item{nboot}{the number of bootstrap times to obtain confidence interval. If confidence interval is not desired, use 0 to skip this time-consuming step.}
+\item{nboot}{a positive integer specifying the number of bootstrap replications when assessing
+sampling uncertainty and constructing confidence intervals. Enter 0 to skip the bootstrap procedures. Default is 50}
 
 \item{conf}{a positive number < 1 specifying the level of confidence interval, default is 0.95.}
 
@@ -50,7 +51,9 @@ a data.frame of species diversity table including the sample size, sample covera
 \examples{
 \dontrun{
 data(Norfolk)
-out1 <- estimateD.link(Norfolk, diversity = 'TD',datatype="abundance", base="coverage", level=0.7, nboot = 30)
-out2 <- estimateD.link(Norfolk, diversity = 'TD',datatype="abundance", base="size", level=0.7, nboot = 30)
+out1 <- estimateD.link(Norfolk, diversity = 'TD',datatype="abundance",
+                       base="coverage", level=0.7, nboot = 30)
+out2 <- estimateD.link(Norfolk, diversity = 'TD',datatype="abundance",
+                       base="size", level=0.7, nboot = 30)
 }
 }

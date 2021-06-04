@@ -5,7 +5,7 @@
 \title{ggplot2 extension for outcome from \code{iNEXT.beta.link}}
 \usage{
 ggiNEXTbeta.link(
-  output,
+  outcome,
   type = c("B", "D"),
   diversity = "TD",
   scale = "free",
@@ -16,47 +16,38 @@ ggiNEXTbeta.link(
 )
 }
 \arguments{
-\item{output}{an list object computed by \code{\link{iNEXT.beta.link}}.}
+\item{outcome}{the outcome from \code{"iNEXTbeta.link"}}
 
-\item{type}{three types of plots: sample-size-based rarefaction/extrapolation curve (\code{type = 1});
-sample completeness curve (\code{type = 2}); coverage-based rarefaction/extrapolation curve (\code{type = 3}).}
+\item{type}{selection of plot type : \code{type = 'B'} for plotting the gamma, alpha, and beta diversity ;
+\code{type = 'D'} for plotting 4 turnover dissimilarities.}
 
-\item{se}{a logical variable to display confidence interval around the estimated sampling curve.}
+\item{scale}{Are scales shared across all facets (\code{"fixed"}), or do they vary across rows (\code{"free_x"}), columns (\code{"free_y"}), or both rows and columns (\code{"free"})? Default is \code{"free"}.}
 
-\item{facet.var}{create a separate plot for each value of a specified variable:
-no separation \cr (\code{facet.var="None"});
-a separate plot for each diversity order (\code{facet.var="Order.q"});
-a separate plot for each assemblage (\code{facet.var="Assemblage"});
-a separate plot for each combination of order x assemblage (\code{facet.var="Both"}).}
+\item{main}{The title of the plot.}
 
-\item{color.var}{create curves in different colors for values of a specified variable:
-all curves are in the same color (\code{color.var="None"});
-use different colors for diversity orders (\code{color.var="Order.q"});
-use different colors for sites (\code{color.var="Assemblage"});
-use different colors for combinations of order x assemblage (\code{color.var="Both"}).}
+\item{transp}{a value between 0 and 1 controlling transparency. \code{transp = 0} is completely transparent, default is 0.4.}
 
-\item{grey}{a logical variable to display grey and white ggplot2 theme.}
-
-\item{...}{other arguments passed on to methods. Not currently used.}
+\item{measurement}{character indicating the label of y-axis.}
 }
 \value{
+a figure for Beta diversity or dissimilarity diversity.
+
 a ggplot2 object
 }
 \description{
-\code{ggiNEXTbeta.link}: the \code{\link[ggplot2]{ggplot}} extension for
-\code{\link{iNEXTbeta.link}} Object to plot sample-size- and coverage-based rarefaction/extrapolation curves along with a bridging sample completeness curve
+\code{ggiNEXTbeta.link}: ggplot for Interpolation and extrapolation of Beta diversity with order q
 }
 \examples{
 \dontrun{
 data(Norfolk)
 beta1 = iNEXTbeta.link(networks = puerto.rico$data, level = seq(0.5, 1, 0.5), datatype='abundance',q = c(0, 1, 2),
                        diversity = 'TD', nboot = 10, conf = 0.95)
-beta2 = iNEXTbeta.link(networks = puerto.rico$data\%>\%lapply(function(x) round(x/10)), level = seq(0.5, 1, 0.5), datatype='abundance',q = c(0, 1, 2),
+beta2 = iNEXTbeta.link(networks = puerto.rico$data, level = seq(0.5, 1, 0.5), datatype='abundance',q = c(0, 1, 2),
                        diversity = 'PD', nboot = 10, conf = 0.95,
                        row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 
-ggiNEXTbeta.link(beta2,diversity = 'TD', type = 'B')
-ggiNEXTbeta.link(beta2,diversity = 'TD', type = 'D')
+ggiNEXTbeta.link(beta1,diversity = 'TD', type = 'B')
+ggiNEXTbeta.link(beta1,diversity = 'TD', type = 'D')
 ggiNEXTbeta.link(beta2,diversity = 'PD', type = 'B')
 ggiNEXTbeta.link(beta2,diversity = 'PD', type = 'D')
 }
