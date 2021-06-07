@@ -62,7 +62,7 @@ SC.link <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30
   data_long <- lapply(data, function(tab){
     as.matrix(tab)%>%c()}
   )
-  res = iNEXT.4steps::SC(x = data_long, q = q, datatype = datatype, nboot = nboot, conf = conf)
+  res = iNEXT.4steps::SC(data = data_long, q = q, datatype = datatype, nboot = nboot, conf = conf)
   return(res)
 }
 
@@ -83,7 +83,7 @@ SC.link <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30
 ggSC.link <- function(outcome){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
-  ggplot(output, aes(x = Order.q, y = Estimate.SC, colour = Assemblage)) +
+  ggplot(outcome, aes(x = Order.q, y = Estimate.SC, colour = Assemblage)) +
     geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
     geom_ribbon(aes(ymin = SC.LCL, ymax = SC.UCL, fill = Assemblage),
                 alpha = 0.2, linetype = 0) + scale_fill_manual(values = cbPalette) +
@@ -349,7 +349,7 @@ ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var
     # output$iNextEst$size_based = output$iNextEst$size_based%>%
     #   rename('qD'="PD", 'qD.UCL'="PD.UCL",'qD.LCL'="PD.LCL")
     # iNEXT.3D::ggiNEXT3D(output, type = 1)
-    iNE <- outcome$iNextEst$size_based
+    iNE <- outcome$iNextEst
     iNE.sub <- iNE[iNE$method == "observed",]
     iNE[iNE$method == "observed",]$method <-  "interpolated"
     ex <- iNE.sub
@@ -892,82 +892,184 @@ estimateD.link = function(data, diversity = 'TD', q = c(0, 1, 2),datatype = "abu
 
     return(div)
   }else if(diversity == 'PD'){
-    q <- unique(ceiling(q))
-    ci <- qnorm(conf/2+0.5)
 
-    if (is.null(level)) {
-      if (datatype == "abundance") {
-        level <- sapply(data, function(x) {
-          ni <- sum(x)
-          Coverage(data = x, datatype = datatype, m = 2 * ni, nt = ni)
-        })
+    if(datatype=='abundance'){
+
+      if(class(data)=="data.frame" | class(data)=="matrix"| class(data)=="integer" ) data = list(Region_1 = data)
+
+      if(class(data)== "list"){
+        if(is.null(names(data))) region_names = paste0("Region_", 1:length(data)) else region_names = names(data)
+        Ns = sapply(data, ncol)
+        data_list = data
       }
-      else if (datatype == "incidence_raw") {
-        level <- sapply(data, function(x) {
-          ni <- ncol(x)
-          Coverage(data = x, datatype = datatype, m = 2 *
-                     ni, nt = ni)
-        })
-      }
-      level <- min(level)
+
     }
-    # level =0.7
-    res = lapply(1:length(data), function(i){
-      x = data[[i]]
-      assemblage = names(data)[[i]]
-      long = as.matrix(x)%>%c()
-      m_target = coverage_to_size(x, C = level, datatype = 'abundance')
-      # if(base == "size"){m_target = level}
-      inex <- function(data,m,q,B,row.tree = NULL,col.tree = NULL) {
-        data <- as.matrix(data)
-        n <- sum(data)
-        phydata <- create.aili(data,row.tree = row.tree,col.tree = col.tree)
-        ## why tbar can be calculated by this?
-        ## (ai * Li) / n
-        tbar <- sum(phydata$branch.length*phydata$branch.abun)/n
-        boot.sam <- sample.boot.phy(data,B,row.tree = row.tree,col.tree = col.tree)
-        sc <- PhD:::Coverage(data,datatype = "abundance",m,nt =n)
-        # sc <- coverage(data,m)
-        sc.sd <- lapply(boot.sam,function(x){
-          x <- x[x$tgroup == "Tip",]$branch.abun
-          PhD:::Coverage(x,datatype = "abundance",m,nt =n)
-        })
-        sc.sd <- do.call(cbind,sc.sd)
-        sc.sd <- sapply(1:length(m), function(x){
-          sd(sc.sd[x,])
-        })
-        sc.table <- data.frame(m=m,SC = sc, SC.UCL = sc+ci * sc.sd,SC.LCL = sc - ci * sc.sd)
-        out <- lapply(q, function(x){
-          PD <- lapply(m,function(y){
-            my_PhD.m.est(ai = phydata$branch.abun, Lis = phydata$branch.length, m = y, q = x, nt = n, cal = 'PD')/tbar
-            # PhD:::PhD.m.est(phydata,y,x,datatype = "abundance",nt = n)/tbar
-          })%>%unlist()
-          PD.sd <- lapply(boot.sam, function(z){
-            tmp <- lapply(m,function(y){
-              # PhD:::PhD.m.est(z,y,x,datatype = "abundance",nt = n)/tbar
-              my_PhD.m.est(ai = z$branch.abun, Lis = z$branch.length, m = y, q = x, nt = n, cal = 'PD')/tbar
-            })
-            unlist(tmp)
-          })
-          PD.sd <- do.call(cbind,PD.sd)
-          PD.sd <- sapply(1:length(m), function(x){
-            sd(PD.sd[x,])
-          })
-          PD.table <- data.frame(m=m,method = ifelse(m<n,"interpolated",ifelse(n == m,"observed","extrapolated")),
-                                 Order.q = x,PD = PD, PD.UCL = PD+ci * PD.sd,PD.LCL = PD - ci * PD.sd)
-          out <- left_join(PD.table,sc.table)
-          out
-        })
-        do.call(rbind,out)
+    if(is.null(conf)) conf = 0.95
+    tmp = qnorm(1 - (1 - conf)/2)
+
+    for_each_region = function(data_2d, region_name, N){
+      if (datatype=='abundance') {
+
+        n = sum(data_2d)
+        if(base == 'coverage'){
+          size_m = sapply(level, function(i) iNEXT.beta:::coverage_to_size(data_2d, i, datatype='abundance'))
+        }else if(base == 'size'){
+          size_m = level
+        }
+
+
+        ref= iNEXT.3D:::Coverage(data_2d,m= n, datatype = 'abundance')
+        #
+        aL_table = create.aili(data_2d, row.tree = row.tree, col.tree = col.tree) %>%
+          select(branch.abun, branch.length, tgroup)%>%
+          filter(branch.abun>0)
+
+        qPDm <- iNEXTPD2:::PhD.m.est(ai = aL_table$branch.abun,
+                                     Lis = aL_table$branch.length%>%as.matrix(),
+                                     m = size_m,
+                                     q = q,nt = n,cal = 'PD')%>%
+          as.vector()
+
+        ## boot
+        tbar <- sum(aL_table$branch.length*aL_table$branch.abun)/n
+
+        if(nboot >1 ){
+          boot.sam <- sample.boot.phy(data_2d,nboot,row.tree = row.tree,col.tree = col.tree)
+          PD.sd <- lapply(boot.sam, function(aL_boot){
+            tmp = iNEXTPD2:::PhD.m.est(ai = aL_boot$branch.abun,
+                                       Lis = aL_boot$branch.length%>%as.matrix(),
+                                       m = size_m,
+                                       q = q,nt = n,cal = 'PD')%>%
+              as.vector()%>%as.data.frame()
+            return(tmp)
+          })%>%
+            abind(along=3) %>% apply(1:2, sd)%>%as.vector()
+        }else{
+          PD.sd = c(0,0,0)
+        }
+
+
+
+
+
+
+        ##
+        len = length(q)
+        res = data.frame(Assemblage = rep(region_name,len),
+                   goalSC = rep(level, len),
+                   SC = rep(iNEXT.3D:::Coverage(data_2d, datatype='abundance', size_m), len),
+                   m = rep(size_m,len),
+                   Method = ifelse(level > ref, 'Extrapolated', 'Interpolated'),
+                   Order.q = q,
+                   qPD = qPDm,
+                   qPD.UCL = qPDm+1.96*PD.sd,
+                   qPD.LCL = qPDm-1.96*PD.sd
+                   )
+        return(res)
       }
+    }
+    print(length(data))
+    output = lapply(1:length(data), function(i) for_each_region(data = data_list[[i]],
+                                                                region_name = region_names[i], N = Ns[i]))%>%
+      do.call('rbind',.)
 
-      inex(data = x,m = m_target, q,B = nboot,row.tree,col.tree)%>%
-        mutate(Assemblage = assemblage)
-
-    })%>%do.call("rbind",.)
-    return(res)
+    return(output)
   }
+
 }
+### old version
+# estimateD.link = function(data, diversity = 'TD', q = c(0, 1, 2),datatype = "abundance",base = "size",
+#                           level = NULL,nboot = 50,conf = 0.95,
+#                           row.tree = NULL, col.tree = NULL){
+#   if(diversity == 'TD'){
+#     div = lapply(1:length(data), function(i){
+#       x = data[[i]]
+#       assemblage = names(data)[[i]]
+#       long = as.matrix(x)%>%c()
+#       iNEXT.3D::estimate3D(long, q=q,datatype=datatype, base=base,
+#                           diversity = 'TD', nboot = nboot,conf=conf)%>%
+#         mutate(Assemblage = assemblage)
+#     })%>%do.call("rbind",.)
+#
+#     return(div)
+#   }else if(diversity == 'PD'){
+#
+#     q <- unique(ceiling(q))
+#     ci <- qnorm(conf/2+0.5)
+#
+#     if (is.null(level)) {
+#       if (datatype == "abundance") {
+#         level <- sapply(data, function(x) {
+#           ni <- sum(x)
+#           Coverage(data = x, datatype = datatype, m = 2 * ni, nt = ni)
+#         })
+#       }
+#       else if (datatype == "incidence_raw") {
+#         # level <- sapply(data, function(x) {
+#         #   ni <- ncol(x)
+#         #   Coverage(data = x, datatype = datatype, m = 2 *
+#         #              ni, nt = ni)
+#         # })
+#       }
+#       level <- min(level)
+#     }
+#     # level =0.7
+#     res = lapply(1:length(data), function(i){
+#       x = data[[i]]
+#       assemblage = names(data)[[i]]
+#       long = as.matrix(x)%>%c()
+#       m_target = coverage_to_size(x, C = level, datatype = 'abundance')
+#       # if(base == "size"){m_target = level}
+#       inex <- function(data,m,q,B,row.tree = NULL,col.tree = NULL) {
+#         data <- as.matrix(data)
+#         n <- sum(data)
+#         phydata <- create.aili(data,row.tree = row.tree,col.tree = col.tree)
+#         ## why tbar can be calculated by this?
+#         ## (ai * Li) / n
+#         tbar <- sum(phydata$branch.length*phydata$branch.abun)/n
+#         boot.sam <- sample.boot.phy(data,B,row.tree = row.tree,col.tree = col.tree)
+#         sc <- PhD:::Coverage(data,datatype = "abundance",m,nt =n)
+#         # sc <- coverage(data,m)
+#         sc.sd <- lapply(boot.sam,function(x){
+#           x <- x[x$tgroup == "Tip",]$branch.abun
+#           PhD:::Coverage(x,datatype = "abundance",m,nt =n)
+#         })
+#         sc.sd <- do.call(cbind,sc.sd)
+#         sc.sd <- sapply(1:length(m), function(x){
+#           sd(sc.sd[x,])
+#         })
+#         sc.table <- data.frame(m=m,SC = sc, SC.UCL = sc+ci * sc.sd,SC.LCL = sc - ci * sc.sd)
+#         out <- lapply(q, function(x){
+#           PD <- lapply(m,function(y){
+#             my_PhD.m.est(ai = phydata$branch.abun, Lis = phydata$branch.length, m = y, q = x, nt = n, cal = 'PD')/tbar
+#             # PhD:::PhD.m.est(phydata,y,x,datatype = "abundance",nt = n)/tbar
+#           })%>%unlist()
+#           PD.sd <- lapply(boot.sam, function(z){
+#             tmp <- lapply(m,function(y){
+#               # PhD:::PhD.m.est(z,y,x,datatype = "abundance",nt = n)/tbar
+#               my_PhD.m.est(ai = z$branch.abun, Lis = z$branch.length, m = y, q = x, nt = n, cal = 'PD')/tbar
+#             })
+#             unlist(tmp)
+#           })
+#           PD.sd <- do.call(cbind,PD.sd)
+#           PD.sd <- sapply(1:length(m), function(x){
+#             sd(PD.sd[x,])
+#           })
+#           PD.table <- data.frame(m=m,method = ifelse(m<n,"interpolated",ifelse(n == m,"observed","extrapolated")),
+#                                  Order.q = x,PD = PD, PD.UCL = PD+ci * PD.sd,PD.LCL = PD - ci * PD.sd)
+#           out <- left_join(PD.table,sc.table)
+#           out
+#         })
+#         do.call(rbind,out)
+#       }
+#
+#       inex(data = x,m = m_target, q,B = nboot,row.tree,col.tree)%>%
+#         mutate(Assemblage = assemblage)
+#
+#     })%>%do.call("rbind",.)
+#     return(res)
+#   }
+# }
 
 # Spec.link  -------------------------------------------------------------------
 #' Specialization Estimation of Evenness with order q
@@ -1030,13 +1132,18 @@ Spec.link <- function(data, q = seq(0, 2, 0.2),
     return(Spec)
 
   }else if (diversity == 'PD'){
-    ### not finished yet
-    long = lapply(data, function(da){da%>%as.data.frame()%>%gather(key = "col_sp", value = "abundance")%>%.[,2]})
+
+
+    long = lapply(data, function(da){
+      da%>%as.data.frame()%>%gather(key = "col_sp", value = "abundance")%>%column_to_rownames('col_sp')
+    })
+    names(long) = names(data)
 
     Spec <- lapply(E.class, function(e){
-      each_class = lapply(seq_along(long), function(i){
-        res = iNEXT.4steps::Evenness(long[[i]], q = q,datatype = datatype,
-                                    method = method, nboot=nboot, E.class = e, C = C)
+      each_class = lapply(seq_along(data), function(i){
+        res = Spec.PD(data[[i]], q = q,datatype = datatype,
+                      method = method, nboot=nboot, E.class = e, C = C)
+
         res['Coverage'] = NULL
         res = lapply(res, function(each_class){
           each_class%>%
@@ -1052,8 +1159,96 @@ Spec.link <- function(data, q = seq(0, 2, 0.2),
 
       each_class%>%mutate(class = paste0("E",e))
     })
-    names(Spec) = paste0("E",E.class)
-    return(Spec)
+
+
+
+    spec_PD <- function(){
+      if (datatype == "abundance") {
+        qD <- Evenness.profile(data, q, "abundance", method,
+                               E.class, C)
+        qD <- map(qD, as.vector)
+        if (nboot > 1) {
+          Prob.hat <- lapply(1:length(data), function(i) iNEXT.3D:::EstiBootComm.Ind(data[[i]]))
+          Abun.Mat <- lapply(1:length(data), function(i) rmultinom(nboot,
+                                                                   sum(data[[i]]), Prob.hat[[i]]))
+          error = apply(matrix(sapply(1:nboot, function(b) {
+            dat = lapply(1:length(Abun.Mat), function(j) Abun.Mat[[j]][,
+                                                                       b])
+            names(dat) = paste("Site", 1:length(dat), sep = "")
+            dat.qD = Evenness.profile(dat, q, "abundance",
+                                      method, E.class, C)
+            unlist(dat.qD)
+          }), nrow = length(q) * length(E.class) * length(Abun.Mat)),
+          1, sd, na.rm = TRUE)
+          error = matrix(error, ncol = length(E.class))
+          se = split(error, col(error))
+        }
+        else {
+          se = lapply(1:length(E.class), function(x) NA)
+        }
+        out <- lapply(1:length(E.class), function(k) {
+          tmp = data.frame(Order.q = rep(q, length(data)),
+                           Evenness = as.vector(qD[[k]]), s.e. = as.vector(se[[k]]),
+                           Even.LCL = as.vector(qD[[k]] - qnorm(1 - (1 -
+                                                                       conf)/2) * se[[k]]), Even.UCL = as.vector(qD[[k]] +
+                                                                                                                   qnorm(1 - (1 - conf)/2) * se[[k]]), Assemblage = rep(names(data),
+                                                                                                                                                                        each = length(q)), Method = rep(method, length(q) *
+                                                                                                                                                                                                          length(data)))
+          tmp$Even.LCL[tmp$Even.LCL < 0] <- 0
+          tmp
+        })
+        if (is.null(C) == TRUE)
+          C = unique(estimate3D(data, diversity = "TD", q = 0,
+                                datatype = "abundance", base = "coverage", nboot = 0)$goalSC)
+        if (method == "Estimated") {
+          out <- append(C, out)
+        }
+      }
+    }
+
+    Spec <- lapply(E.class, function(e){
+      each_class = lapply(seq_along(long), function(i){
+        res = iNEXT.4steps::Evenness(long[[i]], q = q,datatype = datatype,
+                                     method = method, nboot=nboot, E.class = e, C = C)
+        res['Coverage'] = NULL
+        res = lapply(res, function(each_class){
+          each_class%>%
+            mutate(Evenness = 1-Evenness, Even.LCL = 1-Even.LCL, Even.UCL = 1-Even.UCL)%>%
+            rename('Specialization'='Evenness', 'Spec.LCL' ='Even.LCL', 'Spec.UCL' ='Even.UCL')%>%
+            mutate(Assemblage = names(long)[[i]])
+        })
+        # if(method == "Empirical") index = 1
+        # if(method == "Estimated") index = 2
+        # return(res[[index]]%>%mutate(Assemblage = names(long)[[i]]))
+        return(res[[1]])
+      })%>%do.call("rbind",.)
+
+      each_class%>%mutate(class = paste0("E",e))
+    })
+    # ### not finished yet
+    # long = lapply(data, function(da){da%>%as.data.frame()%>%gather(key = "col_sp", value = "abundance")%>%.[,2]})
+    #
+    # Spec <- lapply(E.class, function(e){
+    #   each_class = lapply(seq_along(long), function(i){
+    #     res = iNEXT.4steps::Evenness(long[[i]], q = q,datatype = datatype,
+    #                                 method = method, nboot=nboot, E.class = e, C = C)
+    #     res['Coverage'] = NULL
+    #     res = lapply(res, function(each_class){
+    #       each_class%>%
+    #         mutate(Evenness = 1-Evenness, Even.LCL = 1-Even.LCL, Even.UCL = 1-Even.UCL)%>%
+    #         rename('Specialization'='Evenness', 'Spec.LCL' ='Even.LCL', 'Spec.UCL' ='Even.UCL')%>%
+    #         mutate(Assemblage = names(long)[[i]])
+    #     })
+    #     # if(method == "Empirical") index = 1
+    #     # if(method == "Estimated") index = 2
+    #     # return(res[[index]]%>%mutate(Assemblage = names(long)[[i]]))
+    #     return(res[[1]])
+    #   })%>%do.call("rbind",.)
+    #
+    #   each_class%>%mutate(class = paste0("E",e))
+    # })
+    # names(Spec) = paste0("E",E.class)
+    # return(Spec)
   }
 }
 
@@ -1082,7 +1277,7 @@ Spec.link <- function(data, q = seq(0, 2, 0.2),
 ggSpec.link <- function(outcome){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
-  classdata = cbind(do.call(rbind, output))
+  classdata = cbind(do.call(rbind, outcome))
 
   fig = classdata%>%
     ggplot(aes(x=Order.q, y=Specialization, colour=Assemblage, lty = Method)) +
@@ -1107,7 +1302,7 @@ ggSpec.link <- function(outcome){
           plot.margin = unit(c(5.5,5.5,5.5,5.5), "pt")
     )
 
-  if (length(output) != 1) fig = fig +
+  if (length(outcome) != 1) fig = fig +
     facet_wrap(~class) +
     theme(strip.text.x = element_text(size=12, colour = "purple", face="bold"))
 

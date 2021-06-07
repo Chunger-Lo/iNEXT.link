@@ -5,11 +5,10 @@
 # # devtools::install_github('chaolab2019/chaoUtility')
 # # devtools::install_github('Chunger-Lo/iNEXT.link')
 # # devtools::install_github('YanHanChen/PhD')
-#
+# # #
 # library(ggplot2)
 # library(knitr)
 # library(tibble)
-# library(chao)
 # library(iNEXT.3D)
 # library(iNEXT.beta)
 # library(iNEXT.4steps)
@@ -27,7 +26,7 @@
 # library(future.apply)
 # library(abind)
 #
-# # library(iNEXT.link)
+# library(iNEXT.link)
 # # library(sets)
 #
 # source("R//iNEXTlink.R")
@@ -71,7 +70,7 @@
 #
 # #Obs.link ----
 # obs1 <- Obs.link(Norfolk, diversity = 'TD', datatype = "abundance", nboot = 10)
-# pbs2 <- Obs.link(data = puerto.rico$data, diversity = 'PD', datatype = "abundance",nboot = 10,
+# obs2 <- Obs.link(data = puerto.rico$data, diversity = 'PD', datatype = "abundance",nboot = 10,
 #                  row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 # #ggObs.link ----
 # ggObs.link(obs1)
@@ -80,18 +79,21 @@
 # #estimateD.link ----
 # est1 <- estimateD.link(Norfolk, diversity = 'TD', datatype="abundance", base="coverage", level=0.7, nboot = 10)
 # est2 <- estimateD.link(Norfolk, diversity = 'TD', datatype="abundance", base="size", level=0.7, nboot = 10)
-# est3 <- estimateD.link(puerto.rico$data, diversity = 'PD', datatype="abundance", base="coverage", level=0.7, nboot = 10,
+# est3 <- estimateD.link(data = puerto.rico$data, diversity = 'PD', datatype="abundance", base="coverage",
+#                        level=0.7, nboot = 10,
 #                        row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 #
 # #iNEXTbeta.link ----
-# beta1 = iNEXTbeta.link(data = puerto.rico$data%>%lapply(function(x) round(x/10)), level = seq(0.5, 0.9, 0.4), datatype='abundance',q = c(0, 1, 2),
+# beta1 = iNEXTbeta.link(data = puerto.rico$data%>%lapply(function(x) round(x/10)),
+#                        level = seq(0.5, 0.9, 0.4), datatype='abundance',q = c(0, 1, 2),
 #                        diversity = 'TD', nboot = 10, conf = 0.95)
-# beta2 = iNEXTbeta.link(networks = puerto.rico$data%>%lapply(function(x) round(x/10)), level = seq(0.5, 0.9, 0.4), datatype='abundance',q = c(0, 1, 2),
-#                        data = 'PD', nboot = 10, conf = 0.95,
+# beta2 = iNEXTbeta.link(data = puerto.rico$data%>%lapply(function(x) round(x/10)),
+#                        level = seq(0.5, 0.9, 0.4), datatype='abundance',q = c(0, 1, 2),
+#                        diversity = 'PD', nboot = 10, conf = 0.95,
 #                        row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 # #ggiNEXTbeta.link ----
-# # ggiNEXTbeta.link(beta1,diversity = 'TD', type = 'B')
-# # ggiNEXTbeta.link(beta1,diversity = 'TD', type = 'D')
+# ggiNEXTbeta.link(beta1,diversity = 'TD', type = 'B')
+# ggiNEXTbeta.link(beta1,diversity = 'TD', type = 'D')
 # ggiNEXTbeta.link(beta2,diversity = 'PD', type = 'B')
 # ggiNEXTbeta.link(beta2,diversity = 'PD', type = 'D')
 #
