@@ -43,7 +43,7 @@ colnames(tab_selected) = colnames(tab_selected)%>%str_replace_all('\\.','_')
 #   name%in%tr$tip.label
 # })
 
-net_treat_plot = list()
+
 
 names(tab_selected) <- gsub("Anobium_fulvicorne", "Hemicoelus_fulvicornis", names(tab_selected))
 names(tab_selected) <- gsub("Xyleborus_saxesenii", "Xyleborinus_saxesenii", names(tab_selected))
@@ -65,7 +65,7 @@ treatO = tab_selected%>%filter(treatment == 'O')%>%.[,-c(2,3)]
 
 
 
-
+net_treat_plot = list()
 # net_treat_plot[['G']] = list()
 # net_treat_plot[['G']][['A']] = treatG%>%filter(plot == 'A')%>%.[,-1]%>%column_to_rownames('tree_species')%>%.[,speices_name[ind]]
 # net_treat_plot[['G']][['B']] = treatG%>%filter(plot == 'B')%>%.[,-1]%>%column_to_rownames('tree_species')%>%.[,speices_name[ind]]

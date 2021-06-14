@@ -55,7 +55,7 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
     tmp <- lapply(1:length(tmp), function(x){
       tmp1 <- as.data.frame(tmp[[x]])
       tmp1$spe.c <- colnames(data)[x]
-      tmp1$interaction <- paste(tmp1$label,tmp1$spe.c,sep = "_")
+      tmp1$interaction <- paste(tmp1$label,tmp1$spe.c,sep = "*")
       tmp1
     })
     tmp <- do.call(rbind,tmp)
@@ -76,7 +76,7 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
     tmp <- lapply(1:length(tmp), function(x){
       tmp1 <- tmp[[x]]%>%as.data.frame()
       tmp1$spe.r <- rownames(data)[x]
-      tmp1$interaction <- paste(tmp1$spe.r,tmp1$label,sep = "_")
+      tmp1$interaction <- paste(tmp1$spe.r,tmp1$label,sep = "*")
       tmp1
     })
     tmp <- do.call(rbind,tmp)
@@ -93,15 +93,22 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
     mytree.row <- phylo2phytree(mytree.row)
 
     # create aiLi tables by col.tree (row by row)
-    tmp <- apply(data, 1, function(abun){
+    tmp0 <- apply(data, 1, function(abun){
       phyExpandData(x=abun, labels=colnames(data), phy=mytree.col, datatype="abundance")
     })
+
     # combine
-    tmp = lapply(1:length(tmp), function(i){
-      tab = tmp[[i]]
-      tab$Species <- names(tmp)[i]
+    tmp = lapply(1:length(tmp0), function(i){
+      tab = tmp0[[i]]
+      tab$Species <- names(tmp0)[i]
       return(tab)
     })%>%do.call("rbind",.)
+
+    # tmp = lapply(1:nrow(data), function(i){
+    #   phyExpandData(x=data[i,], labels=colnames(data), phy=mytree.col, datatype="abundance")%>%
+    #     mutate(Speices = rownames(data)[i])
+    # })%>%do.call("rbind",.)
+
     # speices = row species
     t1 <- tmp%>%as.data.frame()%>%dplyr::select(label, branch.abun, Species)
     # back to 2d matrix
@@ -110,12 +117,13 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
     label <- unique(tmp$label)
     species <- unique(tmp$Species)
 
+    # label = colnames
     tmp_list_bylabel = lapply(label, function(lab){
       tmp[tmp$label == lab, ]%>%head(1)
     })
     names(tmp_list_bylabel) = label
 
-    ### col by col
+    ### row by row
     tmp1 <- apply(mat, 1, function(abun){
       phyExpandData(x=abun, labels=rownames(data), phy=mytree.row, datatype="abundance")
     })
@@ -140,7 +148,7 @@ create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
     t2 = t2_list_bylabel%>%do.call('rbind',.)
 
     t2$group <- ifelse(t2$tgroup == t2$r.group,t2$tgroup,"Inode")
-    t2$interaction <- paste(t2$label,t2$Species,sep = "_")
+    t2$interaction <- paste(t2$label,t2$Species,sep = "*")
 
     out <- data.frame(branch.abun = t2$branch.abun, branch.length = t2$branch.length*t2$r.length,
                       tgroup = t2$group, interaction = t2$interaction)
@@ -616,10 +624,11 @@ get.netphydiv_iNE <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf, kno
       sd(sc.sd[x,])
     })
     sc.table <- data.frame(m=m,SC = sc, SC.UCL = sc+ci * sc.sd,SC.LCL = sc - ci * sc.sd)
-    out <- lapply(q, function(x){
-      plan(multisession)
-      PD <- future_lapply(m,function(y){
-       my_PhD.m.est(ai = phydata$branch.abun, Lis = phydata$branch.length, m = y, q = x, nt = n, cal = 'PD')/tbar
+
+    out <- lapply(q, function(q_){
+
+      PD <- lapply(m,function(y){
+       my_PhD.m.est(ai = phydata$branch.abun, Lis = phydata$branch.length, m = y, q = q_, nt = n, cal = 'PD')/tbar
         # PhD:::PhD.m.est(phydata,y,x,datatype = "abundance",nt = n)/tbar
       })%>%unlist()
 
@@ -628,7 +637,7 @@ get.netphydiv_iNE <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf, kno
       PD.sd <- lapply(boot.sam, function(z){
         tmp <- lapply(m,function(y){
           # PhD:::PhD.m.est(z,y,x,datatype = "abundance",nt = n)/tbar
-          my_PhD.m.est(ai = z$branch.abun, Lis = z$branch.length, m = y, q = x, nt = n, cal = 'PD')/tbar
+          my_PhD.m.est(ai = z$branch.abun, Lis = z$branch.length, m = y, q = q_, nt = n, cal = 'PD')/tbar
         })
         unlist(tmp)
       })
@@ -637,11 +646,10 @@ get.netphydiv_iNE <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf, kno
         sd(PD.sd[x,])
       })
       PD.table <- data.frame(m=m,method = ifelse(m<n,"interpolated",ifelse(n == m,"observed","extrapolated")),
-                             Order.q = x,PD = PD, PD.UCL = PD+ci * PD.sd,PD.LCL = PD - ci * PD.sd)
+                             Order.q = q_,PD = PD, PD.UCL = PD+ci * PD.sd,PD.LCL = PD - ci * PD.sd)
       out <- left_join(PD.table,sc.table)
       out
-    })
-    do.call(rbind,out)
+    })%>%do.call("rbind",.)
   }
 
   # out <- future_lapply(data, FUN = function(x){
@@ -651,6 +659,7 @@ get.netphydiv_iNE <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf, kno
   out <- future_lapply(data, function(x){
     inex(data = x,q,B,row.tree,col.tree)
   }, future.seed = T)
+
   out1 <- c()
   for (i in 1:length(out)) {
     tmp <- out[[i]]

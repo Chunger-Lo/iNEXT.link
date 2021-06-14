@@ -154,9 +154,9 @@ ggSC.link <- function(outcome){
 #' @export
 
 iNEXT.link <- function(data, diversity = 'TD', q = c(0,1,2), datatype = "abundance", size = NULL, nT = NULL,
-                         endpoint = NULL, knots = 40, conf = 0.95, nboot = 30,
-                         row.tree = NULL, col.tree = NULL, PDtype = 'meanPD'
-                         ){
+                       endpoint = NULL, knots = 40, conf = 0.95, nboot = 30,
+                       row.tree = NULL, col.tree = NULL, PDtype = 'meanPD'
+){
   # User interface
   TYPE <- c("abundance", "incidence", "incidence_freq", "incidence_raw")
   if(is.na(pmatch(datatype, TYPE)))
@@ -192,7 +192,7 @@ iNEXT.link <- function(data, diversity = 'TD', q = c(0,1,2), datatype = "abundan
       as.matrix(tab)%>%c()}
     )
     INEXT_est <- iNEXT.3D::iNEXT3D(data_long, diversity = 'TD', q = q,conf = conf,
-                                  nboot = nboot, knots = knots, endpoint = endpoint, size = size)
+                                   nboot = nboot, knots = knots, endpoint = endpoint, size = size)
 
     res[[1]] = datainfo
     res[[2]] = INEXT_est$iNextEst
@@ -281,6 +281,7 @@ iNEXTbeta.link = function(data, diversity = 'TD', level = seq(0.5, 1, 0.5), data
                           row.tree = NULL,col.tree = NULL){
 
   if(class(data[[1]]) == 'data.frame' ){data = list(data); }
+
   combined_list = lapply(data, function(y){
     long = ready4beta(y)%>%filter_all(any_vars(. != 0))
     rownames(long) = rownames(long)%>%gsub('\\.','_',.)
@@ -292,7 +293,7 @@ iNEXTbeta.link = function(data, diversity = 'TD', level = seq(0.5, 1, 0.5), data
   }
   else if(diversity == 'PD'){
     if(!is.null(row.tree)){row.tree$tip.label = gsub('\\.', '_',row.tree$tip.label)}
-    if(!is.null(row.tree)){col.tree$tip.label = gsub('\\.', '_',col.tree$tip.label)}
+    if(!is.null(col.tree)){col.tree$tip.label = gsub('\\.', '_',col.tree$tip.label)}
 
     dissimilarity = iNEXTbeta.PDlink(data = combined_list, level = level, datatype = datatype,
                                      q =q ,row.tree = row.tree,col.tree = col.tree, nboot = nboot)
@@ -886,7 +887,7 @@ estimateD.link = function(data, diversity = 'TD', q = c(0, 1, 2),datatype = "abu
       assemblage = names(data)[[i]]
       long = as.matrix(x)%>%c()
       iNEXT.3D::estimate3D(long, q=q,datatype=datatype, base=base,
-                          diversity = 'TD', nboot = nboot,conf=conf)%>%
+                           diversity = 'TD', nboot = nboot,conf=conf)%>%
         mutate(Assemblage = assemblage)
     })%>%do.call("rbind",.)
 
@@ -956,20 +957,20 @@ estimateD.link = function(data, diversity = 'TD', q = c(0, 1, 2),datatype = "abu
         ##
         len = length(q)
         res = data.frame(Assemblage = rep(region_name,len),
-                   goalSC = rep(level, len),
-                   SC = rep(iNEXT.3D:::Coverage(data_2d, datatype='abundance', size_m), len),
-                   m = rep(size_m,len),
-                   Method = ifelse(level > ref, 'Extrapolated', 'Interpolated'),
-                   Order.q = q,
-                   qPD = qPDm,
-                   qPD.UCL = qPDm+1.96*PD.sd,
-                   qPD.LCL = qPDm-1.96*PD.sd
-                   )
+                         goalSC = rep(level, len),
+                         SC = rep(iNEXT.3D:::Coverage(data_2d, datatype='abundance', size_m), len),
+                         m = rep(size_m,len),
+                         Method = ifelse(level > ref, 'Extrapolated', 'Interpolated'),
+                         Order.q = q,
+                         qPD = qPDm,
+                         qPD.UCL = qPDm+1.96*PD.sd,
+                         qPD.LCL = qPDm-1.96*PD.sd
+        )
         return(res)
       }
     }
     print(length(data))
-    output = lapply(1:length(data), function(i) for_each_region(data = data_list[[i]],
+    output = lapply(1:length(data), function(i) for_each_region(data_2d = data_list[[i]],
                                                                 region_name = region_names[i], N = Ns[i]))%>%
       do.call('rbind',.)
 
@@ -1112,7 +1113,7 @@ Spec.link <- function(data, q = seq(0, 2, 0.2),
     Spec <- lapply(E.class, function(e){
       each_class = lapply(seq_along(long), function(i){
         res = iNEXT.4steps::Evenness(long[[i]], q = q,datatype = datatype,
-                                    method = method, nboot=nboot, E.class = e, C = C)
+                                     method = method, nboot=nboot, E.class = e, C = C)
         res['Coverage'] = NULL
         res = lapply(res, function(each_class){
           each_class%>%
@@ -1420,7 +1421,7 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
 
         ## 2. alpha
         qPDm = iNEXTPD2:::PhD.m.est(ai = aL_table_alpha$branch.abun, Lis = aL_table_alpha$branch.length%>%as.matrix(),
-                               m = m_alpha,q = q,nt = n,cal = 'PD')
+                                    m = m_alpha,q = q,nt = n,cal = 'PD')
 
         qPDm = qPDm/N
         alpha = qPDm %>% t %>% as.data.frame %>%
@@ -1481,64 +1482,57 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
         f0 <- ceiling(ifelse(f2 > 0 ,(n-1)/n*f1^2/2/f2,(n-1)/n*f1*(f1-1)/2))
         return(f0)
       }
-      data_to_pi <- function(data) {
-        f1 <- sum(data == 1)
-        f2 <- sum(data == 2)
-        n <- sum(sapply(unique(data), function(x){x*sum(data == x)}))
-        C.hat <- 1-f1/n*ifelse(f2 ==0,ifelse(f1 == 0,0,2/((n-1)*(f1-1)+2)),2*f2/((n-1)*f1+2*f2))
-        lambda <- ifelse(C.hat != 1,(1-C.hat)/sum(data/n*(1-data/n)^n),0)
-        f0 <- ceiling(ifelse(f2 > 0 ,(n-1)/n*f1^2/2/f2,(n-1)/n*f1*(f1-1)/2))
-        p.seen <- data/n*(1-lambda*(1-data/n)^n)
-        # p.seen <- p.seen[p.seen>0]
-        p.unseen <- (1-C.hat)/f0
-        list(seen = p.seen,unseen = p.unseen)
-      }
+      get_g0_hat <- function(data){
+        n = sum(data)
+        f1 = sum(data==1)
+        f2 = sum(data==2)
 
-      f0_pool = get_f0_hat(data_gamma)
-      pi <- lapply(data, function(x){data_to_pi(x)})
-
-      g0_hat = sapply(1:ncol(data), function(k){
-        k_net = data[,k]
-        names(k_net) = rownames(data)
-        n = sum(k_net)
-        f1 = sum(k_net==1)
-        f2 = sum(k_net==2)
-
-        # aL = phyBranchAL_Abu(phylo = phy_tree, data = x, rootExtend = T, refT = reft)
-        # aL$treeNabu$branch.length = aL$BLbyT[,1]
-        aL = create.aili(k_net%>%long_to_wide(), row.tree, col.tree)%>%
+        aL = create.aili(data%>%long_to_wide(), row.tree, col.tree)%>%
           select(branch.abun,branch.length)
         g1 = aL$branch.length[aL$branch.abun==1] %>% sum
         g2 = aL$branch.length[aL$branch.abun==2] %>% sum
         g0_hat = ifelse( g2>((g1*f2)/(2*f1)) , ((n-1)/n)*(g1^2/(2*g2)) ,
                          ((n-1)/n)*(g1*(f1-1)/(2*(f2+1))))
         return(g0_hat)
+      }
 
-      })
+      f0_pool = get_f0_hat(data_gamma)
 
       plan(multisession)
-      se = future_lapply(1:nboot, function(b){
+      datainfo_each_k = future_lapply(1:ncol(data), function(k){
+        kth_net = data[,k]
+        names(kth_net) = rownames(data)
+
+        g0_k = get_g0_hat(kth_net)
+        f1 <- sum(kth_net == 1)
+        f2 <- sum(kth_net == 2)
+        f0_k <- ceiling(ifelse(f2 > 0 ,(n-1)/n*f1^2/2/f2,(n-1)/n*f1*(f1-1)/2))
+        C.hat <- 1-f1/n*ifelse(f2 ==0,ifelse(f1 == 0,0,2/((n-1)*(f1-1)+2)),2*f2/((n-1)*f1+2*f2))
+        lambda <- ifelse(C.hat != 1,(1-C.hat)/sum(kth_net/n*(1-kth_net/n)^n),0)
+
+        p.seen <- kth_net/n*(1-lambda*(1-kth_net/n)^n)
+        pi_matrix = p.seen%>%long_to_wide()
+        res = list()
+        res[['pi_matrix']] = pi_matrix
+        res[['f0_k']] = f0_k
+        res[['C.hat']] = C.hat
+        res[['g0_k']] = g0_k
+
+        return(res)
+      }, future.seed = T)
+      # plan(multisession)
+
+      # se = future_lapply(1:nboot, function(b){
+      se = lapply(1:nboot, function(b){
         ## for each bootstrap samples
         ### 1. get population (random assign position from candidates)
-        piLi_k = lapply(1:ncol(data), function(k){
-          kth_net = data[,k]
-          names(kth_net) = rownames(data)
-
-          f1 <- sum(kth_net == 1)
-          f2 <- sum(kth_net == 2)
-          f0_k <- ceiling(ifelse(f2 > 0 ,(n-1)/n*f1^2/2/f2,(n-1)/n*f1*(f1-1)/2))
-          C.hat <- 1-f1/n*ifelse(f2 ==0,ifelse(f1 == 0,0,2/((n-1)*(f1-1)+2)),2*f2/((n-1)*f1+2*f2))
-          ## phy
-          phy <- create.aili(kth_net%>%long_to_wide(),row.tree,col.tree)
-          g1 <- sum(phy$branch.length[phy$branch.abun==1])
-          g2 <- sum(phy$branch.length[phy$branch.abun==2])
-          g0_k <- ifelse(g2>g1*f2/2/f1,(n-1)/n*g1^2/2/g2,(n-1)/n*g1*(f1-1)/2/(f2+1))/f0_k
-          ##
-          pi = data_to_pi(kth_net)
+        aiLi_k = lapply(1:ncol(data), function(k){
+          pi_matrix_k = datainfo_each_k[[k]]$pi_matrix
+          f0_k = datainfo_each_k[[k]]$f0_k
+          C.hat = datainfo_each_k[[k]]$C.hat
           ## pi_matrix: S1*S2 (42*98)
-          pi_matrix = pi$seen%>%long_to_wide()
           ## S1*S2 -> B1*B2 (8736)
-          seen_interaction_aili = create.aili(pi_matrix,row.tree,col.tree)
+          seen_interaction_aili = create.aili(pi_matrix_k,row.tree,col.tree)
           # unseen_interaction_aili = data.frame(branch.abun = rep(pi$unseen,f0_k), branch.length = g0 / f0_k,
           #                                      tgroup = "Tip",interaction = "unseen")
           unseen_interaction_aili = data.frame(branch.abun = rep(0,f0_pool), branch.length = rep(0,f0_pool),
@@ -1547,47 +1541,57 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
           seen_unseen = rbind(seen_interaction_aili, unseen_interaction_aili)
           ## 8268 candidates out of 8977
           candidates = which(seen_unseen$branch.abun == 0)
+          ###
           assigned_position = sample(candidates, size = min(f0_k, length(candidates)) , replace = F)
           seen_unseen$branch.abun[assigned_position] = (1-C.hat) / f0_k
           # seen_unseen <- seen_unseen%>%filter(branch.abun != 0)
-
-          return(seen_unseen)
+          seen_unseen_unique = seen_unseen%>%
+            group_by(interaction)%>%
+            summarise(tgroup = first(tgroup),
+                      branch.abun = first(branch.abun),
+                      branch.length = first(branch.length))
+          return(seen_unseen_unique)
         })
 
-        length_bt = lapply(piLi_k, function(pili){
-          pili[, c("branch.length", "interaction")]%>%column_to_rownames("interaction")
+        length_bt = lapply(aiLi_k, function(aili){
+          aili[, c("branch.length", "interaction")]%>%column_to_rownames("interaction")
         })%>%do.call("cbind",.)
         colnames(length_bt) = paste0("net_", 1:ncol(length_bt))
 
-        p_bt = lapply(piLi_k, function(pili){
-          pili[, c("branch.abun", "interaction")]%>%column_to_rownames("interaction")
+        p_bt = lapply(aiLi_k, function(aili){
+          aili[, c("branch.abun", "interaction")]%>%column_to_rownames("interaction")
         })%>%do.call("cbind",.)
         colnames(p_bt) = paste0("net_", 1:ncol(p_bt))
 
-        p_bt = p_bt%>%cbind(tgroup = piLi_k[[1]]$tgroup)%>%
+        p_bt = p_bt%>%cbind(tgroup = aiLi_k[[1]]$tgroup)%>%
           filter_all(any_vars(. != 0))
-        ### 2. get samples(x_bt)
+
+        ### 2. generate samples(x_bt)
         x_bt = sapply(1:(ncol(p_bt)-1), function(k){
           n = sum(data[,k])
           sapply(p_bt[,k], function(p){rbinom(1,size=n, prob = p)})
 
         })
         rownames(x_bt) = rownames(p_bt)
-
+        ### 3. estimate unkwown branch length
         L0_hat = sapply(1:ncol(data), function(k){
-
-          compare = data.frame(interaction = names(data_gamma), raw = data_gamma)%>%
+          # compare = data.frame(interaction = names(data_gamma), raw = data_gamma)%>%
+          compare = data.frame(interaction = rownames(data), raw = data[,k])%>%
             inner_join(x_bt[,k]%>%as.data.frame()%>%rownames_to_column('interaction'),
                        by = 'interaction')%>%rename('sample'=".")
-          know_unseen_interaction = which(and((compare$raw==0) ,(compare$sample!=0)))
+          # compare$sample[c(5,14)] = 3
+          known_unseen_interaction = which(and((compare$raw==0) ,(compare$sample!=0)))
 
-          if(length(know_unseen_interaction) == 0){ used_length = 0}else{
+          # print(paste0("length of know_unseen_interaction", length(known_unseen_interaction)))
+          if(length(known_unseen_interaction) == 0){ used_length = 0}else{
             used_length = compare%>%filter(raw == 0, sample != 0 )%>%
+              ## note: length_bt have same value over all k
               left_join(cbind(length_bt[,c('net_1')], interaction = rownames(length_bt))%>%
                           as.data.frame()%>%rename("length"="V1"),
-                        by = 'interaction')%>%pull(length)%>%sum()
+                        by = 'interaction')%>%pull(length)%>%as.numeric()%>%sum()
           }
-          L0_hat_k = g0_hat[k] - used_length
+          L0_hat_k = datainfo_each_k[[k]][['g0_k']] - used_length
+          # L0_hat_k = g0_hat[k] - used_length
           return(L0_hat_k)
         })
 
@@ -1598,6 +1602,7 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
         }
         length_bt_average = length_bt%>%rowMeans()%>%as.data.frame()%>%rownames_to_column("interaction")
         ###############
+        ### With obtained sample, we can start to calculate gamma, alpha, beta diversities with data_gamma and data_alpha
         ### 1. aL_table_gamma
         bootstrap_data_gamma = rowSums(x_bt)
         bootstrap_data_gamma = bootstrap_data_gamma[bootstrap_data_gamma>0]
@@ -1624,26 +1629,22 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
           return(aL_table)
         }, future.seed = TRUE)%>%do.call("rbind",.)
 
-
         bootstrap_data_alpha = as.matrix(x_bt) %>% as.vector
         bootstrap_data_alpha = bootstrap_data_alpha[bootstrap_data_alpha>0]
 
-
         m_gamma_bt = sapply(level, function(i) coverage_to_size(bootstrap_data_gamma, i, datatype='abundance'))
         m_alpha_bt = sapply(level, function(i) coverage_to_size(bootstrap_data_alpha, i, datatype='abundance'))
-
 
         get_phylogenetic_alpha_gamma_bootstrap <- function(aL_table_gamma, aL_table_alpha,
                                                            n, m_gamma, m_alpha){
           ## 1. gamma
           gamma <- iNEXTPD2:::PhD.m.est(ai = aL_table_gamma$branch.abun,
                                         Lis = aL_table_gamma$branch.length%>%as.matrix(),m = m_gamma,
-                                        q = q,nt = n,cal = 'PD')%>%
-            t%>% as.vector()
+                                        q = q,nt = n,cal = 'PD')%>%t%>% as.vector()
           ## 2. alpha
           alpha =(PhD:::PhD.m.est(ai = aL_table_alpha$branch.abun, Lis = aL_table_alpha$branch.length%>%as.matrix(),
-                                  m = m_alpha,q = q,nt = n,cal = 'PD')/N)%>%
-            t%>% as.vector()
+                                  m = m_alpha,q = q,nt = n,cal = 'PD')/N)%>%t%>% as.vector()
+          ## 3. beta
           beta_obs = (iNEXT.3D:::PD.Tprofile(ai=aL_table_gamma$branch.abun,
                                              Lis=as.matrix(aL_table_gamma$branch.length),
                                              q=q, nt=n, cal="PD") /
@@ -1687,7 +1688,9 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
         diversity = cbind(gamma, alpha, beta, C, U, V, S) %>% as.matrix
         return(diversity)
 
-      }, future.seed = T)%>%
+        # })%>%
+      })%>%
+        # }, future.seed = T)%>%
         abind(along=3) %>% apply(1:2, sd)
 
 
