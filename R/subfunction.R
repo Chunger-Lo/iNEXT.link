@@ -321,6 +321,9 @@ expanddata <- function(data){
 
 datainfphy <- function(data, row.tree = NULL,col.tree = NULL, datatype){
   if (class(data)!="dataframe") data <- as.data.frame(data)
+
+  rownames(data) = gsub('\\.', '_',rownames(data))
+  colnames(data) = gsub('\\.', '_',colnames(data))
   # if(datatype == "abundance"){
   #   rownames(res) <- c("n", "S.obs","Links.obs","S.obs.row","S.obs.col","Connectance", "Coverage","f1","f2","f3","f4","f5","f6","f7","f8","f9","f10")
   #   rownames(tmp) <- c("n", "S.obs","Links.obs","S.obs.row","S.obs.col","Connectance", "f1*", "f2*", "g1", "g2", "observed PD", "mean_T")
@@ -330,22 +333,22 @@ datainfphy <- function(data, row.tree = NULL,col.tree = NULL, datatype){
   #   rownames(tmp) <- c("n", "S.obs","Links.obs","S.obs.row","S.obs.col","Connectance", "f1*", "f2*", "g1", "g2", "observed PD", "mean_T")
   #   rownames(res) <- c("U", "S.obs","Links.obs","S.obs.row","S.obs.col","Connectance", "Coverage","Q1","Q2","Q3","Q4","Q5","Q6","Q7","Q8","Q9","Q10")
   # }
-  res <- matrix(0,12,1,dimnames=list(1:12, "value"))
-  rownames(res) <- c("n", "S.obs","Links.obs","S.obs.row","S.obs.col","Connectance", "f1*", "f2*", "g1", "g2", "observed PD", "mean_T")
+  res <- matrix(0,11,1,dimnames=list(1:11, "value"))
+  # rownames(res) <- c("n", "S.obs","Links.obs","S.obs.row","S.obs.col","Connectance", "f1*", "f2*", "g1", "g2", "observed PD", "mean_T")
+  rownames(res) <- c("n", "Links.obs","S.obs(row)","S.obs(col)","Connectance", "f1*", "f2*", "g1", "g2", "PD.obs", "mean_T")
 
   res[1,1] <- as.integer(sum(data))
-  res[2,1] <-  sum(ncol(data),nrow(data))
-  res[3,1] <-  sum(data>0)
-  res[4,1] <-  nrow(data)
-  res[5,1] <-  ncol(data)
-  res[6,1] <-  round(sum(data>0)/ncol(data)/nrow(data),4)
-  res[7,1] <-  sum(data == 1)
-  res[8,1] <-  sum(data == 2)
+  res[2,1] <-  sum(data>0)
+  res[3,1] <-  nrow(data)
+  res[4,1] <-  ncol(data)
+  res[5,1] <-  round(sum(data>0)/ncol(data)/nrow(data),4)
+  res[6,1] <-  sum(data == 1)
+  res[7,1] <-  sum(data == 2)
   phy <- create.aili(data,row.tree = row.tree,col.tree = col.tree)
-  res[9,1] <- sum(phy$branch.length[phy$branch.abun==1])
-  res[10,1] <- sum(phy$branch.length[phy$branch.abun==2])
-  res[11,1] <- nrow(phy)
-  res[12,1] <- sum(phy$branch.length*phy$branch.abun)/sum(data)
+  res[8,1] <- sum(phy$branch.length[phy$branch.abun==1])
+  res[9,1] <- sum(phy$branch.length[phy$branch.abun==2])
+  res[10,1] <- nrow(phy)
+  res[11,1] <- sum(phy$branch.length*phy$branch.abun)/sum(data)
 
   res = res%>%t()%>%as.data.frame()
   return(res)

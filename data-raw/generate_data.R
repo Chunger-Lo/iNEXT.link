@@ -65,14 +65,6 @@ treatO = tab_selected%>%filter(treatment == 'O')%>%.[,-c(2,3)]
 
 
 net_treat_plot = list()
-# net_treat_plot[['G']] = list()
-# net_treat_plot[['G']][['A']] = treatG%>%filter(plot == 'A')%>%.[,-1]%>%column_to_rownames('tree_species')%>%.[,speices_name[ind]]
-# net_treat_plot[['G']][['B']] = treatG%>%filter(plot == 'B')%>%.[,-1]%>%column_to_rownames('tree_species')%>%.[,speices_name[ind]]
-# net_treat_plot[['G']][['C']] = treatG%>%filter(plot == 'C')%>%.[,-1]%>%column_to_rownames('tree_species')%>%.[,speices_name[ind]]
-# net_treat_plot[['O']] = list()
-# net_treat_plot[['O']][['A']] = treatO%>%filter(plot == 'A')%>%.[,-1]%>%column_to_rownames('tree_species')%>%.[,speices_name[ind]]
-# net_treat_plot[['O']][['B']] = treatO%>%filter(plot == 'B')%>%.[,-1]%>%column_to_rownames('tree_species')%>%.[,speices_name[ind]]
-# net_treat_plot[['O']][['C']] = treatO%>%filter(plot == 'C')%>%.[,-1]%>%column_to_rownames('tree_species')%>%.[,speices_name[ind]]
 net_treat_plot[['G']] = list()
 net_treat_plot[['G']][['A']] = treatG%>%filter(plot == 'A')%>%.[,-1]%>%column_to_rownames('tree_species')
 net_treat_plot[['G']][['B']] = treatG%>%filter(plot == 'B')%>%.[,-1]%>%column_to_rownames('tree_species')
@@ -90,6 +82,16 @@ beetles_treat_plot_remove_dominance[["data"]] = net_treat_plot
 beetles_treat_plot_remove_dominance[["col.tree"]] = tr
 # usethis::use_data(beetles_treat_plot, overwrite = T)
 usethis::use_data(beetles_treat_plot_remove_dominance, overwrite = T)
+### treat pool
+net_treat_pool = list()
+net_treat_pool[['G']] = treatG%>%.[,-1]%>%group_by(tree_species)%>%summarise_all(sum)%>%column_to_rownames('tree_species')
+net_treat_pool[['O']] = treatO%>%.[,-1]%>%group_by(tree_species)%>%summarise_all(sum)%>%column_to_rownames('tree_species')
+
+beetles_treat_pool = list()
+beetles_treat_pool[["data"]] = net_treat_pool
+beetles_treat_pool[["col.tree"]] = tr
+usethis::use_data(beetles_treat_pool, overwrite = T)
+
 
 
 ## by plot
@@ -118,21 +120,34 @@ beetles_plot_treat_remove_dominance[["data"]] = interactions
 beetles_plot_treat_remove_dominance[["col.tree"]] = tr
 # usethis::use_data(beetles_plot_treat, overwrite = T)
 usethis::use_data(beetles_plot_treat_remove_dominance, overwrite = T)
+### treat pool
+net_plot_pool = list()
+net_plot_pool[['A']] = plotA%>%.[,-1]%>%group_by(tree_species)%>%summarise_all(sum)%>%column_to_rownames('tree_species')
+net_plot_pool[['B']] = plotB%>%.[,-1]%>%group_by(tree_species)%>%summarise_all(sum)%>%column_to_rownames('tree_species')
+net_plot_pool[['C']] = plotC%>%.[,-1]%>%group_by(tree_species)%>%summarise_all(sum)%>%column_to_rownames('tree_species')
+
+beetles_plot_pool = list()
+beetles_plot_pool[["data"]] = net_plot_pool
+beetles_plot_pool[["col.tree"]] = tr
+usethis::use_data(beetles_plot_pool, overwrite = T)
 
 
-# beetles(pool) ----
-treatG = tab_selected%>%filter(treatment == 'G')%>%.[,-c(1,2,3)]
-treatO = tab_selected%>%filter(treatment == 'O')%>%.[,-c(1,2,3)]
 
-treatG_pool = treatG%>%group_by(tree_species)%>%summarize_all(sum)%>%column_to_rownames('tree_species')
-treatO_pool = treatO%>%group_by(tree_species)%>%summarize_all(sum)%>%column_to_rownames('tree_species')
-interactions = list()
-interactions[['G']] = treatG_pool
-interactions[['O']] = treatO_pool
+#
+# # beetles(pool) ----
+# treatG = tab_selected%>%filter(treatment == 'G')%>%.[,-c(1,2,3)]
+# treatO = tab_selected%>%filter(treatment == 'O')%>%.[,-c(1,2,3)]
+#
+# treatG_pool = treatG%>%group_by(tree_species)%>%summarize_all(sum)%>%column_to_rownames('tree_species')
+# treatO_pool = treatO%>%group_by(tree_species)%>%summarize_all(sum)%>%column_to_rownames('tree_species')
+# interactions = list()
+# interactions[['G']] = treatG_pool
+# interactions[['O']] = treatO_pool
+#
+# beetles_pool = list()
+# beetles_pool[["data"]] = interactions
+# beetles_pool[["col.tree"]] = tr
+# usethis::use_data(beetles_pool, overwrite = T)
 
-beetles_pool = list()
-beetles_pool[["data"]] = interactions
-beetles_pool[["col.tree"]] = tr
-usethis::use_data(beetles_pool, overwrite = T)
 
 

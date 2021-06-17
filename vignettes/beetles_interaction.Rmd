@@ -60,7 +60,9 @@ network_list_byplots = list(A_G = network_list[['A']][['G']],
 
 load(file = "..//data//beetles_pool.rda")
 network_list = beetles_pool$data
-
+col.tree = coltree
+row.tree =NULL
+data = network_list
 ```
 
 
@@ -100,7 +102,7 @@ datainf_pool%>%
 
 ```{r, message = F, warning=F}
 bef = Sys.time()
-b = 10
+b = 3
 sample1 <- iNEXT.link(data = network_list, diversity = 'TD', datatype = "abundance", nboot = b)
 asy1 = Asy.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
 obs1 = Obs.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
@@ -109,7 +111,7 @@ spec1 = Spec.link(network_list, q = seq(0,2,1), datatype = "abundance", nboot = 
 # Beta
 dissimilarity_pool = iNEXTbeta.link(data = beetles_pool$data, level = seq(0.5,0.95,0.05),
                                     datatype='abundance',q = c(0, 1, 2), diversity='TD',
-                                    nboot = b, conf = 0.95, max_alpha_coverage=F)
+                                    nboot = b, conf = 0.95)
 
 dissimilarity_byplot = iNEXTbeta.link(data = beetles_plot_treat$data, level = seq(0.5,0.95,0.05),
                                       datatype='abundance',q = c(0, 1, 2),diversity='TD',
@@ -242,7 +244,9 @@ ggiNEXT_beta.link(dissimilarity_bytreat, diversity = 'TD', type = 'B')+
 
 ```{r, message = F, warning=F}
 b =50
-sample2 <- iNEXT.link(x = network_list, diversity = 'PD', datatype = "abundance",
+datainf_phy = DataInfo.link(data = beetles_pool$data, diversity = 'PD', datatype = "abundance",
+              col.tree = coltree, row.tree = rowtree)
+sample2 <- iNEXT.link(data = network_list, diversity = 'PD', datatype = "abundance",
                       nboot = b,col.tree = coltree, row.tree = rowtree)
 
 

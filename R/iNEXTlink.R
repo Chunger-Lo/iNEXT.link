@@ -21,6 +21,10 @@
 DataInfo.link <- function(data, diversity = 'TD', datatype = "abundance", row.tree = NULL,col.tree = NULL){
 
   if(diversity == 'PD'){
+
+    if(!is.null(row.tree)){row.tree$tip.label = gsub('\\.', '_',row.tree$tip.label)}
+    if(!is.null(col.tree)){col.tree$tip.label = gsub('\\.', '_',col.tree$tip.label)}
+
     table <- lapply(data, function(y){datainfphy(data = y, datatype = datatype,
                                                  row.tree = row.tree,col.tree = col.tree)})%>%
       do.call(rbind,.)
@@ -200,6 +204,8 @@ iNEXT.link <- function(data, diversity = 'TD', q = c(0,1,2), datatype = "abundan
     names(res) = c("DataInfo", "iNextEst", "AsyEst")
 
   }else if(diversity == 'PD'){
+    if(!is.null(row.tree)){row.tree$tip.label = gsub('\\.', '_',row.tree$tip.label)}
+    if(!is.null(col.tree)){col.tree$tip.label = gsub('\\.', '_',col.tree$tip.label)}
     ## 1. datainfo
     datainfo = DataInfo.link(data = data, diversity = diversity, datatype = datatype,
                              row.tree = row.tree, col.tree = col.tree)
