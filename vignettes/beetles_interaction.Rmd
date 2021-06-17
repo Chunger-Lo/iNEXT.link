@@ -32,6 +32,8 @@ library(phytools)
 library(magrittr)
 library(chaoUtility)
 library(future.apply)
+library(iNEXT.beta)
+library(iNEXT.link)
 ```
 
 ```{r}
@@ -75,6 +77,11 @@ datainf1%>%separate(col = 'Assemblages', into = c('Plot', 'Treatment'))%>%
 ---
 
 ```{r}
+datainf_pool = DataInfo.link(data = beetles_plot_treat$data, 
+                        diversity = 'TD', datatype = "abundance")
+datainf_pool%>%
+  flextable()
+
 datainf_pool = DataInfo.link(data = network_list, 
                         diversity = 'TD', datatype = "abundance")
 datainf_pool%>%
@@ -100,19 +107,21 @@ obs1 = Obs.link(network_list, diversity = 'TD', q = seq(0,2,0.25),nboot = b)
 sc1 <- SC.link(x = network_list, datatype = "abundance", nboot = b)
 spec1 = Spec.link(network_list, q = seq(0,2,1), datatype = "abundance", nboot = b)
 # Beta
-dissimilarity_pool = iNEXTbeta.link(x = beetles_pool$data, level = seq(0.5,0.95,0.05),
+dissimilarity_pool = iNEXTbeta.link(data = beetles_pool$data, level = seq(0.5,0.95,0.05),
                                     datatype='abundance',q = c(0, 1, 2), diversity='TD',
                                     nboot = b, conf = 0.95, max_alpha_coverage=F)
 
-dissimilarity_byplot = iNEXTbeta.link(x = beetles_plot_treat$data, level = seq(0.5,0.95,0.05),datatype='abundance',q = c(0, 1, 2),diversity='TD',
-                                 nboot = b, conf = 0.95, max_alpha_coverage=F)
+dissimilarity_byplot = iNEXTbeta.link(data = beetles_plot_treat$data, level = seq(0.5,0.95,0.05),
+                                      datatype='abundance',q = c(0, 1, 2),diversity='TD',
+                                 nboot = b, conf = 0.95)
 
-dissimilarity_bytreat = iNEXTbeta.link(x = beetles_treat_plot$data, level = seq(0.5,0.95,0.05),datatype='abundance',q = c(0, 1, 2),diversity='TD',
-                                 nboot = b, conf = 0.95, max_alpha_coverage=F)
+dissimilarity_bytreat = iNEXTbeta.link(data = beetles_treat_plot$data, level = seq(0.5,0.95,0.05),
+                                       datatype='abundance',q = c(0, 1, 2),diversity='TD',
+                                       nboot = b, conf = 0.95)
 
 # save(sample1, asy1, obs1, sc1, spec1, dissimilarity_pool, dissimilarity_byplot,dissimilarity_bytreat,
 #      file = "output//taxonomic.RData")
-# load("output//taxonomic.RData")
+load("output//taxonomic.RData")
 ```
 
 
@@ -195,18 +204,19 @@ c. Treatment-wise: 給定不同的Treatment(G,0)下, plot A,B,C間的相異程�
 #### Compare treatment G and O with pooled abundance
 
 ```{r,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta.link(dissimilarity_pool, type = 'B')
+ggiNEXTbeta.link(dissimilarity_pool, type = 'B')
 ```
 
 #### Plot-wise comparison
 ```{r,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta.link(dissimilarity_byplot, type = 'B')
+ggiNEXTbeta.link(dissimilarity_byplot, type = 'B')
+ggiNEXTbeta.link(dissimilarity_bytreat, type = 'B')
 ```
 
 
 ### Take a closer look (indivisually scaling)
 ```{r,fig.width=7, fig.height=4, fig.align="center",warning=FALSE}
-ggiNEXT_beta.link(dissimilarity_byplot, diversity = 'TD', type = 'B')+
+ggiNEXTbeta.link(dissimilarity_byplot, diversity = 'TD', type = 'B')+
   facet_wrap(div_type~Order, scale = 'free') +
   theme(legend.position = "bottom", legend.title = element_blank(),
         strip.text.x = element_blank())

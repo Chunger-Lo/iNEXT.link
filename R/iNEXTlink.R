@@ -25,11 +25,11 @@ DataInfo.link <- function(data, diversity = 'TD', datatype = "abundance", row.tr
                                                  row.tree = row.tree,col.tree = col.tree)})%>%
       do.call(rbind,.)
     rownames(table) <- names(data)
-    table = tibble::rownames_to_column(table, var = "Assemblages")
+    table = tibble::rownames_to_column(table, var = "Networks")
   }else if(diversity == 'TD'){
     table <- lapply(data, function(y){datainf(data = y, datatype = datatype)})%>%do.call(rbind,.)
     rownames(table) <- names(data)
-    table = tibble::rownames_to_column(table, var = "Assemblages")
+    table = tibble::rownames_to_column(table, var = "Networks")
   }
   return(table)
 

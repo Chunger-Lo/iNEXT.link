@@ -352,26 +352,28 @@ datainfphy <- function(data, row.tree = NULL,col.tree = NULL, datatype){
 }
 datainf <- function(data, datatype){
   if (class(data)!="dataframe") data <- as.data.frame(data)
-  res <- matrix(0,17,1,dimnames=list(1:17, "value"))
+  res <- matrix(0,16,1,dimnames=list(1:16, "value"))
 
   if(datatype == "abundance"){
-    rownames(res) <- c("n", "S.obs","Links.obs","S.obs.row","S.obs.col","Connectance", "Coverage","f1","f2","f3","f4","f5","f6","f7","f8","f9","f10")
+    rownames(res) <- c("n", "S.obs(row)","S.obs(col)","Links.obs","Connectance", "Coverage","f1","f2","f3","f4","f5","f6","f7","f8","f9","f10")
+    # rownames(res) <- c("n", "S.obs","Links.obs","S.obs.row","S.obs.col","Connectance", "Coverage","f1","f2","f3","f4","f5","f6","f7","f8","f9","f10")
   }
   if(datatype == "incidence_freq"){
     rownames(res) <- c("U", "S.obs","Links.obs","S.obs.row","S.obs.col","Connectance", "Coverage","Q1","Q2","Q3","Q4","Q5","Q6","Q7","Q8","Q9","Q10")
   }
+  res[]
 
   res[1,1] <- as.integer(sum(data))
-  res[2,1] <-  sum(ncol(data),nrow(data))
-  res[3,1] <-  sum(data>0)
-  res[4,1] <-  nrow(data)
-  res[5,1] <-  ncol(data)
-  res[6,1] <-  round(sum(data>0)/ncol(data)/nrow(data),4)
-  res[8:17,1] <- c(sum(data==1),sum(data==2),sum(data==3),sum(data==4),sum(data==5),sum(data==6),sum(data==7),sum(data==8),sum(data==9),sum(data==10))
+  # res[2,1] <-  sum(ncol(data),nrow(data))
+  res[2,1] <-  sum(data>0)
+  res[3,1] <-  nrow(data)
+  res[4,1] <-  ncol(data)
+  res[5,1] <-  round(sum(data>0)/ncol(data)/nrow(data),4)
+  res[7:16,1] <- c(sum(data==1),sum(data==2),sum(data==3),sum(data==4),sum(data==5),sum(data==6),sum(data==7),sum(data==8),sum(data==9),sum(data==10))
   f1 = sum(data==1)
   f2 = sum(data==2)
   n = sum(data)
-  res[7,1] <- round(1 - (f1/n)*((n-1)*f1/((n-1)*f1+2*f2)),4) #C.hat
+  res[6,1] <- round(1 - (f1/n)*((n-1)*f1/((n-1)*f1+2*f2)),4) #C.hat
 
   res = res%>%t()%>%as.data.frame()
   return(res)

@@ -32,7 +32,8 @@ load(file = "data-raw//beetles//for_anne.rda")
 tab_selected = tab[,-c(1,2,3,8,9)]
 #Tilia_cordata  $Ernoporus_tiliae
 
-### temp changetab_selected[tab_selected$tree_species=="Tilia_cordata","Ernoporus.tiliae"] = 0
+### temp change
+tab_selected[tab_selected$tree_species=="Tilia_cordata","Ernoporus.tiliae"] = 0
 ###
 colnames(tab_selected) = colnames(tab_selected)%>%str_replace_all('\\.','_')
 
@@ -42,8 +43,6 @@ colnames(tab_selected) = colnames(tab_selected)%>%str_replace_all('\\.','_')
 # ind = sapply(speices_name, function(name){
 #   name%in%tr$tip.label
 # })
-
-
 
 names(tab_selected) <- gsub("Anobium_fulvicorne", "Hemicoelus_fulvicornis", names(tab_selected))
 names(tab_selected) <- gsub("Xyleborus_saxesenii", "Xyleborinus_saxesenii", names(tab_selected))
@@ -83,10 +82,14 @@ net_treat_plot[['O']][['A']] = treatO%>%filter(plot == 'A')%>%.[,-1]%>%column_to
 net_treat_plot[['O']][['B']] = treatO%>%filter(plot == 'B')%>%.[,-1]%>%column_to_rownames('tree_species')
 net_treat_plot[['O']][['C']] = treatO%>%filter(plot == 'C')%>%.[,-1]%>%column_to_rownames('tree_species')
 
-beetles_treat_plot = list()
-beetles_treat_plot[["data"]] = net_treat_plot
-beetles_treat_plot[["col.tree"]] = tr
-usethis::use_data(beetles_treat_plot, overwrite = T)
+# beetles_treat_plot = list()
+# beetles_treat_plot[["data"]] = net_treat_plot
+# beetles_treat_plot[["col.tree"]] = tr
+beetles_treat_plot_remove_dominance = list()
+beetles_treat_plot_remove_dominance[["data"]] = net_treat_plot
+beetles_treat_plot_remove_dominance[["col.tree"]] = tr
+# usethis::use_data(beetles_treat_plot, overwrite = T)
+usethis::use_data(beetles_treat_plot_remove_dominance, overwrite = T)
 
 
 ## by plot
@@ -110,7 +113,12 @@ interactions[['C']][['O']] = plotC%>%filter(treatment == 'O')%>%.[,-1]%>%column_
 beetles_plot_treat = list()
 beetles_plot_treat[["data"]] = interactions
 beetles_plot_treat[["col.tree"]] = tr
-usethis::use_data(beetles_plot_treat, overwrite = T)
+beetles_plot_treat_remove_dominance = list()
+beetles_plot_treat_remove_dominance[["data"]] = interactions
+beetles_plot_treat_remove_dominance[["col.tree"]] = tr
+# usethis::use_data(beetles_plot_treat, overwrite = T)
+usethis::use_data(beetles_plot_treat_remove_dominance, overwrite = T)
+
 
 # beetles(pool) ----
 treatG = tab_selected%>%filter(treatment == 'G')%>%.[,-c(1,2,3)]
