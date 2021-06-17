@@ -335,12 +335,13 @@ datainfphy <- function(data, row.tree = NULL,col.tree = NULL, datatype){
   # }
   res <- matrix(0,11,1,dimnames=list(1:11, "value"))
   # rownames(res) <- c("n", "S.obs","Links.obs","S.obs.row","S.obs.col","Connectance", "f1*", "f2*", "g1", "g2", "observed PD", "mean_T")
-  rownames(res) <- c("n", "Links.obs","S.obs(row)","S.obs(col)","Connectance", "f1*", "f2*", "g1", "g2", "PD.obs", "mean_T")
+  rownames(res) <- c("n", "S.obs(row)","S.obs(col)","Links.obs","Connectance", "f1*", "f2*", "g1", "g2", "PD.obs", "mean_T")
 
   res[1,1] <- as.integer(sum(data))
-  res[2,1] <-  sum(data>0)
-  res[3,1] <-  nrow(data)
-  res[4,1] <-  ncol(data)
+  res[2,1] <-  nrow(data)
+  res[3,1] <-  ncol(data)
+  res[4,1] <-  sum(data>0)
+
   res[5,1] <-  round(sum(data>0)/ncol(data)/nrow(data),4)
   res[6,1] <-  sum(data == 1)
   res[7,1] <-  sum(data == 2)
@@ -362,15 +363,15 @@ datainf <- function(data, datatype){
     # rownames(res) <- c("n", "S.obs","Links.obs","S.obs.row","S.obs.col","Connectance", "Coverage","f1","f2","f3","f4","f5","f6","f7","f8","f9","f10")
   }
   if(datatype == "incidence_freq"){
-    rownames(res) <- c("U", "S.obs","Links.obs","S.obs.row","S.obs.col","Connectance", "Coverage","Q1","Q2","Q3","Q4","Q5","Q6","Q7","Q8","Q9","Q10")
+    rownames(res) <- c("U", "S.obs(row)","S.obs(col)","Links.obs","S.obs.col","Connectance", "Coverage","Q1","Q2","Q3","Q4","Q5","Q6","Q7","Q8","Q9","Q10")
   }
   res[]
 
   res[1,1] <- as.integer(sum(data))
   # res[2,1] <-  sum(ncol(data),nrow(data))
-  res[2,1] <-  sum(data>0)
-  res[3,1] <-  nrow(data)
-  res[4,1] <-  ncol(data)
+  res[2,1] <-  nrow(data)
+  res[3,1] <-  ncol(data)
+  res[4,1] <-  sum(data>0)
   res[5,1] <-  round(sum(data>0)/ncol(data)/nrow(data),4)
   res[7:16,1] <- c(sum(data==1),sum(data==2),sum(data==3),sum(data==4),sum(data==5),sum(data==6),sum(data==7),sum(data==8),sum(data==9),sum(data==10))
   f1 = sum(data==1)
