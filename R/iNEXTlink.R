@@ -414,7 +414,7 @@ ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var
             legend.title=element_blank(), strip.text = element_text(size = stript.size),
             text=element_text(size=text.size),
             legend.key.width = unit(0.8,"cm"))  +
-      labs(y = "Phylogenetic network diversity", lty = "Method")
+      labs(y = "Phylogenetic diversity", lty = "Method")
     # if(grey){
     #   g <- g +
     #     scale_fill_grey(start = 0, end = .4) +
@@ -709,7 +709,7 @@ Asy.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abu
       filter(method == "Estimate")%>%
       mutate(method = ifelse(method == 'Estimate','Estimated',method ))%>%
       dplyr::select(Order.q, Estimate, LCL, UCL, Region, method )%>%
-      set_colnames(c('Order.q', 'qD', 'qD.LCL','qD.UCL', 'Network', 'Method'))
+      set_colnames(c('Order.q', 'qPD', 'qPD.LCL','qPD.UCL', 'Network', 'Method'))
 
     return(NetDiv)
   }
@@ -775,7 +775,7 @@ Obs.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abu
                             col.tree = col.tree,conf = conf)%>%
       filter(method == "Empirical")%>%
       dplyr::select(Order.q, Estimate, LCL, UCL, Region, method )%>%
-      set_colnames(c('Order.q', 'qD', 'qD.LCL','qD.UCL', 'Network', 'Method'))
+      set_colnames(c('Order.q', 'qPD', 'qPD.LCL','qPD.UCL', 'Network', 'Method'))
 
     return(NetDiv)
   }
@@ -804,26 +804,36 @@ Obs.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abu
 #' }
 
 #' @export
-ggObs.link <- function(outcome, text.size = 14){
+ggObs.link <- function(outcome, diversity = 'TD', text.size = 14){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
-  # if (sum(unique(outcome$method) %in% c("Estimated", "Empirical")) == 0)
-  #   stop("Please use the outcome from specified function 'AsyD'")
-
-  ggplot(outcome, aes(x = Order.q, y = qD, colour = Network, lty = Method)) +
-    geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
-    geom_ribbon(data = outcome[outcome$method == "Empirical", ],
-                aes(ymin = qD.LCL, ymax = qD.UCL, fill = Network), alpha = 0.2, linetype = 0) +
-    scale_fill_manual(values = cbPalette) +
-    scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
-    labs(x = "Order q", y = "Network diversity") + theme(text = element_text(size = 10)) +
-    theme(legend.position = "bottom", legend.box = "vertical",
-          legend.key.width = unit(1.1, "cm"), legend.title = element_blank(),
-          legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10),
-          text = element_text(size = text.size)
-    )
-
-  # +labs(x = "Order q", y = "Network phylogenetic diversity", lty = "Method") + scale_linetype_manual(values=c("dashed","solid"))
+  if(diversity == 'TD'){
+    ggplot(outcome, aes(x = Order.q, y = qD, colour = Network, lty = Method)) +
+      geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
+      geom_ribbon(data = outcome[outcome$method == "Empirical", ],
+                  aes(ymin = qD.LCL, ymax = qD.UCL, fill = Network), alpha = 0.2, linetype = 0) +
+      scale_fill_manual(values = cbPalette) +
+      scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
+      labs(x = "Order q", y = "Taxonomic diversity") + theme(text = element_text(size = 10)) +
+      theme(legend.position = "bottom", legend.box = "vertical",
+            legend.key.width = unit(1.1, "cm"), legend.title = element_blank(),
+            legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10),
+            text = element_text(size = text.size)
+      )
+  }else if(diversity == 'PD'){
+    ggplot(outcome, aes(x = Order.q, y = qPD, colour = Network, lty = Method)) +
+      geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
+      geom_ribbon(data = outcome[outcome$method == "Empirical", ],
+                  aes(ymin = qPD.LCL, ymax = qPD.UCL, fill = Network), alpha = 0.2, linetype = 0) +
+      scale_fill_manual(values = cbPalette) +
+      scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
+      labs(x = "Order q", y = "Phylogenetic diversity") + theme(text = element_text(size = 10)) +
+      theme(legend.position = "bottom", legend.box = "vertical",
+            legend.key.width = unit(1.1, "cm"), legend.title = element_blank(),
+            legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10),
+            text = element_text(size = text.size)
+      )
+  }
 }
 # ggAsy.link -------------------------------------------------------------------
 #' ggplot for Asymptotic Network diversity
@@ -847,24 +857,38 @@ ggObs.link <- function(outcome, text.size = 14){
 #' ggAsy.link(out2)
 #' }
 #' @export
-ggAsy.link <- function(outcome, text.size = 14){
+ggAsy.link <- function(outcome, diversity = 'TD', text.size = 14){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
-  # if (sum(unique(outcome$method) %in% c("Estimate", "Empirical")) == 0)
-  #   stop("Please use the outcome from specified function 'AsyD'")
+  if(diversity == 'TD'){
+    ggplot(outcome, aes(x = Order.q, y = qD, colour = Network, lty = Method)) +
+      geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
+      geom_ribbon(data = outcome[outcome$method == "Estimated", ],
+                  aes(ymin = qD.LCL, ymax = qD.UCL, fill = Network), alpha = 0.2, linetype = 0) +
+      scale_fill_manual(values = cbPalette) +
+      scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
+      labs(x = "Order q", y = "Taxonomic diversity") + theme(text = element_text(size = 10)) +
+      theme(legend.position = "bottom", legend.box = "vertical",
+            legend.key.width = unit(1.1, "cm"), legend.title = element_blank(),
+            legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10),
+            text = element_text(size = text.size)
+      )
+  }else if(diversity == 'PD'){
+    ggplot(outcome, aes(x = Order.q, y = qPD, colour = Network, lty = Method)) +
+      geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
+      geom_ribbon(data = outcome[outcome$method == "Estimated", ],
+                  aes(ymin = qPD.LCL, ymax = qPD.UCL, fill = Network), alpha = 0.2, linetype = 0) +
+      scale_fill_manual(values = cbPalette) +
+      scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
+      labs(x = "Order q", y = "Phylogenetic diversity") + theme(text = element_text(size = 10)) +
+      theme(legend.position = "bottom", legend.box = "vertical",
+            legend.key.width = unit(1.1, "cm"), legend.title = element_blank(),
+            legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10),
+            text = element_text(size = text.size)
+      )
+  }
 
-  ggplot(outcome, aes(x = Order.q, y = qD, colour = Network, lty = Method)) +
-    geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
-    geom_ribbon(data = outcome[outcome$method == "Estimated", ],
-                aes(ymin = qD.LCL, ymax = qD.UCL, fill = Network), alpha = 0.2, linetype = 0) +
-    scale_fill_manual(values = cbPalette) +
-    scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
-    labs(x = "Order q", y = "Network diversity") + theme(text = element_text(size = 10)) +
-    theme(legend.position = "bottom", legend.box = "vertical",
-          legend.key.width = unit(1.1, "cm"), legend.title = element_blank(),
-          legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10),
-          text = element_text(size = text.size)
-    )
+
 
   # +labs(x = "Order q", y = "Network phylogenetic diversity", lty = "Method") + scale_linetype_manual(values=c("dashed","solid"))
 }
@@ -1134,13 +1158,13 @@ Spec.link <- function(data, q = seq(0, 2, 0.2),
     Spec <- lapply(E.class, function(e){
       each_class = lapply(seq_along(long), function(i){
         res = iNEXT.4steps::Evenness(long[[i]], q = q,datatype = datatype,
-                                     method = method, nboot=nboot, E.class = e, C = C)%>%
-          rename('Network'="Assemblage")
+                                     method = method, nboot=nboot, E.class = e, C = C)
         res['Coverage'] = NULL
         res = lapply(res, function(each_class){
           each_class%>%
             mutate(Evenness = 1-Evenness, Even.LCL = 1-Even.LCL, Even.UCL = 1-Even.UCL)%>%
-            rename('Specialization'='Evenness', 'Spec.LCL' ='Even.LCL', 'Spec.UCL' ='Even.UCL')%>%
+            rename('Network'="Assemblage", 'Specialization'='Evenness',
+                   'Spec.LCL' ='Even.LCL', 'Spec.UCL' ='Even.UCL')%>%
             mutate(Network = names(long)[[i]])
         })
         # if(method == "Empirical") index = 1
@@ -1303,14 +1327,14 @@ ggSpec.link <- function(outcome){
   classdata = cbind(do.call(rbind, outcome))
 
   fig = classdata%>%
-    ggplot(aes(x=Order.q, y=Specialization, colour=Assemblage, lty = Method)) +
+    ggplot(aes(x=Order.q, y=Specialization, colour=Network, lty = Method)) +
     geom_line(size=1.2) +
     scale_colour_manual(values = cbPalette) +
     geom_ribbon(data = classdata %>% filter(Method=="Estimated"),
-                aes(ymin=Spec.LCL, ymax=Spec.UCL, fill=Assemblage),
+                aes(ymin=Spec.LCL, ymax=Spec.UCL, fill=Network),
                 alpha=0.2, linetype=0) +
     geom_ribbon(data = classdata %>% filter(Method=="Empirical"),
-                aes(ymin=Spec.LCL, ymax=Spec.UCL, fill=Assemblage),
+                aes(ymin=Spec.LCL, ymax=Spec.UCL, fill=Network),
                 alpha=0.2, linetype=0) +
     scale_fill_manual(values = cbPalette) +
     labs(x="Order q", y="Specialization") +

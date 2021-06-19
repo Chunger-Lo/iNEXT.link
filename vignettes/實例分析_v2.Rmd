@@ -206,7 +206,7 @@ load("output//puerto.rico//phylogenetic.RData")
 ### 1.Asymptotic/ Empirical diversity
 
 ```{r}
-ggAsy.link(rbind(obs2, asy2))
+ggAsy.link(rbind(obs2, asy2), diversity = 'PD')
 ```
 ```{r}
 rbind(obs2, asy2)%>%
