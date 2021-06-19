@@ -44,8 +44,6 @@ long_to_wide = function(data_long = data_gamma){
 create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
 
   if (class(data)[1] != "matrix") { data <- as.matrix(data) }
-  rownames()
-
 
   if ((is.null(row.tree)) == 0 & (is.null(col.tree) == 1)){
     tip <- row.tree$tip.label[-match(rownames(data),row.tree$tip.label)]
