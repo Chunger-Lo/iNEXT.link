@@ -44,6 +44,8 @@ long_to_wide = function(data_long = data_gamma){
 create.aili <- function(data,row.tree = NULL,col.tree = NULL) {
 
   if (class(data)[1] != "matrix") { data <- as.matrix(data) }
+  rownames()
+
 
   if ((is.null(row.tree)) == 0 & (is.null(col.tree) == 1)){
     tip <- row.tree$tip.label[-match(rownames(data),row.tree$tip.label)]
@@ -338,17 +340,17 @@ datainfphy <- function(data, row.tree = NULL,col.tree = NULL, datatype){
   rownames(res) <- c("n", "S.obs(row)","S.obs(col)","Links.obs","Connectance", "f1*", "f2*", "g1", "g2", "PD.obs", "mean_T")
 
   res[1,1] <- as.integer(sum(data))
-  res[2,1] <-  nrow(data)
-  res[3,1] <-  ncol(data)
-  res[4,1] <-  sum(data>0)
+  res[2,1] <-  nrow(data)%>%as.integer()
+  res[3,1] <-  ncol(data)%>%as.integer()
+  res[4,1] <-  sum(data>0)%>%as.integer()
 
   res[5,1] <-  round(sum(data>0)/ncol(data)/nrow(data),4)
-  res[6,1] <-  sum(data == 1)
-  res[7,1] <-  sum(data == 2)
+  res[6,1] <-  sum(data == 1)%>%as.integer()
+  res[7,1] <-  sum(data == 2)%>%as.integer()
   phy <- create.aili(data,row.tree = row.tree,col.tree = col.tree)
   res[8,1] <- sum(phy$branch.length[phy$branch.abun==1])
   res[9,1] <- sum(phy$branch.length[phy$branch.abun==2])
-  res[10,1] <- nrow(phy)
+  res[10,1] <- nrow(phy)%>%as.integer()
   res[11,1] <- sum(phy$branch.length*phy$branch.abun)/sum(data)
 
   res = res%>%t()%>%as.data.frame()
@@ -369,14 +371,15 @@ datainf <- function(data, datatype){
 
   res[1,1] <- as.integer(sum(data))
   # res[2,1] <-  sum(ncol(data),nrow(data))
-  res[2,1] <-  nrow(data)
-  res[3,1] <-  ncol(data)
-  res[4,1] <-  sum(data>0)
+  res[2,1] <-  nrow(data)%>%as.integer()
+  res[3,1] <-  ncol(data)%>%as.integer()
+  res[4,1] <-  sum(data>0)%>%as.integer()
   res[5,1] <-  round(sum(data>0)/ncol(data)/nrow(data),4)
-  res[7:16,1] <- c(sum(data==1),sum(data==2),sum(data==3),sum(data==4),sum(data==5),sum(data==6),sum(data==7),sum(data==8),sum(data==9),sum(data==10))
-  f1 = sum(data==1)
-  f2 = sum(data==2)
-  n = sum(data)
+  res[7:16,1] <- c(sum(data==1),sum(data==2),sum(data==3),sum(data==4),sum(data==5),
+                   sum(data==6),sum(data==7),sum(data==8),sum(data==9),sum(data==10))%>%as.integer()
+  f1 = sum(data==1)%>%as.integer()
+  f2 = sum(data==2)%>%as.integer()
+  n = sum(data)%>%as.integer()
   res[6,1] <- round(1 - (f1/n)*((n-1)*f1/((n-1)*f1+2*f2)),4) #C.hat
 
   res = res%>%t()%>%as.data.frame()
@@ -610,6 +613,7 @@ get.netphydiv <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf, PDtype 
 }
 
 get.netphydiv_iNE <- function(data,q,B,row.tree = NULL,col.tree = NULL,conf, knots = 40, PDtype = 'PD') {
+  if(is.null(knots)){knots = 40}
   q <- unique(ceiling(q))
   ci <- qnorm(conf/2+0.5)
   inex <- function(data,q,B,row.tree = NULL,col.tree = NULL) {

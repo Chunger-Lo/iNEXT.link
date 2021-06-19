@@ -66,7 +66,8 @@ SC.link <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30
   data_long <- lapply(data, function(tab){
     as.matrix(tab)%>%c()}
   )
-  res = iNEXT.4steps::SC(data = data_long, q = q, datatype = datatype, nboot = nboot, conf = conf)
+  res = iNEXT.4steps::SC(data = data_long, q = q, datatype = datatype, nboot = nboot, conf = conf)%>%
+    rename('Network'='Assemblage')
   return(res)
 }
 
@@ -87,9 +88,9 @@ SC.link <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30
 ggSC.link <- function(outcome){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
-  ggplot(outcome, aes(x = Order.q, y = Estimate.SC, colour = Assemblage)) +
+  ggplot(outcome, aes(x = Order.q, y = Estimate.SC, colour = Network)) +
     geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
-    geom_ribbon(aes(ymin = SC.LCL, ymax = SC.UCL, fill = Assemblage),
+    geom_ribbon(aes(ymin = SC.LCL, ymax = SC.UCL, fill = Network),
                 alpha = 0.2, linetype = 0) + scale_fill_manual(values = cbPalette) +
     labs(x = "Order q", y = "Sample completeness") + theme(text = element_text(size = 12)) +
     theme(legend.position = "bottom", legend.box = "vertical",
@@ -206,6 +207,15 @@ iNEXT.link <- function(data, diversity = 'TD', q = c(0,1,2), datatype = "abundan
   }else if(diversity == 'PD'){
     if(!is.null(row.tree)){row.tree$tip.label = gsub('\\.', '_',row.tree$tip.label)}
     if(!is.null(col.tree)){col.tree$tip.label = gsub('\\.', '_',col.tree$tip.label)}
+
+    if(class(data) == 'list'){
+      data = lapply(data, function(net){
+        rownames(net) = gsub('\\.', '_', rownames(net))
+        colnames(net) = gsub('\\.', '_', colnames(net))
+        return(net)
+      })
+    }
+
     ## 1. datainfo
     datainfo = DataInfo.link(data = data, diversity = diversity, datatype = datatype,
                              row.tree = row.tree, col.tree = col.tree)
@@ -346,10 +356,10 @@ iNEXTbeta.link = function(data, diversity = 'TD', level = seq(0.5, 1, 0.5), data
 #' ggiNEXT.link(outcome = out2, type = 3)
 #' }
 #' @export
-ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var = "Assemblage",
-                         color.var = "Order.q", text.size = 12, stript.size = 12){
+ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var = "Order.q",
+                         color.var = "Assemblage", text.size = 12, stript.size = 12){
   if(diversity == 'TD'){
-    iNEXT.3D::ggiNEXT3D(outcome, type = type)
+    iNEXT.3D::ggiNEXT3D(outcome, type = type, facet.var = facet.var, color.var = color.var)
 
   }else if(diversity == 'PD'){
     # output = outcome

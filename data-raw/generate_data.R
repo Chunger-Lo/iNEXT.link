@@ -14,7 +14,13 @@ Cialitos <- read.table("data-raw//puerto.rico//Cialitos.txt")
 Cordillera <- read.table("data-raw//puerto.rico//Cordillera.txt")
 Fronton <- read.table("data-raw//puerto.rico//Fronton.txt")
 data <- list(Cordillera = Cordillera,Caguana = Caguana,Fronton = Fronton,Cialitos = Cialitos)
-puerto.rico <- list(Cordillera = Cordillera,Caguana = Caguana,Fronton = Fronton,Cialitos = Cialitos)
+
+
+# data_compare <- list("Caguana & Cialitos" = list(Caguana, Cialitos),
+#                      "Caguana & Cordillera" = list(Caguana, Cordillera),
+#                      "Caguana & Fronton" = list(Caguana, Fronton))
+data_compare <- list("Caguana & Cordillera" = list(Caguana, Cordillera),
+                     "Cialitos & Fronton" = list(Cialitos, Fronton))
 
 
 rowtree <- read.newick("data-raw//puerto.rico//rowtree.txt")
@@ -25,6 +31,12 @@ puerto.rico[["data"]] = data
 puerto.rico[["col.tree"]] = coltree
 puerto.rico[["row.tree"]] = rowtree
 usethis::use_data(puerto.rico, overwrite = T)
+
+puerto.rico_pair = list()
+puerto.rico_pair[["data"]] = data_compare
+puerto.rico_pair[["col.tree"]] = coltree
+puerto.rico_pair[["row.tree"]] = rowtree
+usethis::use_data(puerto.rico_pair, overwrite = T)
 
 # Beetles interaction ----
 # load(file = "data-raw//beetles//beetles_tree.rda")
@@ -37,13 +49,6 @@ tab_selected[tab_selected$tree_species=="Tilia_cordata","Ernoporus.tiliae"] = 0
 ###
 colnames(tab_selected) = gsub('\\.', '_',colnames(tab_selected))
 tab_selected$tree_species= gsub('\\.', '_',tab_selected$tree_species)
-
-# speices_name = tab_selected%>%colnames()%>%
-#   .[5:length(.)]
-#
-# ind = sapply(speices_name, function(name){
-#   name%in%tr$tip.label
-# })
 
 names(tab_selected) <- gsub("Anobium_fulvicorne", "Hemicoelus_fulvicornis", names(tab_selected))
 names(tab_selected) <- gsub("Xyleborus_saxesenii", "Xyleborinus_saxesenii", names(tab_selected))
@@ -64,7 +69,7 @@ treatG = tab_selected%>%filter(treatment == 'G')%>%.[,-c(2,3)]
 treatO = tab_selected%>%filter(treatment == 'O')%>%.[,-c(2,3)]
 
 
-
+### *treat -> plot ----
 net_treat_plot = list()
 net_treat_plot[['G']] = list()
 net_treat_plot[['G']][['A']] = treatG%>%filter(plot == 'A')%>%.[,-1]%>%column_to_rownames('tree_species')
@@ -80,11 +85,11 @@ beetles_treat_plot[["data"]] = net_treat_plot
 beetles_treat_plot[["col.tree"]] = tr
 usethis::use_data(beetles_treat_plot, overwrite = T)
 
-beetles_treat_plot_remove_dominance = list()
-beetles_treat_plot_remove_dominance[["data"]] = net_treat_plot
-beetles_treat_plot_remove_dominance[["col.tree"]] = tr
+beetles_treat_plot_remove = list()
+beetles_treat_plot_remove[["data"]] = net_treat_plot
+beetles_treat_plot_remove[["col.tree"]] = tr
 # usethis::use_data(beetles_treat_plot, overwrite = T)
-usethis::use_data(beetles_treat_plot_remove_dominance, overwrite = T)
+usethis::use_data(beetles_treat_plot_remove, overwrite = T)
 ### treat pool
 net_treat_pool = list()
 net_treat_pool[['G']] = treatG%>%.[,-1]%>%group_by(tree_species)%>%summarise_all(sum)%>%column_to_rownames('tree_species')
@@ -101,7 +106,7 @@ beetles_treat_pool_remove[["col.tree"]] = tr
 usethis::use_data(beetles_treat_pool_remove, overwrite = T)
 
 
-
+### *plot -> treat ----
 ## by plot
 plotA = tab_selected%>%filter(plot == 'A')%>%.[,-c(1,3)]
 plotB = tab_selected%>%filter(plot == 'B')%>%.[,-c(1,3)]
@@ -123,14 +128,14 @@ interactions[['C']][['O']] = plotC%>%filter(treatment == 'O')%>%.[,-1]%>%column_
 beetles_plot_treat = list()
 beetles_plot_treat[["data"]] = interactions
 beetles_plot_treat[["col.tree"]] = tr
-
-beetles_plot_treat_remove_dominance = list()
-beetles_plot_treat_remove_dominance[["data"]] = interactions
-beetles_plot_treat_remove_dominance[["col.tree"]] = tr
 usethis::use_data(beetles_plot_treat, overwrite = T)
-usethis::use_data(beetles_plot_treat_remove_dominance, overwrite = T)
 
-### treat pool
+beetles_plot_treat_remove = list()
+beetles_plot_treat_remove[["data"]] = interactions
+beetles_plot_treat_remove[["col.tree"]] = tr
+usethis::use_data(beetles_plot_treat_remove, overwrite = T)
+
+### plot pool
 net_plot_pool = list()
 net_plot_pool[['A']] = plotA%>%.[,-1]%>%group_by(tree_species)%>%summarise_all(sum)%>%column_to_rownames('tree_species')
 net_plot_pool[['B']] = plotB%>%.[,-1]%>%group_by(tree_species)%>%summarise_all(sum)%>%column_to_rownames('tree_species')
