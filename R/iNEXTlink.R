@@ -205,6 +205,7 @@ iNEXT.link <- function(data, diversity = 'TD', q = c(0,1,2), datatype = "abundan
     names(res) = c("DataInfo", "iNextEst", "AsyEst")
 
   }else if(diversity == 'PD'){
+
     if(!is.null(row.tree)){row.tree$tip.label = gsub('\\.', '_',row.tree$tip.label)}
     if(!is.null(col.tree)){col.tree$tip.label = gsub('\\.', '_',col.tree$tip.label)}
 
@@ -214,6 +215,9 @@ iNEXT.link <- function(data, diversity = 'TD', q = c(0,1,2), datatype = "abundan
         colnames(net) = gsub('\\.', '_', colnames(net))
         return(net)
       })
+    }else if(class(data) == 'data.frame'){
+      rownames(data) = gsub('\\.', '_', rownames(data))
+      colnames(data) = gsub('\\.', '_', colnames(data))
     }
 
     ## 1. datainfo
@@ -359,7 +363,8 @@ iNEXTbeta.link = function(data, diversity = 'TD', level = seq(0.5, 1, 0.5), data
 ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var = "Order.q",
                          color.var = "Assemblage", text.size = 12, stript.size = 12){
   if(diversity == 'TD'){
-    iNEXT.3D::ggiNEXT3D(outcome, type = type, facet.var = facet.var, color.var = color.var)
+    iNEXT.3D::ggiNEXT3D(outcome, type = type, facet.var = facet.var, color.var = color.var)+
+      ylab("Taxonomic diversity")
 
   }else if(diversity == 'PD'){
     # output = outcome
@@ -1129,13 +1134,14 @@ Spec.link <- function(data, q = seq(0, 2, 0.2),
     Spec <- lapply(E.class, function(e){
       each_class = lapply(seq_along(long), function(i){
         res = iNEXT.4steps::Evenness(long[[i]], q = q,datatype = datatype,
-                                     method = method, nboot=nboot, E.class = e, C = C)
+                                     method = method, nboot=nboot, E.class = e, C = C)%>%
+          rename('Network'="Assemblage")
         res['Coverage'] = NULL
         res = lapply(res, function(each_class){
           each_class%>%
             mutate(Evenness = 1-Evenness, Even.LCL = 1-Even.LCL, Even.UCL = 1-Even.UCL)%>%
             rename('Specialization'='Evenness', 'Spec.LCL' ='Even.LCL', 'Spec.UCL' ='Even.UCL')%>%
-            mutate(Assemblage = names(long)[[i]])
+            mutate(Network = names(long)[[i]])
         })
         # if(method == "Empirical") index = 1
         # if(method == "Estimated") index = 2
