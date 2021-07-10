@@ -66,7 +66,7 @@
 #                  row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 # #ggAsy.link ----
 # ggAsy.link(asy1)
-# ggAsy.link(asy2)
+# ggAsy.link(asy2, diversity = 'PD')
 #
 # #Obs.link ----
 # obs1 <- Obs.link(Norfolk, diversity = 'TD', datatype = "abundance", nboot = 10)
@@ -74,7 +74,7 @@
 #                  row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
 # #ggObs.link ----
 # ggObs.link(obs1)
-# ggObs.link(obs2)
+# ggObs.link(obs2, diversity = 'PD')
 #
 # #estimateD.link ----
 # est1 <- estimateD.link(Norfolk, diversity = 'TD', datatype="abundance", base="coverage", level=0.7, nboot = 10)
@@ -82,6 +82,10 @@
 # est3 <- estimateD.link(data = puerto.rico$data, diversity = 'PD', datatype="abundance", base="coverage",
 #                        level=0.7, nboot = 10,
 #                        row.tree = puerto.rico$row.tree, col.tree = puerto.rico$col.tree)
+# est1
+# est2
+# est3
+#
 #
 # #iNEXTbeta.link ----
 # beta1 = iNEXTbeta.link(data = puerto.rico$data%>%lapply(function(x) round(x/10)),

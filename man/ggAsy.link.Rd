@@ -4,7 +4,7 @@
 \alias{ggAsy.link}
 \title{ggplot for Asymptotic Network diversity}
 \usage{
-ggAsy.link(outcome, text.size = 14)
+ggAsy.link(outcome, diversity = "TD", text.size = 14)
 }
 \arguments{
 \item{outcome}{the outcome of the functions \code{Asy.link} .\cr}

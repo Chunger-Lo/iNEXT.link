@@ -4,7 +4,7 @@
 \alias{ggObs.link}
 \title{ggplot for Empirical Network diversity}
 \usage{
-ggObs.link(outcome, text.size = 14)
+ggObs.link(outcome, diversity = "TD", text.size = 14)
 }
 \arguments{
 \item{outcome}{the outcome of the functions \code{Obs.link} .\cr}

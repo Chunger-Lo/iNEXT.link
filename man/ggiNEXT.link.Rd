@@ -9,8 +9,8 @@ ggiNEXT.link(
   diversity = "TD",
   type = 1,
   se = TRUE,
-  facet.var = "Assemblage",
-  color.var = "Order.q",
+  facet.var = "Order.q",
+  color.var = "Assemblage",
   text.size = 12,
   stript.size = 12
 )
