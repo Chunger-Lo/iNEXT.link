@@ -66,7 +66,8 @@ SC.link <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30
   data_long <- lapply(data, function(tab){
     as.matrix(tab)%>%c()}
   )
-  res = iNEXT.4steps::SC(data = data_long, q = q, datatype = datatype, nboot = nboot, conf = conf)
+  res = iNEXT.4steps::SC(data = data_long, q = q, datatype = datatype, nboot = nboot, conf = conf)%>%
+    rename('Network'='Assemblage')
   return(res)
 }
 
@@ -87,9 +88,9 @@ SC.link <- function(data, q = seq(0, 2, 0.2), datatype = "abundance", nboot = 30
 ggSC.link <- function(outcome){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
-  ggplot(outcome, aes(x = Order.q, y = Estimate.SC, colour = Assemblage)) +
+  ggplot(outcome, aes(x = Order.q, y = Estimate.SC, colour = Network)) +
     geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
-    geom_ribbon(aes(ymin = SC.LCL, ymax = SC.UCL, fill = Assemblage),
+    geom_ribbon(aes(ymin = SC.LCL, ymax = SC.UCL, fill = Network),
                 alpha = 0.2, linetype = 0) + scale_fill_manual(values = cbPalette) +
     labs(x = "Order q", y = "Sample completeness") + theme(text = element_text(size = 12)) +
     theme(legend.position = "bottom", legend.box = "vertical",
@@ -204,8 +205,21 @@ iNEXT.link <- function(data, diversity = 'TD', q = c(0,1,2), datatype = "abundan
     names(res) = c("DataInfo", "iNextEst", "AsyEst")
 
   }else if(diversity == 'PD'){
+
     if(!is.null(row.tree)){row.tree$tip.label = gsub('\\.', '_',row.tree$tip.label)}
     if(!is.null(col.tree)){col.tree$tip.label = gsub('\\.', '_',col.tree$tip.label)}
+
+    if(class(data) == 'list'){
+      data = lapply(data, function(net){
+        rownames(net) = gsub('\\.', '_', rownames(net))
+        colnames(net) = gsub('\\.', '_', colnames(net))
+        return(net)
+      })
+    }else if(class(data) == 'data.frame'){
+      rownames(data) = gsub('\\.', '_', rownames(data))
+      colnames(data) = gsub('\\.', '_', colnames(data))
+    }
+
     ## 1. datainfo
     datainfo = DataInfo.link(data = data, diversity = diversity, datatype = datatype,
                              row.tree = row.tree, col.tree = col.tree)
@@ -289,7 +303,7 @@ iNEXTbeta.link = function(data, diversity = 'TD', level = seq(0.5, 1, 0.5), data
   if(class(data[[1]]) == 'data.frame' ){data = list(data); }
 
   combined_list = lapply(data, function(y){
-    long = iNEXT.link:::ready4beta(y)%>%filter_all(any_vars(. != 0))
+    long = ready4beta(y)%>%filter_all(any_vars(. != 0))
     rownames(long) = rownames(long)%>%gsub('\\.','_',.)
     return(long)
   })
@@ -346,10 +360,11 @@ iNEXTbeta.link = function(data, diversity = 'TD', level = seq(0.5, 1, 0.5), data
 #' ggiNEXT.link(outcome = out2, type = 3)
 #' }
 #' @export
-ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var = "Assemblage",
-                         color.var = "Order.q", text.size = 12, stript.size = 12){
+ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var = "Order.q",
+                         color.var = "Assemblage", text.size = 12, stript.size = 12){
   if(diversity == 'TD'){
-    iNEXT.3D::ggiNEXT3D(outcome, type = type)
+    iNEXT.3D::ggiNEXT3D(outcome, type = type, facet.var = facet.var, color.var = color.var)+
+      ylab("Taxonomic diversity")
 
   }else if(diversity == 'PD'){
     # output = outcome
@@ -399,7 +414,7 @@ ggiNEXT.link <- function(outcome, diversity = 'TD', type = 1,se = TRUE,facet.var
             legend.title=element_blank(), strip.text = element_text(size = stript.size),
             text=element_text(size=text.size),
             legend.key.width = unit(0.8,"cm"))  +
-      labs(y = "Phylogenetic network diversity", lty = "Method")
+      labs(y = "Phylogenetic diversity", lty = "Method")
     # if(grey){
     #   g <- g +
     #     scale_fill_grey(start = 0, end = .4) +
@@ -694,7 +709,7 @@ Asy.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abu
       filter(method == "Estimate")%>%
       mutate(method = ifelse(method == 'Estimate','Estimated',method ))%>%
       dplyr::select(Order.q, Estimate, LCL, UCL, Region, method )%>%
-      set_colnames(c('Order.q', 'qD', 'qD.LCL','qD.UCL', 'Network', 'Method'))
+      set_colnames(c('Order.q', 'qPD', 'qPD.LCL','qPD.UCL', 'Network', 'Method'))
 
     return(NetDiv)
   }
@@ -760,7 +775,7 @@ Obs.link <- function(data, diversity = 'TD', q = seq(0, 2, 0.2), datatype = "abu
                             col.tree = col.tree,conf = conf)%>%
       filter(method == "Empirical")%>%
       dplyr::select(Order.q, Estimate, LCL, UCL, Region, method )%>%
-      set_colnames(c('Order.q', 'qD', 'qD.LCL','qD.UCL', 'Network', 'Method'))
+      set_colnames(c('Order.q', 'qPD', 'qPD.LCL','qPD.UCL', 'Network', 'Method'))
 
     return(NetDiv)
   }
@@ -793,24 +808,32 @@ ggObs.link <- function(outcome, diversity = 'TD', text.size = 14){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
   if(diversity == 'TD'){
-    ylab = 'taxonomic diversity'
-  }else if(diversity == 'PD') {
-    ylab = 'phylogenetic diversity'
+    ggplot(outcome, aes(x = Order.q, y = qD, colour = Network, lty = Method)) +
+      geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
+      geom_ribbon(data = outcome[outcome$method == "Empirical", ],
+                  aes(ymin = qD.LCL, ymax = qD.UCL, fill = Network), alpha = 0.2, linetype = 0) +
+      scale_fill_manual(values = cbPalette) +
+      scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
+      labs(x = "Order q", y = "Taxonomic diversity") + theme(text = element_text(size = 10)) +
+      theme(legend.position = "bottom", legend.box = "vertical",
+            legend.key.width = unit(1.1, "cm"), legend.title = element_blank(),
+            legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10),
+            text = element_text(size = text.size)
+      )
+  }else if(diversity == 'PD'){
+    ggplot(outcome, aes(x = Order.q, y = qPD, colour = Network, lty = Method)) +
+      geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
+      geom_ribbon(data = outcome[outcome$method == "Empirical", ],
+                  aes(ymin = qPD.LCL, ymax = qPD.UCL, fill = Network), alpha = 0.2, linetype = 0) +
+      scale_fill_manual(values = cbPalette) +
+      scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
+      labs(x = "Order q", y = "Phylogenetic diversity") + theme(text = element_text(size = 10)) +
+      theme(legend.position = "bottom", legend.box = "vertical",
+            legend.key.width = unit(1.1, "cm"), legend.title = element_blank(),
+            legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10),
+            text = element_text(size = text.size)
+      )
   }
-  ggplot(outcome, aes(x = Order.q, y = qD, colour = Network, lty = Method)) +
-    geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
-    geom_ribbon(data = outcome[outcome$method == "Empirical", ],
-                aes(ymin = qD.LCL, ymax = qD.UCL, fill = Network), alpha = 0.2, linetype = 0) +
-    scale_fill_manual(values = cbPalette) +
-    scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
-    labs(x = "Order q", y = ylab) + theme(text = element_text(size = 10)) +
-    theme(legend.position = "bottom", legend.box = "vertical",
-          legend.key.width = unit(1.1, "cm"), legend.title = element_blank(),
-          legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10),
-          text = element_text(size = text.size)
-    )
-
-  # +labs(x = "Order q", y = "Network phylogenetic diversity", lty = "Method") + scale_linetype_manual(values=c("dashed","solid"))
 }
 # ggAsy.link -------------------------------------------------------------------
 #' ggplot for Asymptotic Network diversity
@@ -837,26 +860,35 @@ ggObs.link <- function(outcome, diversity = 'TD', text.size = 14){
 ggAsy.link <- function(outcome, diversity = 'TD', text.size = 14){
   cbPalette <- rev(c("#999999", "#E69F00", "#56B4E9", "#009E73",
                      "#330066", "#CC79A7", "#0072B2", "#D55E00"))
-  # if (sum(unique(outcome$method) %in% c("Estimate", "Empirical")) == 0)
-  #   stop("Please use the outcome from specified function 'AsyD'")
-
   if(diversity == 'TD'){
-    ylab = 'taxonomic diversity'
-  }else if(diversity == 'PD') {
-    ylab = 'phylogenetic diversity'
+    ggplot(outcome, aes(x = Order.q, y = qD, colour = Network, lty = Method)) +
+      geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
+      geom_ribbon(data = outcome[outcome$method == "Estimated", ],
+                  aes(ymin = qD.LCL, ymax = qD.UCL, fill = Network), alpha = 0.2, linetype = 0) +
+      scale_fill_manual(values = cbPalette) +
+      scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
+      labs(x = "Order q", y = "Taxonomic diversity") + theme(text = element_text(size = 10)) +
+      theme(legend.position = "bottom", legend.box = "vertical",
+            legend.key.width = unit(1.1, "cm"), legend.title = element_blank(),
+            legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10),
+            text = element_text(size = text.size)
+      )
+  }else if(diversity == 'PD'){
+    ggplot(outcome, aes(x = Order.q, y = qPD, colour = Network, lty = Method)) +
+      geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
+      geom_ribbon(data = outcome[outcome$method == "Estimated", ],
+                  aes(ymin = qPD.LCL, ymax = qPD.UCL, fill = Network), alpha = 0.2, linetype = 0) +
+      scale_fill_manual(values = cbPalette) +
+      scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
+      labs(x = "Order q", y = "Phylogenetic diversity") + theme(text = element_text(size = 10)) +
+      theme(legend.position = "bottom", legend.box = "vertical",
+            legend.key.width = unit(1.1, "cm"), legend.title = element_blank(),
+            legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10),
+            text = element_text(size = text.size)
+      )
   }
-  ggplot(outcome, aes(x = Order.q, y = qD, colour = Network, lty = Method)) +
-    geom_line(size = 1.2) + scale_colour_manual(values = cbPalette) +
-    geom_ribbon(data = outcome[outcome$method == "Estimated", ],
-                aes(ymin = qD.LCL, ymax = qD.UCL, fill = Network), alpha = 0.2, linetype = 0) +
-    scale_fill_manual(values = cbPalette) +
-    scale_linetype_manual(values = c(Estimated = 1, Empirical = 2)) +
-    labs(x = "Order q", y = ylab) + theme(text = element_text(size = 10)) +
-    theme(legend.position = "bottom", legend.box = "vertical",
-          legend.key.width = unit(1.1, "cm"), legend.title = element_blank(),
-          legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(-10,-10, -5, -10),
-          text = element_text(size = text.size)
-    )
+
+
 
   # +labs(x = "Order q", y = "Network phylogenetic diversity", lty = "Method") + scale_linetype_manual(values=c("dashed","solid"))
 }
@@ -1131,7 +1163,8 @@ Spec.link <- function(data, q = seq(0, 2, 0.2),
         res = lapply(res, function(each_class){
           each_class%>%
             mutate(Evenness = 1-Evenness, Even.LCL = 1-Even.LCL, Even.UCL = 1-Even.UCL)%>%
-            rename('Specialization'='Evenness', 'Spec.LCL' ='Even.LCL', 'Spec.UCL' ='Even.UCL')%>%
+            rename('Network'="Assemblage", 'Specialization'='Evenness',
+                   'Spec.LCL' ='Even.LCL', 'Spec.UCL' ='Even.UCL')%>%
             mutate(Network = names(long)[[i]])
         })
         # if(method == "Empirical") index = 1
@@ -1163,7 +1196,7 @@ Spec.link <- function(data, q = seq(0, 2, 0.2),
           each_class%>%
             mutate(Evenness = 1-Evenness, Even.LCL = 1-Even.LCL, Even.UCL = 1-Even.UCL)%>%
             rename('Specialization'='Evenness', 'Spec.LCL' ='Even.LCL', 'Spec.UCL' ='Even.UCL')%>%
-            mutate(Network = names(long)[[i]])
+            mutate(Assemblage = names(long)[[i]])
         })
         # if(method == "Empirical") index = 1
         # if(method == "Estimated") index = 2
@@ -1205,7 +1238,8 @@ Spec.link <- function(data, q = seq(0, 2, 0.2),
                            Evenness = as.vector(qD[[k]]), s.e. = as.vector(se[[k]]),
                            Even.LCL = as.vector(qD[[k]] - qnorm(1 - (1 -
                                                                        conf)/2) * se[[k]]), Even.UCL = as.vector(qD[[k]] +
-                                                                                                                   qnorm(1 - (1 - conf)/2) * se[[k]]), Assemblage = rep(names(data),                                                                                                                                                                each = length(q)), Method = rep(method, length(q) *
+                                                                                                                   qnorm(1 - (1 - conf)/2) * se[[k]]), Assemblage = rep(names(data),
+                                                                                                                                                                        each = length(q)), Method = rep(method, length(q) *
                                                                                                                                                                                                           length(data)))
           tmp$Even.LCL[tmp$Even.LCL < 0] <- 0
           tmp
@@ -1380,6 +1414,12 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
       data_gamma = data_gamma[data_gamma>0]
       data_alpha = as.matrix(data) %>% as.vector
 
+      # ref_gamma = iNEXT.3D:::Chat.Ind(data_gamma, n)
+      # ref_alpha = iNEXT.3D:::Chat.Ind(data_alpha, n)
+      #
+      # ref_alpha_max = iNEXT.3D:::Chat.Ind(data_alpha, n * 2)
+      # ref_gamma_max = iNEXT.3D:::Chat.Ind(data_gamma, n * 2)
+
       ref_gamma = iNEXT.3D:::Coverage(data_gamma, n, datatype = 'abundance')
       ref_alpha = iNEXT.3D:::Coverage(data_alpha, n, datatype = 'abundance')
 
@@ -1389,7 +1429,7 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
       level = level[level<1]
       level = c(level, ref_gamma, ref_alpha, ref_alpha_max, ref_gamma_max) %>% sort %>% unique
 
-      m_gamma = sapply(level, function(i) coverage_to_size(x = data_gamma, C = i, datatype='abundance'))
+      m_gamma = sapply(level, function(i) coverage_to_size(data_gamma, i, datatype='abundance'))
       m_alpha = sapply(level, function(i) coverage_to_size(data_alpha, i, datatype='abundance'))
     }
 
@@ -1454,7 +1494,7 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
     if (max_alpha_coverage==T) {
       under_max_alpha = !((gamma$Order==0) & (gamma$level>ref_alpha_max))
     }else{
-      under_max_alpha = level>0
+      under_max_alpha = gamma$level>0
     }
     gamma = gamma[under_max_alpha,]
     gamma$Order = as.numeric(gamma$Order)
@@ -1493,7 +1533,7 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
         f1 = sum(data==1)
         f2 = sum(data==2)
 
-        aL = iNEXT.link:::create.aili(data%>%iNEXT.link:::long_to_wide(), row.tree, col.tree)%>%
+        aL = create.aili(data%>%long_to_wide(), row.tree, col.tree)%>%
           select(branch.abun,branch.length)
         g1 = aL$branch.length[aL$branch.abun==1] %>% sum
         g2 = aL$branch.length[aL$branch.abun==2] %>% sum
@@ -1509,7 +1549,6 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
         kth_net = data[,k]
         names(kth_net) = rownames(data)
 
-        n = sum(kth_net)
         g0_k = get_g0_hat(kth_net)
         f1 <- sum(kth_net == 1)
         f2 <- sum(kth_net == 2)
@@ -1518,7 +1557,7 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
         lambda <- ifelse(C.hat != 1,(1-C.hat)/sum(kth_net/n*(1-kth_net/n)^n),0)
 
         p.seen <- kth_net/n*(1-lambda*(1-kth_net/n)^n)
-        pi_matrix = p.seen%>%iNEXT.link:::long_to_wide()
+        pi_matrix = p.seen%>%long_to_wide()
         res = list()
         res[['pi_matrix']] = pi_matrix
         res[['f0_k']] = f0_k
@@ -1530,7 +1569,7 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
       # plan(multisession)
 
       # se = future_lapply(1:nboot, function(b){
-      se = future_lapply(1:nboot, function(b){
+      se = lapply(1:nboot, function(b){
         ## for each bootstrap samples
         ### 1. get population (random assign position from candidates)
         aiLi_k = lapply(1:ncol(data), function(k){
@@ -1539,8 +1578,7 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
           C.hat = datainfo_each_k[[k]]$C.hat
           ## pi_matrix: S1*S2 (42*98)
           ## S1*S2 -> B1*B2 (8736)
-          seen_interaction_aili = iNEXT.link:::create.aili(pi_matrix_k,row.tree,col.tree)
-          seen_interaction_aili%>%filter(tgroup == 'Tip')%>%summarise(sum(branch.abun))
+          seen_interaction_aili = create.aili(pi_matrix_k,row.tree,col.tree)
           # unseen_interaction_aili = data.frame(branch.abun = rep(pi$unseen,f0_k), branch.length = g0 / f0_k,
           #                                      tgroup = "Tip",interaction = "unseen")
           unseen_interaction_aili = data.frame(branch.abun = rep(0,f0_pool), branch.length = rep(0,f0_pool),
@@ -1571,27 +1609,16 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
         })%>%do.call("cbind",.)
         colnames(p_bt) = paste0("net_", 1:ncol(p_bt))
 
-        p_bt2 = p_bt%>%
-          cbind(tgroup = aiLi_k[[1]]$tgroup)%>%
-          filter(tgroup == 'Tip')%>%select(-tgroup)%>%
+        p_bt = p_bt%>%cbind(tgroup = aiLi_k[[1]]$tgroup)%>%
           filter_all(any_vars(. != 0))
 
         ### 2. generate samples(x_bt)
-        x_bt = sapply(1:ncol(p_bt2), function(k){
+        x_bt = sapply(1:(ncol(p_bt)-1), function(k){
           n = sum(data[,k])
-          sapply(p_bt2[,k], function(p){rbinom(1,size=n, prob = p)})
+          sapply(p_bt[,k], function(p){rbinom(1,size=n, prob = p)})
+
         })
-        p_star_bt = p_bt%>%
-          cbind(tgroup = aiLi_k[[1]]$tgroup)%>%
-          filter_all(any_vars(. != 0))
-
-        x_star_bt = sapply(1:(ncol(p_star_bt)-1), function(k){
-          n = sum(data[,k])
-          sapply(p_star_bt[,k], function(p){rbinom(1,size=n, prob = p)})
-        })
-
-
-        rownames(x_bt) = rownames(p_bt2)
+        rownames(x_bt) = rownames(p_bt)
         ### 3. estimate unkwown branch length
         L0_hat = sapply(1:ncol(data), function(k){
           # compare = data.frame(interaction = names(data_gamma), raw = data_gamma)%>%
@@ -1703,13 +1730,13 @@ iNEXTbeta.PDlink <- function(data, level, datatype='abundance', q = c(0, 1, 2),
         S = (beta %>% mutate(Estimate = (1/Estimate-1)/(1/N-1)))$Estimate
 
         beta = beta$Estimate
+
         diversity = cbind(gamma, alpha, beta, C, U, V, S) %>% as.matrix
-        # diversity = cbind(gamma, alpha, beta, level= c(rep(level,2), NA,NA)) %>% as.matrix
         return(diversity)
 
         # })%>%
-      # })%>%
-        }, future.seed = T)%>%
+      })%>%
+        # }, future.seed = T)%>%
         abind(along=3) %>% apply(1:2, sd)
 
 

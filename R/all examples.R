@@ -1,11 +1,11 @@
-# # devtools::install_github('crazymin2266/iNEXT.beta')
-# # devtools::install_github('KaiHsiangHu/iNEXT.3D')
-# # devtools::install_github('KaiHsiangHu/iNEXTPD2')
-# # devtools::install_github('KaiHsiangHu/iNEXT.4steps')
-# # devtools::install_github('chaolab2019/chaoUtility')
-# # devtools::install_github('Chunger-Lo/iNEXT.link')
-# # devtools::install_github('YanHanChen/PhD')
-# # #
+# # # devtools::install_github('crazymin2266/iNEXT.beta')
+# # # devtools::install_github('KaiHsiangHu/iNEXT.3D')
+# # # devtools::install_github('KaiHsiangHu/iNEXTPD2')
+# # # devtools::install_github('KaiHsiangHu/iNEXT.4steps')
+# # # devtools::install_github('chaolab2019/chaoUtility')
+# # # devtools::install_github('Chunger-Lo/iNEXT.link')
+# # # devtools::install_github('YanHanChen/PhD')
+# # # #
 # library(ggplot2)
 # library(knitr)
 # library(tibble)
@@ -36,6 +36,7 @@
 #
 # data(Norfolk)
 # data(puerto.rico)
+# load(file = "data//beetles_treat_pool.rda")
 #
 # #DataInfo.link ----
 # DataInfo.link(puerto.rico$data, diversity = 'TD', datatype="abundance")
@@ -109,3 +110,4 @@
 #                  nboot = 30, method = "Empirical")
 # ggSpec.link(Est)
 # ggSpec.link(Emp)
+#

@@ -173,7 +173,7 @@ coverage_to_size <- function (x, C, datatype = "abundance")
     else if (refC > C) {
       opt <- optimize(f, C = C, lower = 0, upper = sum(x))
       mm <- opt$minimum
-      mm <- round(mm)
+      # mm <- round(mm)
     }
     else if (refC < C) {
       f1 <- sum(x == 1)
